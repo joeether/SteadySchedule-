@@ -1,0 +1,52 @@
+﻿@page "/"
+@using SteadySchedule.Domain
+
+<PageTitle>Dashboard</PageTitle>
+
+<h1>Dashboard</h1>
+<p>SteadySchedule is running.</p>
+
+<h3>Core Model Check</h3>
+<ul>
+    <li>Company: @company.Name (@company.AdminEmail)</li>
+    <li>Employee: @employee.Name (Max @employee.MaxHoursPerWeek hrs/week)</li>
+    <li>Shift: @shift.Position on @shift.Date.ToShortDateString() @shift.StartTime - @shift.EndTime</li>
+    <li>Assignment: EmployeeId @assignment.EmployeeId, Approved OT: @assignment.ApprovedOvertime</li>
+</ul>
+
+@code {
+    private Company company = new()
+    {
+        Id = 1,
+        Name = "Mama's Burger Joint",
+        AdminEmail = "admin@mamasburgers.com"
+    };
+
+    private Employee employee = new()
+    {
+        Id = 1,
+        CompanyId = 1,
+        Name = "Joey",
+        Email = "joey@mamasburgers.com",
+        MaxHoursPerWeek = 40,
+        PositionsQualified = "Cashier"
+    };
+
+    private Shift shift = new()
+    {
+        Id = 1,
+        CompanyId = 1,
+        Date = DateTime.Today,
+        Position = "Cashier",
+        StartTime = new TimeSpan(9, 0, 0),
+        EndTime = new TimeSpan(17, 0, 0)
+    };
+
+    private Assignment assignment = new()
+    {
+        Id = 1,
+        ShiftId = 1,
+        EmployeeId = 1,
+        ApprovedOvertime = false
+    };
+}

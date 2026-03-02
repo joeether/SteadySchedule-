@@ -1,0 +1,198 @@
+﻿@page "/assign"
+@using SteadySchedule.Domain
+
+<PageTitle>Assign</PageTitle>
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Two-Click Assign</h2>
+        <span class="badge bg-dark">Company: Mama's Burger Joint</span>
+    </div>
+
+    <div class="form-check form-switch mt-2">
+        <input class="form-check-input" type="checkbox" @bind="allowOvertime">
+        <label class="form-check-label">
+            Allow Overtime
+        </label>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Shifts Panel -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold">
+                    Shifts
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        @foreach (var s in shifts)
+                        {
+                            <li class="list-group-item @(selectedShift?.Id == s.Id ? "active" : "")"
+                                style="cursor:pointer"
+                                @onclick="() => SelectShift(s)">
+                                <div class="fw-semibold">@s.Position</div>
+                                <small>
+                                    @s.Date.ToShortDateString()
+                                    | @s.StartTime - @s.EndTime
+                                </small>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employees Panel -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold">
+                    Eligible Employees
+                </div>
+                <div class="card-body">
+
+                    @if (selectedShift is null)
+                    {
+                        <p class="text-muted">Select a shift to see eligible employees.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group">
+                            @foreach (var e in EligibleEmployees(selectedShift))
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-semibold">@e.Name</div>
+                                        <small class="text-muted">
+                                            Max @e.MaxHoursPerWeek hrs/week
+                                        </small>
+                                    </div>
+                                    <button class="btn btn-sm btn-dark"
+                                            @onclick="() => AssignEmployee(selectedShift, e)">
+                                        Assign
+                                    </button>
+                                </li>
+                            }
+                        </ul>
+
+                        <hr />
+
+                        <h6 class="fw-bold">Assignments</h6>
+
+                        @foreach (var a in assignments.Where(a => a.ShiftId == selectedShift.Id))
+                        {
+                            var emp = employees.First(x => x.Id == a.EmployeeId);
+                            <span class="badge bg-success me-2 mb-2">
+                                @emp.Name
+                            </span>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@code {
+
+    private Company company = new()
+    {
+        Id = 1,
+        Name = "Mama's Burger Joint",
+        AdminEmail = "admin@mamasburgers.com"
+    };
+
+    private bool allowOvertime = false;
+
+    private int GetWeeklyHours(Employee employee)
+    {
+        var weekStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+        var weekEnd = weekStart.AddDays(7);
+
+        var employeeAssignments = assignments
+            .Where(a => a.EmployeeId == employee.Id)
+            .Join(shifts,
+                  a => a.ShiftId,
+                  s => s.Id,
+                  (a, s) => s)
+            .Where(s => s.Date >= weekStart && s.Date < weekEnd);
+
+        return employeeAssignments
+            .Sum(s => (int)(s.EndTime - s.StartTime).TotalHours);
+    }
+
+    private List<Employee> employees = new()
+    {
+        new Employee { Id = 1, CompanyId = 1, Name = "Joey", Email="joey@mamas.com", MaxHoursPerWeek = 40, PositionsQualified="Cashier" },
+        new Employee { Id = 2, CompanyId = 1, Name = "Megan", Email="megan@mamas.com", MaxHoursPerWeek = 4, PositionsQualified="Cashier, Cook" },
+        new Employee { Id = 3, CompanyId = 1, Name = "Billy", Email="billy@mamas.com", MaxHoursPerWeek = 20, PositionsQualified="Cook" },
+    };
+
+    private List<Shift> shifts = new()
+    {
+        new Shift { Id = 1, CompanyId = 1, Date = DateTime.Today, Position="Cashier", StartTime=new TimeSpan(9,0,0), EndTime=new TimeSpan(13,0,0) },
+        new Shift { Id = 2, CompanyId = 1, Date = DateTime.Today, Position="Cook", StartTime=new TimeSpan(10,0,0), EndTime=new TimeSpan(18,0,0) },
+        new Shift { Id = 3, CompanyId = 1, Date = DateTime.Today, Position="Cashier", StartTime=new TimeSpan(12,0,0), EndTime=new TimeSpan(20,0,0) },
+        new Shift { Id = 4, CompanyId = 1, Date = DateTime.Today.AddDays(1), Position="Cashier", StartTime=new TimeSpan(12,0,0), EndTime=new TimeSpan(20,0,0) },
+    };
+
+    private List<Assignment> assignments = new();
+
+    private Shift? selectedShift;
+
+    private void SelectShift(Shift s)
+    {
+        selectedShift = s;
+    }
+
+    private IEnumerable<Employee> EligibleEmployees(Shift shift)
+    {
+        return employees
+            .Where(e => e.CompanyId == shift.CompanyId)
+            .Where(e => e.PositionsQualified.Contains(shift.Position, StringComparison.OrdinalIgnoreCase))
+            .Where(e => !assignments.Any(a => a.ShiftId == shift.Id && a.EmployeeId == e.Id))
+            .Where(e =>
+            {
+                // HARD RULE: no overlapping shifts
+                var overlapping = assignments
+                    .Where(a => a.EmployeeId == e.Id)
+                    .Join(shifts,
+                          a => a.ShiftId,
+                          s => s.Id,
+                          (a, s) => s)
+                    .Any(existingShift =>
+                        existingShift.Date == shift.Date &&
+                        existingShift.StartTime < shift.EndTime &&
+                        shift.StartTime < existingShift.EndTime
+                    );
+
+                if (overlapping)
+                    return false;
+
+                // SOFT RULE: weekly hours (can be bypassed)
+                if (!allowOvertime)
+                {
+                    var currentHours = GetWeeklyHours(e);
+                    var shiftHours = (int)(shift.EndTime - shift.StartTime).TotalHours;
+
+                    if (currentHours + shiftHours > e.MaxHoursPerWeek)
+                        return false;
+                }
+
+                return true;
+            });
+    }
+
+    private void AssignEmployee(Shift shift, Employee employee)
+    {
+        assignments.Add(new Assignment
+        {
+            Id = assignments.Count + 1,
+            ShiftId = shift.Id,
+            EmployeeId = employee.Id,
+            ApprovedOvertime = false
+        });
+    }
+}
