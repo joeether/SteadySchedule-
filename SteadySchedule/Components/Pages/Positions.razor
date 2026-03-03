@@ -1,0 +1,90 @@
+﻿@page "/positions"
+@using SteadySchedule.Services
+@inject ScheduleService Schedule
+
+<PageTitle>Positions</PageTitle>
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Positions</h2>
+        <span class="badge bg-dark">Company: @Schedule.Company.Name</span>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header fw-semibold">
+            Add Position
+        </div>
+        <div class="card-body">
+
+            <input class="form-control"
+                   placeholder="Enter new position"
+                   @bind="newPosition" />
+
+            <button class="btn btn-dark mt-3"
+                    @onclick="AddPosition">
+                Add Position
+            </button>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header fw-semibold">
+            Existing Positions
+        </div>
+
+        <div class="card-body p-0">
+            <ul class="list-group list-group-flush">
+                @foreach (var p in Schedule.Positions.OrderBy(p => p))
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        @p
+                        <button class="btn btn-sm btn-outline-danger"
+                                @onclick="() => DeletePosition(p)">
+                            Delete
+                        </button>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+@code {
+
+    private string newPosition = string.Empty;
+    private string? message;
+
+    private void AddPosition()
+    {
+        if (string.IsNullOrWhiteSpace(newPosition))
+            return;
+
+        if (Schedule.Positions.Contains(newPosition, StringComparer.OrdinalIgnoreCase))
+        {
+            message = "Position already exists.";
+            return;
+        }
+
+        Schedule.Positions.Add(newPosition.Trim());
+        newPosition = string.Empty;
+        message = null;
+    }
+
+    private void DeletePosition(string position)
+    {
+        var usedInShift = Schedule.Shifts.Any(s =>
+            string.Equals(s.Position, position, StringComparison.OrdinalIgnoreCase));
+
+        if (usedInShift)
+        {
+            message = $"Cannot delete '{position}' because it is used by one or more shifts.";
+            return;
+        }
+
+        Schedule.Positions.Remove(position);
+        message = null;
+    }
+}

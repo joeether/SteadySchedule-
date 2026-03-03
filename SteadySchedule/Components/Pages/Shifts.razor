@@ -1,0 +1,155 @@
+﻿@page "/shifts"
+@using SteadySchedule.Domain
+@using SteadySchedule.Services
+@inject ScheduleService Schedule
+
+<PageTitle>Shifts</PageTitle>
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Shifts</h2>
+        <span class="badge bg-dark">Company: @Schedule.Company.Name</span>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header fw-semibold">
+            Add Shift
+        </div>
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-control" @bind="newShiftDate" />
+                </div>
+
+                <select class="form-select" @bind="newShift.Position">
+                    <option value="">Select Position</option>
+                    @foreach (var p in Schedule.Positions)
+                    {
+                        <option value="@p">@p</option>
+                    }
+                </select>
+
+                <div class="col-md-3">
+                    <label class="form-label">Start Time</label>
+                    <input type="time" class="form-control" @bind="newStartTime" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">End Time</label>
+                    <input type="time" class="form-control" @bind="newEndTime" />
+                </div>
+
+            </div>
+
+            <button class="btn btn-dark mt-3" @onclick="AddShift">
+                Add Shift
+            </button>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header fw-semibold">
+            Existing Shifts
+        </div>
+        @if (!string.IsNullOrWhiteSpace(shiftDeleteMessage))
+        {
+            <div class="alert alert-warning m-3">
+                @shiftDeleteMessage
+            </div>
+        }
+        <div class="card-body p-0">
+            <ul class="list-group list-group-flush">
+                @foreach (var s in Schedule.Shifts.OrderBy(s => s.Date))
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <div class="fw-semibold">@s.Position</div>
+                            <small>
+                                @s.Date.ToShortDateString()
+                                | @s.StartTime - @s.EndTime
+                            </small>
+                        </div>
+
+                        <button class="btn btn-sm btn-outline-danger"
+                                @onclick="() => DeleteShift(s)">
+                            Delete
+                        </button>
+
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+@code {
+
+    private Shift newShift = new()
+    {
+        CompanyId = 1
+    };
+
+    private string? shiftDeleteMessage;
+
+    private DateTime newShiftDate = DateTime.Today;
+
+    // UI-only fields
+    private TimeOnly newStartTime = new(9, 0);
+    private TimeOnly newEndTime = new(17, 0);
+
+    private void AddShift()
+    {
+        if (newEndTime <= newStartTime)
+        {
+            return; // later we show validation message
+        }
+
+        newShift.Id = Schedule.Shifts.Count + 1;
+        newShift.CompanyId = Schedule.Company.Id;
+        newShift.Date = newShiftDate.Date;
+
+        // Convert TimeOnly → TimeSpan
+        newShift.StartTime = newStartTime.ToTimeSpan();
+        newShift.EndTime = newEndTime.ToTimeSpan();
+
+        Schedule.Shifts.Add(newShift);
+
+        newShift = new Shift
+        {
+            CompanyId = Schedule.Company.Id
+        };
+
+        newShiftDate = DateTime.Today;
+        newStartTime = new(9, 0);
+        newEndTime = new(17, 0);
+    }
+
+    private void DeleteShift(Shift shift)
+    {
+        var hasAssignments = Schedule.Assignments
+            .Any(a => a.ShiftId == shift.Id);
+
+        if (hasAssignments)
+        {
+            shiftDeleteMessage = $"{shift.Position} on {shift.Date:MM/dd} cannot be deleted because employees are assigned.";
+            return;
+        }
+
+        Schedule.Shifts.Remove(shift);
+        shiftDeleteMessage = null;
+    }
+
+    private IEnumerable<string> ExistingPositions =>
+    Schedule.Shifts
+        .Select(s => s.Position)
+        .Where(p => !string.IsNullOrWhiteSpace(p))
+        .Distinct()
+        .OrderBy(p => p);
+}

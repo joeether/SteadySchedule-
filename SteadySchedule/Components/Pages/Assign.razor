@@ -1,5 +1,7 @@
 ﻿@page "/assign"
 @using SteadySchedule.Domain
+@using SteadySchedule.Services
+@inject ScheduleService Schedule
 
 <PageTitle>Assign</PageTitle>
 
@@ -20,27 +22,67 @@
     <div class="row g-4">
 
         <!-- Shifts Panel -->
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header fw-semibold">
-                    Shifts
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="fw-semibold">
+                    Week of @weekStart.ToString("MMM d, yyyy")
                 </div>
-                <div class="card-body p-0">
-                    <ul class="list-group list-group-flush">
-                        @foreach (var s in shifts)
-                        {
-                            <li class="list-group-item @(selectedShift?.Id == s.Id ? "active" : "")"
-                                style="cursor:pointer"
-                                @onclick="() => SelectShift(s)">
-                                <div class="fw-semibold">@s.Position</div>
-                                <small>
-                                    @s.Date.ToShortDateString()
-                                    | @s.StartTime - @s.EndTime
-                                </small>
-                            </li>
-                        }
-                    </ul>
+
+                <div class="btn-group">
+                    <button class="btn btn-outline-dark btn-sm" @onclick="PrevWeek">◀ Prev</button>
+                    <button class="btn btn-outline-dark btn-sm" @onclick="() => weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday)">Today</button>
+                    <button class="btn btn-outline-dark btn-sm" @onclick="NextWeek">Next ▶</button>
                 </div>
+            </div>
+
+            <div class="row g-3">
+                @for (int i = 0; i < 7; i++)
+                {
+                    var day = Day(i);
+                    var dayShifts = shifts
+                    .Where(s => s.Date.Date == day.Date)
+                    .OrderBy(s => s.StartTime)
+                    .ToList();
+
+                    <div class="col-12 col-md">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header fw-semibold">
+                                <div>@day.ToString("ddd")</div>
+                                <small class="text-muted">@day.ToString("M/d")</small>
+                            </div>
+
+                            <div class="card-body p-2">
+                                @if (!dayShifts.Any())
+                                {
+                                    <div class="text-muted small">No shifts</div>
+                                }
+                                else
+                                {
+                                    @foreach (var s in dayShifts)
+                                    {
+                                        <div class="border rounded p-2 mb-2 @(selectedShift?.Id == s.Id ? "bg-dark text-white" : "")"
+                                             style="cursor:pointer"
+                                             @onclick="() => SelectShift(s)">
+                                            <div class="fw-semibold">@s.Position</div>
+                                            <div class="small">
+                                                @s.StartTime.ToString(@"hh\:mm") - @s.EndTime.ToString(@"hh\:mm")
+                                            </div>
+
+                                            @* quick assignment chips *@
+                                            <div class="mt-1">
+                                                @foreach (var a in assignments.Where(a => a.ShiftId == s.Id))
+                                                {
+                                                    var emp = employees.First(x => x.Id == a.EmployeeId);
+                                                    <span class="badge bg-success me-1">@emp.Name</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
 
@@ -83,8 +125,11 @@
                         @foreach (var a in assignments.Where(a => a.ShiftId == selectedShift.Id))
                         {
                             var emp = employees.First(x => x.Id == a.EmployeeId);
-                            <span class="badge bg-success me-2 mb-2">
-                                @emp.Name
+
+                            <span class="badge bg-success me-1" style="cursor:pointer"
+                                  title="Click to unassign"
+                                  @onclick="() => Unassign(a)">
+                                @emp.Name ✕
                             </span>
                         }
                     }
@@ -97,48 +142,59 @@
 
 @code {
 
-    private Company company = new()
+    private DateTime weekStart;
+
+    protected override void OnInitialized()
     {
-        Id = 1,
-        Name = "Mama's Burger Joint",
-        AdminEmail = "admin@mamasburgers.com"
-    };
+        weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
+    }
+
+    private static DateTime StartOfWeek(DateTime date, DayOfWeek startDay)
+    {
+        int diff = (7 + (date.DayOfWeek - startDay)) % 7;
+        return date.Date.AddDays(-diff);
+    }
+
+    private void Unassign(Assignment assignment)
+    {
+        Schedule.Assignments.Remove(assignment);
+    }
+
+    private void PrevWeek() => weekStart = weekStart.AddDays(-7);
+    private void NextWeek() => weekStart = weekStart.AddDays(7);
+
+    private DateTime WeekEnd => weekStart.AddDays(7);
+    private DateTime Day(int offset) => weekStart.AddDays(offset);
+
+    private Company company => Schedule.Company;
 
     private bool allowOvertime = false;
 
     private int GetWeeklyHours(Employee employee)
     {
-        var weekStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
-        var weekEnd = weekStart.AddDays(7);
-
         var employeeAssignments = assignments
             .Where(a => a.EmployeeId == employee.Id)
             .Join(shifts,
                   a => a.ShiftId,
                   s => s.Id,
                   (a, s) => s)
-            .Where(s => s.Date >= weekStart && s.Date < weekEnd);
+            .Where(s => s.Date >= weekStart && s.Date < WeekEnd);
 
-        return employeeAssignments
-            .Sum(s => (int)(s.EndTime - s.StartTime).TotalHours);
+        return employeeAssignments.Sum(s => (int)(s.EndTime - s.StartTime).TotalHours);
     }
 
-    private List<Employee> employees = new()
+    private static bool IsQualified(Employee e, string position)
     {
-        new Employee { Id = 1, CompanyId = 1, Name = "Joey", Email="joey@mamas.com", MaxHoursPerWeek = 40, PositionsQualified="Cashier" },
-        new Employee { Id = 2, CompanyId = 1, Name = "Megan", Email="megan@mamas.com", MaxHoursPerWeek = 4, PositionsQualified="Cashier, Cook" },
-        new Employee { Id = 3, CompanyId = 1, Name = "Billy", Email="billy@mamas.com", MaxHoursPerWeek = 20, PositionsQualified="Cook" },
-    };
+        return (e.PositionsQualified ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Any(p => string.Equals(p, position, StringComparison.OrdinalIgnoreCase));
+    }
 
-    private List<Shift> shifts = new()
-    {
-        new Shift { Id = 1, CompanyId = 1, Date = DateTime.Today, Position="Cashier", StartTime=new TimeSpan(9,0,0), EndTime=new TimeSpan(13,0,0) },
-        new Shift { Id = 2, CompanyId = 1, Date = DateTime.Today, Position="Cook", StartTime=new TimeSpan(10,0,0), EndTime=new TimeSpan(18,0,0) },
-        new Shift { Id = 3, CompanyId = 1, Date = DateTime.Today, Position="Cashier", StartTime=new TimeSpan(12,0,0), EndTime=new TimeSpan(20,0,0) },
-        new Shift { Id = 4, CompanyId = 1, Date = DateTime.Today.AddDays(1), Position="Cashier", StartTime=new TimeSpan(12,0,0), EndTime=new TimeSpan(20,0,0) },
-    };
+    private List<Employee> employees => Schedule.Employees;
 
-    private List<Assignment> assignments = new();
+    private List<Shift> shifts => Schedule.Shifts;
+
+    private List<Assignment> assignments => Schedule.Assignments;
 
     private Shift? selectedShift;
 
@@ -151,7 +207,7 @@
     {
         return employees
             .Where(e => e.CompanyId == shift.CompanyId)
-            .Where(e => e.PositionsQualified.Contains(shift.Position, StringComparison.OrdinalIgnoreCase))
+            .Where(e => IsQualified(e, shift.Position))
             .Where(e => !assignments.Any(a => a.ShiftId == shift.Id && a.EmployeeId == e.Id))
             .Where(e =>
             {

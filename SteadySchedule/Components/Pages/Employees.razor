@@ -1,0 +1,164 @@
+﻿@page "/employees"
+@using SteadySchedule.Domain
+@using SteadySchedule.Services
+@inject ScheduleService Schedule
+
+<PageTitle>Employees</PageTitle>
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Employees</h2>
+        <span class="badge bg-dark">Company: Mama's Burger Joint</span>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header fw-semibold">
+            Add Employee
+        </div>
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <label class="form-label">Name</label>
+                    <input class="form-control" @bind="newEmployee.Name" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Email</label>
+                    <input class="form-control" @bind="newEmployee.Email" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Max Hours / Week</label>
+                    <input type="number" class="form-control" @bind="newEmployee.MaxHoursPerWeek" />
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Positions Qualified</label>
+
+                    @foreach (var position in ExistingPositions)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   checked="@IsPositionSelected(position)"
+                                   @onchange="(e) => TogglePosition(position, (bool)e.Value!)" />
+
+                            <label class="form-check-label">
+                                @position
+                            </label>
+                        </div>
+                    }
+                </div>
+
+            </div>
+
+            <button class="btn btn-dark mt-3" @onclick="AddEmployee">
+                Add Employee
+            </button>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header fw-semibold">
+            Current Employees
+        </div>
+        @if (!string.IsNullOrWhiteSpace(deleteMessage))
+        {
+            <div class="alert alert-warning m-3">
+                @deleteMessage
+            </div>
+        }
+        <div class="card-body p-0">
+            
+            <ul class="list-group list-group-flush">
+                @foreach (var e in employees)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <div class="fw-semibold">@e.Name</div>
+                            <small>
+                                @e.Email |
+                                Max @e.MaxHoursPerWeek hrs |
+                                @e.PositionsQualified
+                            </small>
+                        </div>
+
+                        <button class="btn btn-sm btn-outline-danger"
+                                @onclick="() => DeleteEmployee(e)">
+                            Delete
+                        </button>
+
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+@code {
+
+    private List<Employee> employees => Schedule.Employees;
+
+    private string? deleteMessage;
+
+    private IEnumerable<string> ExistingPositions =>
+    Schedule.Positions.OrderBy(p => p);
+
+    private Employee newEmployee = new()
+    {
+        CompanyId = 1,
+        MaxHoursPerWeek = 40
+    };
+
+    private void AddEmployee()
+    {
+        newEmployee.Id = employees.Count + 1;
+        employees.Add(newEmployee);
+
+        newEmployee = new Employee
+        {
+            CompanyId = 1,
+            MaxHoursPerWeek = 40
+        };
+        selectedPositions.Clear();
+    }
+
+    private void DeleteEmployee(Employee employee)
+    {
+        var hasAssignments = Schedule.Assignments
+            .Any(a => a.EmployeeId == employee.Id);
+
+        if (hasAssignments)
+        {
+            deleteMessage = $"{employee.Name} cannot be deleted because they are assigned to one or more shifts.";
+            return;
+        }
+
+        Schedule.Employees.Remove(employee);
+        deleteMessage = null;
+    }
+
+    private HashSet<string> selectedPositions = new();
+
+    private bool IsPositionSelected(string position)
+    {
+        return selectedPositions.Contains(position);
+    }
+
+    private void TogglePosition(string position, bool isChecked)
+    {
+        if (isChecked)
+            selectedPositions.Add(position);
+        else
+            selectedPositions.Remove(position);
+
+        newEmployee.PositionsQualified =
+            string.Join(", ", selectedPositions);
+    }
+}
