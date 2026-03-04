@@ -2,8 +2,11 @@
 
 namespace SteadySchedule.Services;
 
+
 public class ScheduleService
 {
+
+    public Dictionary<DateTime, WeekStatus> WeekStatuses { get; } = new();
     public Company Company { get; } = new()
     {
         Id = 1,
@@ -18,6 +21,54 @@ public class ScheduleService
     };
 
     public List<Employee> Employees { get; } = new();
+
+    public static DateTime StartOfWeek(DateTime date)
+    {
+        // Monday-based
+        int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
+        return date.Date.AddDays(-diff);
+    }
+
+    public WeekStatus GetWeekStatus(DateTime weekStart)
+    {
+        weekStart = StartOfWeek(weekStart);
+
+        if (WeekStatuses.TryGetValue(weekStart, out var status))
+            return status;
+
+        return WeekStatus.Draft;
+    }
+
+    public void PublishWeek(DateTime weekStart)
+    {
+        weekStart = StartOfWeek(weekStart);
+        WeekStatuses[weekStart] = WeekStatus.Published;
+    }
+
+    public void UnpublishWeek(DateTime weekStart)
+    {
+        weekStart = StartOfWeek(weekStart);
+
+        // If it was ever published, unpublishing means "InReview"
+        var current = GetWeekStatus(weekStart);
+        WeekStatuses[weekStart] = current == WeekStatus.Draft
+            ? WeekStatus.Draft
+            : WeekStatus.InReview;
+    }
+
+    public void SetWeekDraft(DateTime weekStart)
+    {
+        weekStart = StartOfWeek(weekStart);
+        WeekStatuses[weekStart] = WeekStatus.Draft;
+    }
+
+    public IEnumerable<DateTime> GetPublishedWeeks()
+    {
+        return WeekStatuses
+            .Where(kvp => kvp.Value == WeekStatus.Published || kvp.Value == WeekStatus.InReview)
+            .Select(kvp => kvp.Key)
+            .OrderByDescending(d => d);
+    }
 
     public List<Shift> Shifts { get; } = new()
     {

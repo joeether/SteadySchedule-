@@ -55,9 +55,18 @@
 
             </div>
 
-            <button class="btn btn-dark mt-3" @onclick="AddEmployee">
-                Add Employee
-            </button>
+            @if (editingEmployee == null)
+            {
+                <button class="btn btn-primary" @onclick="AddEmployee">
+                    Add Employee
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-success" @onclick="SaveEmployee">
+                    Save Changes
+                </button>
+            }
 
         </div>
     </div>
@@ -88,7 +97,12 @@
                             </small>
                         </div>
 
-                        <button class="btn btn-sm btn-outline-danger"
+                        <button class="btn btn-secondary btn-sm me-2"
+                                @onclick="() => StartEdit(e)">
+                            Edit
+                        </button>
+
+                        <button class="btn btn-danger btn-sm"
                                 @onclick="() => DeleteEmployee(e)">
                             Delete
                         </button>
@@ -102,6 +116,8 @@
 </div>
 
 @code {
+
+    Employee? editingEmployee = null;
 
     private List<Employee> employees => Schedule.Employees;
 
@@ -160,5 +176,58 @@
 
         newEmployee.PositionsQualified =
             string.Join(", ", selectedPositions);
+    }
+
+    void StartEdit(Employee emp)
+    {
+        editingEmployee = emp;
+
+        newEmployee = new Employee
+        {
+            Id = emp.Id,
+            CompanyId = emp.CompanyId,
+            Name = emp.Name,
+            Email = emp.Email,
+            MaxHoursPerWeek = emp.MaxHoursPerWeek
+        };
+
+        selectedPositions = new HashSet<string>(
+            emp.PositionsQualified?.Split(", ", StringSplitOptions.RemoveEmptyEntries)
+            ?? Array.Empty<string>()
+        );
+    }
+
+    void SaveEmployee()
+    {
+        if (editingEmployee == null)
+            return;
+
+        editingEmployee.Name = newEmployee.Name;
+        editingEmployee.Email = newEmployee.Email;
+        editingEmployee.MaxHoursPerWeek = newEmployee.MaxHoursPerWeek;
+
+        editingEmployee.PositionsQualified =
+            string.Join(", ", selectedPositions);
+
+        editingEmployee = null;
+
+        newEmployee = new Employee
+        {
+            CompanyId = 1,
+            MaxHoursPerWeek = 40
+        };
+
+        selectedPositions.Clear();
+    }
+
+    void ClearForm()
+    {
+        newEmployee = new Employee
+        {
+            CompanyId = 1,
+            MaxHoursPerWeek = 40
+        };
+
+        selectedPositions.Clear();
     }
 }

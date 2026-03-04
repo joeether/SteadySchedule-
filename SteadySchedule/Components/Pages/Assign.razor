@@ -2,15 +2,54 @@
 @using SteadySchedule.Domain
 @using SteadySchedule.Services
 @inject ScheduleService Schedule
+@inject NavigationManager Nav
 
 <PageTitle>Assign</PageTitle>
+
+
 
 <div class="container mt-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold">Two-Click Assign</h2>
-        <span class="badge bg-dark">Company: Mama's Burger Joint</span>
+        <div class="d-flex align-items-center gap-2">
+            <h2 class="fw-bold mb-0">Two-Click Assign</h2>
+
+            <span class="badge @StatusBadgeClass ms-2">
+                @StatusLabel
+            </span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            @if (!IsPublished)
+            {
+                <button class="btn btn-dark btn-sm" @onclick="PublishThisWeek">
+                    Publish Week
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-outline-dark btn-sm" @onclick="UnpublishThisWeek">
+                    Unpublish (In Review)
+                </button>
+            }
+
+            @if (openedFromPublished)
+            {
+                <div class="alert alert-info">
+                    Editing Week of @weekStart.ToString("MMMM d") — Previously Published
+                </div>
+            }
+
+            <span class="badge bg-dark">Company: Mama's Burger Joint</span>
+        </div>
     </div>
+
+    @if (IsInReview)
+    {
+        <div class="alert alert-warning">
+            This schedule is <strong>In Review</strong> and may change.
+        </div>
+    }
 
     <div class="form-check form-switch mt-2">
         <input class="form-check-input" type="checkbox" @bind="allowOvertime">
@@ -62,7 +101,7 @@
                                     {
                                         <div class="border rounded p-2 mb-2 @(selectedShift?.Id == s.Id ? "bg-dark text-white" : "")"
                                              style="cursor:pointer"
-                                             @onclick="() => SelectShift(s)">
+                                             @onclick="() => { if (!IsPublished) SelectShift(s); else selectedShift = s; }">
                                             <div class="fw-semibold">@s.Position</div>
                                             <div class="small">
                                                 @s.StartTime.ToString(@"hh\:mm") - @s.EndTime.ToString(@"hh\:mm")
@@ -94,6 +133,13 @@
                 </div>
                 <div class="card-body">
 
+                    @if (IsPublished)
+                    {
+                        <div class="alert alert-info">
+                            This week is <strong>Official</strong>. Unpublish the week to make changes.
+                        </div>
+                    }
+
                     @if (selectedShift is null)
                     {
                         <p class="text-muted">Select a shift to see eligible employees.</p>
@@ -111,6 +157,8 @@
                                         </small>
                                     </div>
                                     <button class="btn btn-sm btn-dark"
+                                            disabled="@IsPublished"
+                                            title="@(IsPublished ? "Week is Official. Unpublish to edit." : "")"
                                             @onclick="() => AssignEmployee(selectedShift, e)">
                                         Assign
                                     </button>
@@ -126,9 +174,10 @@
                         {
                             var emp = employees.First(x => x.Id == a.EmployeeId);
 
-                            <span class="badge bg-success me-1" style="cursor:pointer"
-                                  title="Click to unassign"
-                                  @onclick="() => Unassign(a)">
+                            <span class="badge bg-success me-1"
+                                  style="cursor:@(IsPublished ? "not-allowed" : "pointer"); opacity:@(IsPublished ? "0.6" : "1");"
+                                  title="@(IsPublished ? "Week is Official. Unpublish to edit." : "Click to unassign")"
+                                  @onclick="() => TryUnassign(a)">
                                 @emp.Name ✕
                             </span>
                         }
@@ -144,9 +193,48 @@
 
     private DateTime weekStart;
 
+    private WeekStatus CurrentWeekStatus => Schedule.GetWeekStatus(weekStart);
+
+    private bool IsPublished => CurrentWeekStatus == WeekStatus.Published;
+
+    private bool IsInReview => CurrentWeekStatus == WeekStatus.InReview;
+
+    private List<Employee> employees => Schedule.Employees;
+
+    private List<Shift> shifts => Schedule.Shifts;
+
+    private List<Assignment> assignments => Schedule.Assignments;
+
+    private Shift? selectedShift;
+
+    private bool allowOvertime = false;
+
+    private void PrevWeek() => weekStart = weekStart.AddDays(-7);
+
+    private void NextWeek() => weekStart = weekStart.AddDays(7);
+
+    private DateTime WeekEnd => weekStart.AddDays(7);
+
+    private DateTime Day(int offset) => weekStart.AddDays(offset);
+
+    private Company company => Schedule.Company;
+
+    bool openedFromPublished = false;
+
     protected override void OnInitialized()
     {
+        LoadWeekFromQuery();
         weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
+
+        var uri = new Uri(Nav.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var weekStr = query["week"];
+
+        if (!string.IsNullOrWhiteSpace(weekStr) && DateTime.TryParse(weekStr, out var requested))
+        {
+            weekStart = StartOfWeek(requested, DayOfWeek.Monday);
+        }
+        selectedShift = null;
     }
 
     private static DateTime StartOfWeek(DateTime date, DayOfWeek startDay)
@@ -157,18 +245,9 @@
 
     private void Unassign(Assignment assignment)
     {
+        if (IsPublished) return;
         Schedule.Assignments.Remove(assignment);
     }
-
-    private void PrevWeek() => weekStart = weekStart.AddDays(-7);
-    private void NextWeek() => weekStart = weekStart.AddDays(7);
-
-    private DateTime WeekEnd => weekStart.AddDays(7);
-    private DateTime Day(int offset) => weekStart.AddDays(offset);
-
-    private Company company => Schedule.Company;
-
-    private bool allowOvertime = false;
 
     private int GetWeeklyHours(Employee employee)
     {
@@ -189,14 +268,6 @@
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Any(p => string.Equals(p, position, StringComparison.OrdinalIgnoreCase));
     }
-
-    private List<Employee> employees => Schedule.Employees;
-
-    private List<Shift> shifts => Schedule.Shifts;
-
-    private List<Assignment> assignments => Schedule.Assignments;
-
-    private Shift? selectedShift;
 
     private void SelectShift(Shift s)
     {
@@ -243,6 +314,8 @@
 
     private void AssignEmployee(Shift shift, Employee employee)
     {
+        if (IsPublished) return;
+
         assignments.Add(new Assignment
         {
             Id = assignments.Count + 1,
@@ -251,4 +324,46 @@
             ApprovedOvertime = false
         });
     }
+
+    private string StatusLabel => CurrentWeekStatus switch
+    {
+        WeekStatus.Published => "Official",
+        WeekStatus.InReview => "In Review",
+        _ => "Draft"
+    };
+
+    private string StatusBadgeClass => CurrentWeekStatus switch
+    {
+        WeekStatus.Published => "bg-success",
+        WeekStatus.InReview => "bg-warning text-dark",
+        _ => "bg-secondary"
+    };
+
+    private void TryUnassign(Assignment a)
+    {
+        if (IsPublished) return;
+        Unassign(a);
+    }
+
+    void LoadWeekFromQuery()
+    {
+        var uri = new Uri(Nav.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+        var weekStr = query["week"];
+
+        if (!string.IsNullOrEmpty(weekStr))
+        {
+            if (DateTime.TryParse(weekStr, out var week))
+            {
+                weekStart = week;
+                openedFromPublished = true;
+            }
+        }
+    }
+
+    private void PublishThisWeek() => Schedule.PublishWeek(weekStart);
+
+    // Per our workflow: unpublish means "In Review"
+    private void UnpublishThisWeek() => Schedule.UnpublishWeek(weekStart);
 }

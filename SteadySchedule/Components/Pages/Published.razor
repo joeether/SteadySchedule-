@@ -1,0 +1,133 @@
+﻿@page "/published"
+@using SteadySchedule.Domain
+@using SteadySchedule.Services
+@inject ScheduleService Schedule
+@inject NavigationManager Nav
+
+<PageTitle>Published Schedule</PageTitle>
+
+<h2 class="fw-bold mb-4">Published Schedule</h2>
+
+<div class="mb-3">
+    <label class="form-label">Select Week</label>
+
+    <select class="form-select" @bind="selectedWeek">
+        @foreach (var w in publishedWeeks)
+        {
+            <option value="@w">@w.ToString("MMM d, yyyy")</option>
+        }
+    </select>
+</div>
+
+@if (selectedWeek != default)
+{
+    <div class="alert @(CurrentStatus == WeekStatus.Published ? "alert-success" : "alert-warning") d-flex justify-content-between align-items-center">
+
+        <div>
+
+            @if (CurrentStatus == WeekStatus.Published)
+            {
+                <strong>Official Schedule</strong>
+            }
+            else
+            {
+                <span>
+                    <strong>In Review</strong> — Subject to change
+                </span>
+            }
+
+        </div>
+
+        @if (CurrentStatus == WeekStatus.Published)
+        {
+            <button class="btn btn-sm btn-danger"
+                    @onclick="UnpublishWeek">
+                Unpublish
+            </button>
+        }
+
+    </div>
+}
+
+<div class="row g-3">
+
+    @for (int i = 0; i < 7; i++)
+    {
+        var day = selectedWeek.AddDays(i);
+
+        var dayShifts = Schedule.Shifts
+        .Where(s => s.Date.Date == day.Date)
+        .OrderBy(s => s.StartTime)
+        .ToList();
+
+        <div class="col">
+            <div class="card shadow-sm h-100">
+
+                <div class="card-header fw-semibold">
+                    <div>@day.ToString("ddd")</div>
+                    <small class="text-muted">@day.ToString("M/d")</small>
+                </div>
+
+                <div class="card-body">
+
+                    @if (!dayShifts.Any())
+                    {
+                        <div class="text-muted small">No shifts</div>
+                    }
+                    else
+                    {
+                        @foreach (var s in dayShifts)
+                        {
+                            <div class="border rounded p-2 mb-2">
+
+                                <div class="fw-semibold">@s.Position</div>
+
+                                <div class="small">
+                                    @s.StartTime.ToString(@"hh\:mm") -
+                                    @s.EndTime.ToString(@"hh\:mm")
+                                </div>
+
+                                <div class="mt-1">
+                                    @foreach (var a in Schedule.Assignments.Where(a => a.ShiftId == s.Id))
+                                    {
+                                        var emp = Schedule.Employees.First(x => x.Id == a.EmployeeId);
+                                        <span class="badge bg-success me-1">@emp.Name</span>
+                                    }
+                                </div>
+
+                            </div>
+                        }
+                    }
+
+                </div>
+
+            </div>
+        </div>
+    }
+
+</div>
+
+@code {
+
+    private List<DateTime> publishedWeeks = new();
+    private DateTime selectedWeek;
+
+    private WeekStatus CurrentStatus =>
+        Schedule.GetWeekStatus(selectedWeek);
+
+    protected override void OnInitialized()
+    {
+        publishedWeeks = Schedule.GetPublishedWeeks().ToList();
+
+        if (publishedWeeks.Any())
+            selectedWeek = publishedWeeks.First();
+    }
+
+    void UnpublishWeek()
+    {
+        Schedule.UnpublishWeek(selectedWeek);
+
+        var week = selectedWeek.ToString("yyyy-MM-dd");
+        Nav.NavigateTo($"/assign?week={week}");
+    }
+}
