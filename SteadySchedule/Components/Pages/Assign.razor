@@ -1,6 +1,7 @@
 ﻿@page "/assign"
 @using SteadySchedule.Domain
 @using SteadySchedule.Services
+@using System.Threading.Tasks
 @inject ScheduleService Schedule
 @inject NavigationManager Nav
 
@@ -13,13 +14,21 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center gap-2">
             <h2 class="fw-bold mb-0">Two-Click Assign</h2>
-
+            @if (!string.IsNullOrWhiteSpace(copyMessage))
+            {
+                <div class="alert @(copyWasSuccess ? "alert-success" : "alert-warning")">
+                    @copyMessage
+                </div>
+            }
             <span class="badge @StatusBadgeClass ms-2">
                 @StatusLabel
             </span>
         </div>
 
         <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-dark btn-sm" @onclick="CopyLastPublishedWeek">
+                Copy Last Published Week
+            </button>
             @if (!IsPublished)
             {
                 <button class="btn btn-dark btn-sm" @onclick="PublishThisWeek">
@@ -102,7 +111,17 @@
                                         <div class="border rounded p-2 mb-2 @(selectedShift?.Id == s.Id ? "bg-dark text-white" : "")"
                                              style="cursor:pointer"
                                              @onclick="() => { if (!IsPublished) SelectShift(s); else selectedShift = s; }">
-                                            <div class="fw-semibold">@s.Position</div>
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="fw-semibold">@s.Position</div>
+
+                                                @if (ShiftHasWarnings(s))
+                                                {
+                                                    <span class="badge bg-warning text-dark">
+                                                        @(GetShiftWarningCount(s) == 1 ? "1 Warning" : $"{GetShiftWarningCount(s)} Warnings")
+                                                    </span>
+                                                }
+                                            </div>
+
                                             <div class="small">
                                                 @s.StartTime.ToString(@"hh\:mm") - @s.EndTime.ToString(@"hh\:mm")
                                             </div>
@@ -149,16 +168,29 @@
                         <ul class="list-group">
                             @foreach (var e in EligibleEmployees(selectedShift))
                             {
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                var warnings = GetWarnings(e, selectedShift);
+
+                                <li class="list-group-item d-flex justify-content-between align-items-start">
                                     <div>
                                         <div class="fw-semibold">@e.Name</div>
-                                        <small class="text-muted">
+                                        <small class="text-muted d-block">
                                             Max @e.MaxHoursPerWeek hrs/week
                                         </small>
+
+                                        @if (warnings.Any())
+                                        {
+                                            <div class="mt-1">
+                                                @foreach (var warning in warnings)
+                                                {
+                                                    <span class="badge bg-warning text-dark me-1">@warning</span>
+                                                }
+                                            </div>
+                                        }
                                     </div>
-                                    <button class="btn btn-sm btn-dark"
+
+                                    <button class="btn btn-sm @(warnings.Any() ? "btn-warning" : "btn-dark")"
                                             disabled="@IsPublished"
-                                            title="@(IsPublished ? "Week is Official. Unpublish to edit." : "")"
+                                            title="@(IsPublished ? "Week is Official. Unpublish to edit." : warnings.Any() ? "Assignment has warnings" : "")"
                                             @onclick="() => AssignEmployee(selectedShift, e)">
                                         Assign
                                     </button>
@@ -221,9 +253,11 @@
 
     bool openedFromPublished = false;
 
+    private string? copyMessage;
+    private bool copyWasSuccess;
+
     protected override void OnInitialized()
     {
-        LoadWeekFromQuery();
         weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
 
         var uri = new Uri(Nav.Uri);
@@ -233,7 +267,9 @@
         if (!string.IsNullOrWhiteSpace(weekStr) && DateTime.TryParse(weekStr, out var requested))
         {
             weekStart = StartOfWeek(requested, DayOfWeek.Monday);
+            openedFromPublished = true;
         }
+
         selectedShift = null;
     }
 
@@ -282,7 +318,6 @@
             .Where(e => !assignments.Any(a => a.ShiftId == shift.Id && a.EmployeeId == e.Id))
             .Where(e =>
             {
-                // HARD RULE: no overlapping shifts
                 var overlapping = assignments
                     .Where(a => a.EmployeeId == e.Id)
                     .Join(shifts,
@@ -295,20 +330,7 @@
                         shift.StartTime < existingShift.EndTime
                     );
 
-                if (overlapping)
-                    return false;
-
-                // SOFT RULE: weekly hours (can be bypassed)
-                if (!allowOvertime)
-                {
-                    var currentHours = GetWeeklyHours(e);
-                    var shiftHours = (int)(shift.EndTime - shift.StartTime).TotalHours;
-
-                    if (currentHours + shiftHours > e.MaxHoursPerWeek)
-                        return false;
-                }
-
-                return true;
+                return !overlapping;
             });
     }
 
@@ -345,7 +367,7 @@
         Unassign(a);
     }
 
-    void LoadWeekFromQuery()
+    /*void LoadWeekFromQuery()
     {
         var uri = new Uri(Nav.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
@@ -360,6 +382,124 @@
                 openedFromPublished = true;
             }
         }
+    }*/
+
+    private async Task CopyLastPublishedWeek()
+    {
+        var copied = Schedule.CopyLastPublishedWeek(weekStart);
+
+        selectedShift = null;
+
+        if (copied)
+        {
+            copyWasSuccess = true;
+            copyMessage = "Last published week copied successfully.";
+        }
+        else
+        {
+            copyWasSuccess = false;
+            copyMessage = "No earlier published week was found to copy.";
+        }
+
+        StateHasChanged();
+
+        await Task.Delay(3000);
+
+        copyMessage = null;
+        StateHasChanged();
+    }
+
+    private static bool IsAvailableForShift(Employee e, Shift shift)
+    {
+        bool dayAvailable;
+        TimeSpan? start;
+        TimeSpan? end;
+
+        switch (shift.Date.DayOfWeek)
+        {
+            case DayOfWeek.Monday:
+                dayAvailable = e.MondayAvailable;
+                start = e.MondayStart;
+                end = e.MondayEnd;
+                break;
+            case DayOfWeek.Tuesday:
+                dayAvailable = e.TuesdayAvailable;
+                start = e.TuesdayStart;
+                end = e.TuesdayEnd;
+                break;
+            case DayOfWeek.Wednesday:
+                dayAvailable = e.WednesdayAvailable;
+                start = e.WednesdayStart;
+                end = e.WednesdayEnd;
+                break;
+            case DayOfWeek.Thursday:
+                dayAvailable = e.ThursdayAvailable;
+                start = e.ThursdayStart;
+                end = e.ThursdayEnd;
+                break;
+            case DayOfWeek.Friday:
+                dayAvailable = e.FridayAvailable;
+                start = e.FridayStart;
+                end = e.FridayEnd;
+                break;
+            case DayOfWeek.Saturday:
+                dayAvailable = e.SaturdayAvailable;
+                start = e.SaturdayStart;
+                end = e.SaturdayEnd;
+                break;
+            case DayOfWeek.Sunday:
+                dayAvailable = e.SundayAvailable;
+                start = e.SundayStart;
+                end = e.SundayEnd;
+                break;
+            default:
+                return true;
+        }
+
+        if (!dayAvailable)
+            return false;
+
+        if (!start.HasValue || !end.HasValue)
+            return false;
+
+        return shift.StartTime >= start.Value && shift.EndTime <= end.Value;
+    }
+
+    private List<string> GetWarnings(Employee e, Shift shift)
+    {
+        var warnings = new List<string>();
+
+        if (!IsAvailableForShift(e, shift))
+            warnings.Add("Availability conflict");
+
+        if (WouldCauseOvertime(e, shift))
+            warnings.Add("Overtime risk");
+
+        return warnings;
+    }
+
+    private bool WouldCauseOvertime(Employee e, Shift shift)
+    {
+        var currentHours = GetWeeklyHours(e);
+        var shiftHours = (int)(shift.EndTime - shift.StartTime).TotalHours;
+        return currentHours + shiftHours > e.MaxHoursPerWeek;
+    }
+
+    private int GetShiftWarningCount(Shift shift)
+    {
+        var assignedEmployees = assignments
+            .Where(a => a.ShiftId == shift.Id)
+            .Select(a => employees.FirstOrDefault(e => e.Id == a.EmployeeId))
+            .Where(e => e != null)
+            .Cast<Employee>()
+            .ToList();
+
+        return assignedEmployees.Sum(e => GetWarnings(e, shift).Count);
+    }
+
+    private bool ShiftHasWarnings(Shift shift)
+    {
+        return GetShiftWarningCount(shift) > 0;
     }
 
     private void PublishThisWeek() => Schedule.PublishWeek(weekStart);

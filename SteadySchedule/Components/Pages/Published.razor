@@ -24,7 +24,6 @@
     <div class="alert @(CurrentStatus == WeekStatus.Published ? "alert-success" : "alert-warning") d-flex justify-content-between align-items-center">
 
         <div>
-
             @if (CurrentStatus == WeekStatus.Published)
             {
                 <strong>Official Schedule</strong>
@@ -37,7 +36,7 @@
             }
 
         </div>
-
+        @* TEMP: manager-only action, may move to admin review page later *@
         @if (CurrentStatus == WeekStatus.Published)
         {
             <button class="btn btn-sm btn-danger"
@@ -55,7 +54,7 @@
     {
         var day = selectedWeek.AddDays(i);
 
-        var dayShifts = Schedule.Shifts
+        var dayShifts = SelectedWeekShifts
         .Where(s => s.Date.Date == day.Date)
         .OrderBy(s => s.StartTime)
         .ToList();
@@ -88,7 +87,7 @@
                                 </div>
 
                                 <div class="mt-1">
-                                    @foreach (var a in Schedule.Assignments.Where(a => a.ShiftId == s.Id))
+                                    @foreach (var a in SelectedWeekAssignments.Where(a => a.ShiftId == s.Id))
                                     {
                                         var emp = Schedule.Employees.First(x => x.Id == a.EmployeeId);
                                         <span class="badge bg-success me-1">@emp.Name</span>
@@ -114,6 +113,18 @@
 
     private WeekStatus CurrentStatus =>
         Schedule.GetWeekStatus(selectedWeek);
+
+    private DateTime WeekEnd => selectedWeek.AddDays(7);
+
+    private List<Shift> SelectedWeekShifts =>
+        Schedule.Shifts
+            .Where(s => s.Date >= selectedWeek && s.Date < WeekEnd)
+            .ToList();
+
+    private List<Assignment> SelectedWeekAssignments =>
+        Schedule.Assignments
+            .Where(a => SelectedWeekShifts.Any(s => s.Id == a.ShiftId))
+            .ToList();
 
     protected override void OnInitialized()
     {

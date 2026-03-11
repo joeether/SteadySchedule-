@@ -51,6 +51,143 @@
                             </label>
                         </div>
                     }
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Availability</label>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Day</th>
+                                        <th>Available</th>
+                                        <th>Start</th>
+                                        <th>End</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Monday</td>
+                                        <td><input type="checkbox" class="form-check-input" @bind="newEmployee.MondayAvailable" /></td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.MondayStart)"
+                                                   @onchange="e => newEmployee.MondayStart = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.MondayAvailable)" />
+                                        </td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.MondayEnd)"
+                                                   @onchange="e => newEmployee.MondayEnd = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.MondayAvailable)" />
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Tuesday</td>
+                                        <td><input type="checkbox" class="form-check-input" @bind="newEmployee.TuesdayAvailable" /></td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.TuesdayStart)"
+                                                   @onchange="e => newEmployee.TuesdayStart = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.TuesdayAvailable)" />
+                                        </td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.TuesdayEnd)"
+                                                   @onchange="e => newEmployee.TuesdayEnd = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.TuesdayAvailable)" />
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Wednesday</td>
+                                        <td><input type="checkbox" class="form-check-input" @bind="newEmployee.WednesdayAvailable" /></td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.WednesdayStart)"
+                                                   @onchange="e => newEmployee.WednesdayStart = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.WednesdayAvailable)" />
+                                        </td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.WednesdayEnd)"
+                                                   @onchange="e => newEmployee.WednesdayEnd = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.WednesdayAvailable)" />
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Thursday</td>
+                                        <td><input type="checkbox" class="form-check-input" @bind="newEmployee.ThursdayAvailable" /></td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.ThursdayStart)"
+                                                   @onchange="e => newEmployee.ThursdayStart = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.ThursdayAvailable)" />
+                                        </td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.ThursdayEnd)"
+                                                   @onchange="e => newEmployee.ThursdayEnd = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.ThursdayAvailable)" />
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Friday</td>
+                                        <td><input type="checkbox" class="form-check-input" @bind="newEmployee.FridayAvailable" /></td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.FridayStart)"
+                                                   @onchange="e => newEmployee.FridayStart = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.FridayAvailable)" />
+                                        </td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.FridayEnd)"
+                                                   @onchange="e => newEmployee.FridayEnd = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.FridayAvailable)" />
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Saturday</td>
+                                        <td><input type="checkbox" class="form-check-input" @bind="newEmployee.SaturdayAvailable" /></td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.SaturdayStart)"
+                                                   @onchange="e => newEmployee.SaturdayStart = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.SaturdayAvailable)" />
+                                        </td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.SaturdayEnd)"
+                                                   @onchange="e => newEmployee.SaturdayEnd = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.SaturdayAvailable)" />
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Sunday</td>
+                                        <td><input type="checkbox" class="form-check-input" @bind="newEmployee.SundayAvailable" /></td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.SundayStart)"
+                                                   @onchange="e => newEmployee.SundayStart = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.SundayAvailable)" />
+                                        </td>
+                                        <td>
+                                            <input type="time" class="form-control"
+                                                   value="@FormatTime(newEmployee.SundayEnd)"
+                                                   @onchange="e => newEmployee.SundayEnd = ParseTime(e.Value?.ToString())"
+                                                   disabled="@(!newEmployee.SundayAvailable)" />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -94,6 +231,10 @@
                                 @e.Email |
                                 Max @e.MaxHoursPerWeek hrs |
                                 @e.PositionsQualified
+                                @if (!string.IsNullOrWhiteSpace(GetAvailabilitySummary(e)))
+                                {
+                                    <span> | @GetAvailabilitySummary(e)</span>
+                                }
                             </small>
                         </div>
 
@@ -135,14 +276,11 @@
     private void AddEmployee()
     {
         newEmployee.Id = employees.Count + 1;
+        newEmployee.PositionsQualified = string.Join(", ", selectedPositions);
+
         employees.Add(newEmployee);
 
-        newEmployee = new Employee
-        {
-            CompanyId = 1,
-            MaxHoursPerWeek = 40
-        };
-        selectedPositions.Clear();
+        ClearForm();
     }
 
     private void DeleteEmployee(Employee employee)
@@ -188,7 +326,36 @@
             CompanyId = emp.CompanyId,
             Name = emp.Name,
             Email = emp.Email,
-            MaxHoursPerWeek = emp.MaxHoursPerWeek
+            MaxHoursPerWeek = emp.MaxHoursPerWeek,
+            PositionsQualified = emp.PositionsQualified,
+
+            MondayAvailable = emp.MondayAvailable,
+            MondayStart = emp.MondayStart,
+            MondayEnd = emp.MondayEnd,
+
+            TuesdayAvailable = emp.TuesdayAvailable,
+            TuesdayStart = emp.TuesdayStart,
+            TuesdayEnd = emp.TuesdayEnd,
+
+            WednesdayAvailable = emp.WednesdayAvailable,
+            WednesdayStart = emp.WednesdayStart,
+            WednesdayEnd = emp.WednesdayEnd,
+
+            ThursdayAvailable = emp.ThursdayAvailable,
+            ThursdayStart = emp.ThursdayStart,
+            ThursdayEnd = emp.ThursdayEnd,
+
+            FridayAvailable = emp.FridayAvailable,
+            FridayStart = emp.FridayStart,
+            FridayEnd = emp.FridayEnd,
+
+            SaturdayAvailable = emp.SaturdayAvailable,
+            SaturdayStart = emp.SaturdayStart,
+            SaturdayEnd = emp.SaturdayEnd,
+
+            SundayAvailable = emp.SundayAvailable,
+            SundayStart = emp.SundayStart,
+            SundayEnd = emp.SundayEnd
         };
 
         selectedPositions = new HashSet<string>(
@@ -205,19 +372,38 @@
         editingEmployee.Name = newEmployee.Name;
         editingEmployee.Email = newEmployee.Email;
         editingEmployee.MaxHoursPerWeek = newEmployee.MaxHoursPerWeek;
+        editingEmployee.PositionsQualified = string.Join(", ", selectedPositions);
 
-        editingEmployee.PositionsQualified =
-            string.Join(", ", selectedPositions);
+        editingEmployee.MondayAvailable = newEmployee.MondayAvailable;
+        editingEmployee.MondayStart = newEmployee.MondayStart;
+        editingEmployee.MondayEnd = newEmployee.MondayEnd;
+
+        editingEmployee.TuesdayAvailable = newEmployee.TuesdayAvailable;
+        editingEmployee.TuesdayStart = newEmployee.TuesdayStart;
+        editingEmployee.TuesdayEnd = newEmployee.TuesdayEnd;
+
+        editingEmployee.WednesdayAvailable = newEmployee.WednesdayAvailable;
+        editingEmployee.WednesdayStart = newEmployee.WednesdayStart;
+        editingEmployee.WednesdayEnd = newEmployee.WednesdayEnd;
+
+        editingEmployee.ThursdayAvailable = newEmployee.ThursdayAvailable;
+        editingEmployee.ThursdayStart = newEmployee.ThursdayStart;
+        editingEmployee.ThursdayEnd = newEmployee.ThursdayEnd;
+
+        editingEmployee.FridayAvailable = newEmployee.FridayAvailable;
+        editingEmployee.FridayStart = newEmployee.FridayStart;
+        editingEmployee.FridayEnd = newEmployee.FridayEnd;
+
+        editingEmployee.SaturdayAvailable = newEmployee.SaturdayAvailable;
+        editingEmployee.SaturdayStart = newEmployee.SaturdayStart;
+        editingEmployee.SaturdayEnd = newEmployee.SaturdayEnd;
+
+        editingEmployee.SundayAvailable = newEmployee.SundayAvailable;
+        editingEmployee.SundayStart = newEmployee.SundayStart;
+        editingEmployee.SundayEnd = newEmployee.SundayEnd;
 
         editingEmployee = null;
-
-        newEmployee = new Employee
-        {
-            CompanyId = 1,
-            MaxHoursPerWeek = 40
-        };
-
-        selectedPositions.Clear();
+        ClearForm();
     }
 
     void ClearForm()
@@ -229,5 +415,94 @@
         };
 
         selectedPositions.Clear();
+    }
+
+    private static string FormatTime(TimeSpan? time)
+    {
+        return time.HasValue ? time.Value.ToString(@"hh\:mm") : "";
+    }
+
+    private static TimeSpan? ParseTime(string? value)
+    {
+        if (TimeSpan.TryParse(value, out var result))
+            return result;
+
+        return null;
+    }
+
+    private string GetAvailabilitySummary(Employee e)
+    {
+        var days = new List<(string Label, bool Available, TimeSpan? Start, TimeSpan? End)>
+    {
+        ("Mon", e.MondayAvailable, e.MondayStart, e.MondayEnd),
+        ("Tue", e.TuesdayAvailable, e.TuesdayStart, e.TuesdayEnd),
+        ("Wed", e.WednesdayAvailable, e.WednesdayStart, e.WednesdayEnd),
+        ("Thu", e.ThursdayAvailable, e.ThursdayStart, e.ThursdayEnd),
+        ("Fri", e.FridayAvailable, e.FridayStart, e.FridayEnd),
+        ("Sat", e.SaturdayAvailable, e.SaturdayStart, e.SaturdayEnd),
+        ("Sun", e.SundayAvailable, e.SundayStart, e.SundayEnd)
+    };
+
+        var parts = new List<string>();
+        int i = 0;
+
+        while (i < days.Count)
+        {
+            var day = days[i];
+
+            if (!day.Available)
+            {
+                i++;
+                continue;
+            }
+
+            int startIndex = i;
+            int endIndex = i;
+
+            while (endIndex + 1 < days.Count &&
+                   days[endIndex + 1].Available &&
+                   days[endIndex + 1].Start == day.Start &&
+                   days[endIndex + 1].End == day.End)
+            {
+                endIndex++;
+            }
+
+            var dayLabel = startIndex == endIndex
+                ? days[startIndex].Label
+                : $"{days[startIndex].Label}-{days[endIndex].Label}";
+
+            if (day.Start.HasValue && day.End.HasValue)
+            {
+                parts.Add($"{dayLabel} {FormatDisplayTime(day.Start.Value)}-{FormatDisplayTime(day.End.Value)}");
+            }
+            else
+            {
+                parts.Add($"{dayLabel} Available");
+            }
+
+            i = endIndex + 1;
+        }
+
+        return string.Join(" | ", parts);
+    }
+
+    private string FormatDisplayTime(TimeSpan time)
+    {
+        return DateTime.Today.Add(time).ToString("h:mmtt").ToLower();
+    }
+
+    private void AddAvailabilityPart(List<string> parts, string dayLabel, bool available, TimeSpan? start, TimeSpan? end)
+    {
+        if (!available)
+            return;
+
+        if (start.HasValue && end.HasValue)
+        {
+            parts.Add($"{dayLabel} {FormatDisplayTime(start.Value)}-{FormatDisplayTime(end.Value)}");
+        }
+        else
+        {
+            parts.Add($"{dayLabel} Available");
+        }
     }
 }
