@@ -62,3 +62,26 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.list-group-item:hover {
+    background-color: #f8f9fa !important;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.warning-popup {
+    position: absolute;
+    top: 110%;
+    right: 0;
+    z-index: 1050;
+    min-width: 260px;
+    max-width: 320px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.warning-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1040;
+    background: transparent;
+}

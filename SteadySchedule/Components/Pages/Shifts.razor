@@ -8,84 +8,153 @@
 <div class="container mt-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold">Shifts</h2>
+        <h2 class="fw-bold mb-0">Week Templates</h2>
         <span class="badge bg-dark">Company: @Schedule.Company.Name</span>
     </div>
 
     <div class="card shadow-sm mb-4">
         <div class="card-header fw-semibold">
-            Add Shift
+            Create Template
         </div>
         <div class="card-body">
 
-            <div class="row g-3">
-
-                <div class="col-md-3">
-                    <label class="form-label">Date</label>
-                    <input type="date" class="form-control" @bind="newShiftDate" />
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label">Template Name</label>
+                    <input class="form-control"
+                           @bind="newTemplateName"
+                           placeholder="Week A" />
                 </div>
 
-                <select class="form-select" @bind="newShift.Position">
-                    <option value="">Select Position</option>
-                    @foreach (var p in Schedule.Positions)
+                <div class="col-md-4">
+                    <button class="btn btn-dark w-100" @onclick="AddTemplate">
+                        Add Template
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <label class="form-label">Select Template</label>
+                <select class="form-select" @onchange="OnTemplateChanged">
+                    @if (!templates.Any())
                     {
-                        <option value="@p">@p</option>
+                        <option value="">No templates yet</option>
+                    }
+                    else
+                    {
+                        @foreach (var t in templates)
+                        {
+                            <option value="@t.Id" selected="@(selectedTemplate?.Id == t.Id)">
+                                @t.Name
+                            </option>
+                        }
                     }
                 </select>
-
-                <div class="col-md-3">
-                    <label class="form-label">Start Time</label>
-                    <input type="time" class="form-control" @bind="newStartTime" />
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">End Time</label>
-                    <input type="time" class="form-control" @bind="newEndTime" />
-                </div>
-
             </div>
-
-            <button class="btn btn-dark mt-3" @onclick="AddShift">
-                Add Shift
-            </button>
 
         </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header fw-semibold">
-            Existing Shifts
-        </div>
-        @if (!string.IsNullOrWhiteSpace(shiftDeleteMessage))
-        {
-            <div class="alert alert-warning m-3">
-                @shiftDeleteMessage
+    @if (selectedTemplate is not null)
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold">
+                Add Shift to @selectedTemplate.Name
             </div>
-        }
-        <div class="card-body p-0">
-            <ul class="list-group list-group-flush">
-                @foreach (var s in Schedule.Shifts.OrderBy(s => s.Date))
-                {
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="card-body">
 
-                        <div>
-                            <div class="fw-semibold">@s.Position</div>
-                            <small>
-                                @s.Date.ToShortDateString()
-                                | @s.StartTime - @s.EndTime
-                            </small>
-                        </div>
+                <div class="row g-3">
 
-                        <button class="btn btn-sm btn-outline-danger"
-                                @onclick="() => DeleteShift(s)">
-                            Delete
+                    <div class="col-md-3">
+                        <label class="form-label">Day</label>
+                        <select class="form-select" @bind="newTemplateDay">
+                            <option value="@DayOfWeek.Monday">Monday</option>
+                            <option value="@DayOfWeek.Tuesday">Tuesday</option>
+                            <option value="@DayOfWeek.Wednesday">Wednesday</option>
+                            <option value="@DayOfWeek.Thursday">Thursday</option>
+                            <option value="@DayOfWeek.Friday">Friday</option>
+                            <option value="@DayOfWeek.Saturday">Saturday</option>
+                            <option value="@DayOfWeek.Sunday">Sunday</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Position</label>
+                        <select class="form-select" @bind="newTemplatePosition">
+                            <option value="">Select Position</option>
+                            @foreach (var p in Schedule.Positions)
+                            {
+                                <option value="@p">@p</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Start Time</label>
+                        <input type="time"
+                               class="form-control"
+                               value="@FormatTime(newTemplateStart)"
+                               @onchange="e => newTemplateStart = ParseTimeSpan(e.Value?.ToString()) ?? TimeSpan.Zero" />
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">End Time</label>
+                        <input type="time"
+                               class="form-control"
+                               value="@FormatTime(newTemplateEnd)"
+                               @onchange="e => newTemplateEnd = ParseTimeSpan(e.Value?.ToString()) ?? TimeSpan.Zero" />
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-dark w-100" @onclick="AddTemplateShift">
+                            Add Shift
                         </button>
+                    </div>
 
-                    </li>
-                }
-            </ul>
+                </div>
+
+            </div>
         </div>
-    </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold">
+                @selectedTemplate.Name Shifts
+            </div>
+
+            <div class="card-body p-0">
+                @if (!SelectedTemplateShifts.Any())
+                {
+                    <div class="p-3 text-muted">
+                        No shifts in this template yet.
+                    </div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var s in SelectedTemplateShifts)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                                <div>
+                                    <div class="fw-semibold">@s.DayOfWeek - @s.Position</div>
+                                    <small>
+                                        @s.StartTime.ToString(@"hh\:mm")
+                                        - @s.EndTime.ToString(@"hh\:mm")
+                                    </small>
+                                </div>
+
+                                <button class="btn btn-sm btn-outline-danger"
+                                        @onclick="() => DeleteTemplateShift(s)">
+                                    Delete
+                                </button>
+
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    }
 
 </div>
 
@@ -97,25 +166,115 @@
     };
 
     private string? shiftDeleteMessage;
+    private string? copyWeekMessage;
 
     private DateTime newShiftDate = DateTime.Today;
+
+    private DateTime copyFromWeekStart = DateTime.Today;
+    private DateTime copyToWeekStart = DateTime.Today.AddDays(7);
 
     // UI-only fields
     private TimeOnly newStartTime = new(9, 0);
     private TimeOnly newEndTime = new(17, 0);
 
+    private List<WeekTemplate> templates = new();
+    private List<WeekTemplateShift> templateShifts = new();
+
+    private WeekTemplate? selectedTemplate;
+    private string newTemplateName = string.Empty;
+
+    private DayOfWeek newTemplateDay = DayOfWeek.Monday;
+    private string newTemplatePosition = string.Empty;
+    private TimeSpan newTemplateStart = new(9, 0, 0);
+    private TimeSpan newTemplateEnd = new(17, 0, 0);
+
+    protected override void OnInitialized()
+    {
+        templates = Schedule.WeekTemplates;
+        templateShifts = Schedule.WeekTemplateShifts;
+
+        if (templates.Any())
+            selectedTemplate = templates.First();
+    }
+
+    private void AddTemplate()
+    {
+        if (string.IsNullOrWhiteSpace(newTemplateName))
+            return;
+
+        var template = new WeekTemplate
+        {
+            Id = templates.Any() ? templates.Max(t => t.Id) + 1 : 1,
+            CompanyId = Schedule.Company.Id,
+            Name = newTemplateName.Trim()
+        };
+
+        templates.Add(template);
+        selectedTemplate = template;
+        newTemplateName = string.Empty;
+    }
+
+    private void AddTemplateShift()
+    {
+        if (selectedTemplate is null || string.IsNullOrWhiteSpace(newTemplatePosition))
+            return;
+
+        templateShifts.Add(new WeekTemplateShift
+        {
+            Id = templateShifts.Any() ? templateShifts.Max(s => s.Id) + 1 : 1,
+            WeekTemplateId = selectedTemplate.Id,
+            DayOfWeek = newTemplateDay,
+            Position = newTemplatePosition.Trim(),
+            StartTime = newTemplateStart,
+            EndTime = newTemplateEnd
+        });
+
+        newTemplatePosition = string.Empty;
+        newTemplateDay = DayOfWeek.Monday;
+        newTemplateStart = new TimeSpan(9, 0, 0);
+        newTemplateEnd = new TimeSpan(17, 0, 0);
+    }
+
+    private void OnTemplateChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id))
+            selectedTemplate = templates.FirstOrDefault(t => t.Id == id);
+    }
+
+    private List<WeekTemplateShift> SelectedTemplateShifts =>
+    selectedTemplate is null
+        ? new()
+        : templateShifts
+            .Where(s => s.WeekTemplateId == selectedTemplate.Id)
+            .OrderBy(s => s.DayOfWeek)
+            .ThenBy(s => s.StartTime)
+            .ToList();
+
+    private void DeleteTemplateShift(WeekTemplateShift shift)
+    {
+        templateShifts.Remove(shift);
+    }
+
+    private string FormatTime(TimeSpan time)
+    {
+        return time.ToString(@"hh\:mm");
+    }
+
+    private TimeSpan? ParseTimeSpan(string? value)
+    {
+        return TimeSpan.TryParse(value, out var result) ? result : null;
+    }
+
     private void AddShift()
     {
         if (newEndTime <= newStartTime)
         {
-            return; // later we show validation message
+            return;
         }
 
-        newShift.Id = Schedule.Shifts.Count + 1;
+        newShift.Id = GetNextShiftId();
         newShift.CompanyId = Schedule.Company.Id;
         newShift.Date = newShiftDate.Date;
-
-        // Convert TimeOnly → TimeSpan
         newShift.StartTime = newStartTime.ToTimeSpan();
         newShift.EndTime = newEndTime.ToTimeSpan();
 
@@ -126,9 +285,76 @@
             CompanyId = Schedule.Company.Id
         };
 
-        newShiftDate = DateTime.Today;
+        // keep selected date instead of resetting to today
         newStartTime = new(9, 0);
         newEndTime = new(17, 0);
+    }
+
+    private void CopyWeek()
+    {
+        copyWeekMessage = null;
+
+        var fromWeekStart = copyFromWeekStart.Date;
+        var toWeekStart = copyToWeekStart.Date;
+
+        if (fromWeekStart == toWeekStart)
+        {
+            copyWeekMessage = "Copy-from week and copy-to week cannot be the same.";
+            return;
+        }
+
+        var sourceShifts = Schedule.Shifts
+            .Where(s => s.Date >= fromWeekStart && s.Date < fromWeekStart.AddDays(7))
+            .OrderBy(s => s.Date)
+            .ThenBy(s => s.StartTime)
+            .ToList();
+
+        if (!sourceShifts.Any())
+        {
+            copyWeekMessage = $"No shifts found for the week starting {fromWeekStart:MM/dd/yyyy}.";
+            return;
+        }
+
+        var dayOffset = (toWeekStart - fromWeekStart).Days;
+        var addedCount = 0;
+
+        foreach (var shift in sourceShifts)
+        {
+            var newDate = shift.Date.AddDays(dayOffset);
+
+            var alreadyExists = Schedule.Shifts.Any(s =>
+                s.CompanyId == shift.CompanyId &&
+                s.Date == newDate &&
+                s.Position == shift.Position &&
+                s.StartTime == shift.StartTime &&
+                s.EndTime == shift.EndTime);
+
+            if (alreadyExists)
+            {
+                continue;
+            }
+
+            Schedule.Shifts.Add(new Shift
+            {
+                Id = GetNextShiftId(),
+                CompanyId = Schedule.Company.Id,
+                Date = newDate,
+                Position = shift.Position,
+                StartTime = shift.StartTime,
+                EndTime = shift.EndTime
+            });
+
+            addedCount++;
+        }
+
+        copyWeekMessage = addedCount > 0
+            ? $"Copied {addedCount} shift(s) from {fromWeekStart:MM/dd/yyyy} to {toWeekStart:MM/dd/yyyy}."
+            : "No shifts were copied because matching shifts already exist in the target week.";
+    }
+
+    private int GetNextShiftId()
+    {
+        return Schedule.Shifts.Any() ? Schedule.Shifts.Max(s => s.Id) + 1 : 1;
     }
 
     private void DeleteShift(Shift shift)
@@ -147,9 +373,9 @@
     }
 
     private IEnumerable<string> ExistingPositions =>
-    Schedule.Shifts
-        .Select(s => s.Position)
-        .Where(p => !string.IsNullOrWhiteSpace(p))
-        .Distinct()
-        .OrderBy(p => p);
+        Schedule.Shifts
+            .Select(s => s.Position)
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Distinct()
+            .OrderBy(p => p);
 }

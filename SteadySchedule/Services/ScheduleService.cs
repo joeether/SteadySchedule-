@@ -139,6 +139,9 @@ public class ScheduleService
             .OrderByDescending(d => d);
     }
 
+    public List<WeekTemplate> WeekTemplates { get; set; } = new();
+    public List<WeekTemplateShift> WeekTemplateShifts { get; set; } = new();
+
     public List<Shift> Shifts { get; } = new()
 {
     new Shift { Id = 1,  CompanyId = 1, Date = SeedWeekStart.AddDays(0), Position = "Cashier", StartTime = new TimeSpan(9,0,0),  EndTime = new TimeSpan(13,0,0) },

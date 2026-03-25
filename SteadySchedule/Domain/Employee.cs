@@ -36,4 +36,12 @@ public class Employee
     public bool SundayAvailable { get; set; }
     public TimeSpan? SundayStart { get; set; }
     public TimeSpan? SundayEnd { get; set; }
+
+    public bool MondayAnyTime { get; set; }
+    public bool TuesdayAnyTime { get; set; }
+    public bool WednesdayAnyTime { get; set; }
+    public bool ThursdayAnyTime { get; set; }
+    public bool FridayAnyTime { get; set; }
+    public bool SaturdayAnyTime { get; set; }
+    public bool SundayAnyTime { get; set; }
 }

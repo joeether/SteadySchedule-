@@ -169,17 +169,46 @@
         if (!IsAvailableForShift(e, shift))
             warnings.Add("Availability conflict");
 
-        if (WouldCauseOvertime(e, shift))
+        if (IsOvertimeWarningForAssignedShift(e, shift))
             warnings.Add("Overtime risk");
 
         return warnings;
     }
 
-    private bool WouldCauseOvertime(Employee e, Shift shift)
+    private bool IsOvertimeWarningForAssignedShift(Employee e, Shift targetShift)
     {
-        var currentHours = GetWeeklyHours(e);
-        var shiftHours = (int)(shift.EndTime - shift.StartTime).TotalHours;
-        return currentHours + shiftHours > e.MaxHoursPerWeek;
+        var employeeWeekShifts = Schedule.Assignments
+            .Where(a => a.EmployeeId == e.Id)
+            .Join(Schedule.Shifts,
+                  a => a.ShiftId,
+                  s => s.Id,
+                  (a, s) => s)
+            .Where(s => s.Date >= weekStart && s.Date < WeekEnd)
+            .OrderBy(s => s.Date)
+            .ThenBy(s => s.StartTime)
+            .ToList();
+
+        double runningHours = 0;
+        bool alreadyCrossed = false;
+
+        foreach (var s in employeeWeekShifts)
+        {
+            var shiftHours = (s.EndTime - s.StartTime).TotalHours;
+
+            if (!alreadyCrossed && runningHours + shiftHours > e.MaxHoursPerWeek)
+            {
+                alreadyCrossed = true;
+            }
+
+            if (s.Id == targetShift.Id)
+            {
+                return alreadyCrossed;
+            }
+
+            runningHours += shiftHours;
+        }
+
+        return false;
     }
 
     private int GetWeeklyHours(Employee employee)
