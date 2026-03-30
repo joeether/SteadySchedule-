@@ -8,4 +8,5 @@ public class Shift
     public string Position { get; set; } = string.Empty;
     public TimeSpan StartTime { get; set; }
     public TimeSpan EndTime { get; set; }
+    public string SlotGroupId { get; set; } = Guid.NewGuid().ToString();
 }

@@ -65,7 +65,7 @@
 
                 <div class="row g-3">
 
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Day</label>
                         <select class="form-select" @bind="newTemplateDay">
                             <option value="@DayOfWeek.Monday">Monday</option>
@@ -105,6 +105,11 @@
                                @onchange="e => newTemplateEnd = ParseTimeSpan(e.Value?.ToString()) ?? TimeSpan.Zero" />
                     </div>
 
+                    <div class="col-md-1">
+                        <label class="form-label">Slots</label>
+                        <input type="number" class="form-control" @bind="newTemplateCount" min="1" />
+                    </div>
+
                     <div class="col-md-2 d-flex align-items-end">
                         <button class="btn btn-dark w-100" @onclick="AddTemplateShift">
                             Add Shift
@@ -136,7 +141,9 @@
                             <li class="list-group-item d-flex justify-content-between align-items-center">
 
                                 <div>
-                                    <div class="fw-semibold">@s.DayOfWeek - @s.Position</div>
+                                    <div class="fw-semibold">
+                                        @s.DayOfWeek - @s.Position (@s.Count slot@(s.Count == 1 ? "" : "s"))
+                                    </div>
                                     <small>
                                         @s.StartTime.ToString(@"hh\:mm")
                                         - @s.EndTime.ToString(@"hh\:mm")
@@ -187,6 +194,7 @@
     private string newTemplatePosition = string.Empty;
     private TimeSpan newTemplateStart = new(9, 0, 0);
     private TimeSpan newTemplateEnd = new(17, 0, 0);
+    private int newTemplateCount = 1;
 
     protected override void OnInitialized()
     {
@@ -219,6 +227,12 @@
         if (selectedTemplate is null || string.IsNullOrWhiteSpace(newTemplatePosition))
             return;
 
+        if (newTemplateEnd <= newTemplateStart)
+            return;
+
+        if (newTemplateCount < 1)
+            newTemplateCount = 1;
+
         templateShifts.Add(new WeekTemplateShift
         {
             Id = templateShifts.Any() ? templateShifts.Max(s => s.Id) + 1 : 1,
@@ -226,13 +240,15 @@
             DayOfWeek = newTemplateDay,
             Position = newTemplatePosition.Trim(),
             StartTime = newTemplateStart,
-            EndTime = newTemplateEnd
+            EndTime = newTemplateEnd,
+            Count = newTemplateCount
         });
 
         newTemplatePosition = string.Empty;
         newTemplateDay = DayOfWeek.Monday;
         newTemplateStart = new TimeSpan(9, 0, 0);
         newTemplateEnd = new TimeSpan(17, 0, 0);
+        newTemplateCount = 1;
     }
 
     private void OnTemplateChanged(ChangeEventArgs e)
@@ -272,18 +288,30 @@
             return;
         }
 
-        newShift.Id = GetNextShiftId();
-        newShift.CompanyId = Schedule.Company.Id;
-        newShift.Date = newShiftDate.Date;
-        newShift.StartTime = newStartTime.ToTimeSpan();
-        newShift.EndTime = newEndTime.ToTimeSpan();
+        if (newTemplateCount < 1)
+        {
+            newTemplateCount = 1;
+        }
 
-        Schedule.Shifts.Add(newShift);
+        for (int i = 0; i < newTemplateCount; i++)
+        {
+            Schedule.Shifts.Add(new Shift
+            {
+                Id = GetNextShiftId(),
+                CompanyId = Schedule.Company.Id,
+                Date = newShiftDate.Date,
+                Position = newShift.Position,
+                StartTime = newStartTime.ToTimeSpan(),
+                EndTime = newEndTime.ToTimeSpan()
+            });
+        }
 
         newShift = new Shift
         {
             CompanyId = Schedule.Company.Id
         };
+
+        newTemplateCount = 1;
 
         // keep selected date instead of resetting to today
         newStartTime = new(9, 0);

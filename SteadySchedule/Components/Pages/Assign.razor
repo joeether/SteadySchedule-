@@ -116,10 +116,7 @@
                 @for (int i = 0; i < 7; i++)
                 {
                     var day = Day(i);
-                    var dayShifts = shifts
-                    .Where(s => s.Date.Date == day.Date)
-                    .OrderBy(s => s.StartTime)
-                    .ToList();
+                    var dayGroups = GetShiftGroupsForDay(day);
 
                     <div class="col-12 col-md">
                         <div class="card shadow-sm h-100">
@@ -129,74 +126,60 @@
                             </div>
 
                             <div class="card-body p-2">
-                                @if (!dayShifts.Any())
+                                @if (!dayGroups.Any())
                                 {
                                     <div class="text-muted small">No shifts</div>
                                 }
                                 else
                                 {
-                                    @foreach (var s in dayShifts)
+                                    @foreach (var group in dayGroups)
                                     {
-                                    <div class="border rounded p-2 mb-2 @(selectedShift?.Id == s.Id ? "bg-dark text-white" : "")">
+                                        var selectedGroupShift = GetPreferredShiftFromGroup(group);
+                                        var filledCount = GetFilledCount(group);
+
+                                        <div class="border rounded p-2 mb-2 @(selectedShift?.Id == selectedGroupShift.Id ? "bg-dark text-white" : "")">
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div class="fw-semibold"
                                                      style="cursor:pointer"
-                                                     @onclick="() => SelectShift(s)">
-                                                    @s.Position
+                                                     @onclick="() => SelectShift(selectedGroupShift)">
+                                                    @group.Position (@filledCount/@group.Total filled)
                                                 </div>
 
                                                 <div class="d-flex align-items-center gap-2">
-                                                    @if (ShiftHasWarnings(s))
-                                                    {
-                                                        <div class="position-relative d-inline-block">
-                                                            <span class="badge bg-warning text-dark"
-                                                                  style="cursor:pointer"
-                                                                  @onclick="() => ToggleWarnings(s.Id)"
-                                                                  @onclick:stopPropagation="true">
-                                                                @(GetShiftWarningCount(s) == 1 ? "1 Warning" : $"{GetShiftWarningCount(s)} Warnings")
-                                                            </span>
-
-                                                            @if (openWarningShiftId == s.Id)
-                                                            {
-                                                                <div class="warning-popup shadow-sm p-2 bg-white text-dark"
-                                                                    @onclick:stopPropagation="true">
-                                                                    <div class="fw-bold mb-2">Warnings</div>
-
-                                                                    @foreach (var warning in GetWarningsForShift(s))
-                                                                    {
-                                                                        <div class="small mb-1">• @warning</div>
-                                                                    }
-                                                                </div>
-                                                            }
-                                                        </div>
-                                                    }
-
                                                     <button class="btn btn-sm btn-outline-danger py-0 px-2"
                                                             disabled="@IsPublished"
-                                                            title="@(IsPublished ? "Week is Official. Unpublish to edit." : "Delete shift")"
-                                                            @onclick="() => ConfirmDeleteShift(s)"
+                                                            title="@(IsPublished ? "Week is Official. Unpublish to edit." : "Delete one shift slot")"
+                                                            @onclick="() => ConfirmDeleteShift(selectedGroupShift)"
                                                             @onclick:stopPropagation="true">
                                                         ✕
                                                     </button>
                                                 </div>
                                             </div>
 
-                                        <div class="small"
-                                             style="cursor:pointer"
-                                             @onclick="() => SelectShift(s)">
-                                            @s.StartTime.ToString(@"hh\:mm") - @s.EndTime.ToString(@"hh\:mm")
-                                        </div>
+                                            <div class="small"
+                                                 style="cursor:pointer"
+                                                 @onclick="() => SelectShift(selectedGroupShift)">
+                                                @group.StartTime.ToString(@"hh\:mm") - @group.EndTime.ToString(@"hh\:mm")
+                                            </div>
+                                            <div class="small text-muted">
+                                                @(group.Total - filledCount) open
+                                            </div>
 
-                                        <div class="mt-1"
-                                             style="cursor:pointer"
-                                             @onclick="() => SelectShift(s)">
-                                            @foreach (var a in assignments.Where(a => a.ShiftId == s.Id))
-                                            {
-                                                var emp = employees.First(x => x.Id == a.EmployeeId);
-                                                <span class="badge bg-success me-1">@emp.Name</span>
-                                            }
+                                            <div class="mt-1"
+                                                 style="cursor:pointer"
+                                                 @onclick="() => SelectShift(selectedGroupShift)">
+                                                @foreach (var shift in group.Shifts)
+                                                {
+                                                    var assignment = assignments.FirstOrDefault(a => a.ShiftId == shift.Id);
+
+                                                    if (assignment is not null)
+                                                    {
+                                                        var emp = employees.First(x => x.Id == assignment.EmployeeId);
+                                                        <span class="badge bg-success me-1">@emp.Name</span>
+                                                    }
+                                                }
+                                            </div>
                                         </div>
-                                    </div>
                                     }
                                 }
                             </div>
@@ -825,13 +808,15 @@
         {
             var shiftDate = weekStart.AddDays(((int)ts.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7);
 
-            bool exists = shifts.Any(s =>
+            int existingCount = shifts.Count(s =>
                 s.Date == shiftDate &&
                 s.Position == ts.Position &&
                 s.StartTime == ts.StartTime &&
                 s.EndTime == ts.EndTime);
 
-            if (!exists)
+            int neededCount = ts.Count - existingCount;
+
+            for (int i = 0; i < neededCount; i++)
             {
                 shifts.Add(new Shift
                 {
@@ -920,23 +905,33 @@
         showAddShiftModal = false;
     }
 
+    private int newShiftCount = 1;
+
     private void AddShiftToWeek()
     {
         if (IsPublished) return;
         if (string.IsNullOrWhiteSpace(newShiftPosition)) return;
+        if (newShiftEnd <= newShiftStart) return;
+
+        if (newShiftCount < 1)
+            newShiftCount = 1;
 
         var shiftDate = weekStart.AddDays(newShiftDayOffset);
 
-        shifts.Add(new Shift
+        for (int i = 0; i < newShiftCount; i++)
         {
-            Id = shifts.Any() ? shifts.Max(s => s.Id) + 1 : 1,
-            CompanyId = Schedule.Company.Id,
-            Date = shiftDate,
-            Position = newShiftPosition,
-            StartTime = newShiftStart,
-            EndTime = newShiftEnd
-        });
+            shifts.Add(new Shift
+            {
+                Id = shifts.Any() ? shifts.Max(s => s.Id) + 1 : 1,
+                CompanyId = Schedule.Company.Id,
+                Date = shiftDate,
+                Position = newShiftPosition,
+                StartTime = newShiftStart,
+                EndTime = newShiftEnd
+            });
+        }
 
+        newShiftCount = 1;
         showAddShiftModal = false;
     }
 
@@ -1029,6 +1024,53 @@
         }
 
         return false;
+    }
+
+    private class ShiftGroup
+    {
+        public string Position { get; set; } = "";
+        public DateTime Date { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
+        public List<Shift> Shifts { get; set; } = new();
+
+        public int Total => Shifts.Count;
+    }
+
+    private List<ShiftGroup> GetShiftGroupsForDay(DateTime day)
+    {
+        return shifts
+            .Where(s => s.Date.Date == day.Date)
+            .GroupBy(s => new
+            {
+                s.Position,
+                s.StartTime,
+                s.EndTime
+            })
+            .Select(g => new ShiftGroup
+            {
+                Position = g.Key.Position,
+                Date = day,
+                StartTime = g.Key.StartTime,
+                EndTime = g.Key.EndTime,
+                Shifts = g.OrderBy(s => s.Id).ToList()
+            })
+            .OrderBy(g => g.StartTime)
+            .ThenBy(g => g.Position)
+            .ToList();
+    }
+
+    private int GetFilledCount(ShiftGroup group)
+    {
+        return group.Shifts.Count(s => assignments.Any(a => a.ShiftId == s.Id));
+    }
+
+    private Shift GetPreferredShiftFromGroup(ShiftGroup group)
+    {
+        var openShift = group.Shifts
+            .FirstOrDefault(s => !assignments.Any(a => a.ShiftId == s.Id));
+
+        return openShift ?? group.Shifts.First();
     }
 
     private void PublishThisWeek() => Schedule.PublishWeek(weekStart);
