@@ -42,13 +42,13 @@
 
 <div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
         <button class="btn btn-outline-dark btn-sm" @onclick="CopyLastPublishedWeek">
-            Copy Last Published Week
+            Use Last Week
         </button>
         <button class="btn btn-outline-dark btn-sm" @onclick="ShowTemplatePicker">
-            Load Week Template
+            Use Template
         </button>
         <button class="btn btn-outline-danger btn-sm" @onclick="ClearWeek">
-            Clear Week
+            Clear All Shifts
         </button>
         <button class="btn btn-outline-secondary btn-sm" @onclick="ShowAddShiftModal">
             Add Shift
@@ -66,7 +66,7 @@
     else
     {
         <button class="btn btn-outline-dark btn-sm" @onclick="UnpublishThisWeek">
-            Unpublish (Edit)
+            Edit Schedule
         </button>
     }
 
@@ -76,118 +76,127 @@
             Editing Week of @weekStart.ToString("MMMM d") — Previously Published
         </div>
     }
-</div>
-
-    @if (IsInReview)
-    {
-        <div class="alert alert-warning">
-            This schedule is <strong>In Review</strong> and may change.
-        </div>
-    }
-
-    <div class="form-check form-switch mt-2">
-        <input class="form-check-input" type="checkbox" @bind="allowOvertime">
-        <label class="form-check-label">
-            Allow Overtime
-        </label>
     </div>
 
-    <div class="row g-4">
-
-        <!-- Shifts Panel -->
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="fw-semibold">
-                    Week of @weekStart.ToString("MMM d, yyyy")
-                </div>
-
-                <div class="btn-group">
-                    <button class="btn btn-outline-dark btn-sm" @onclick="PrevWeek">◀ Prev</button>
-                    <button class="btn btn-outline-dark btn-sm" @onclick="() => weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday)">Today</button>
-                    <button class="btn btn-outline-dark btn-sm" @onclick="NextWeek">Next ▶</button>
-                </div>
-            </div>
-
-            @if (!shifts.Any(s => s.Date >= weekStart && s.Date < WeekEnd))
+            @if (IsInReview)
             {
-                <div class="alert alert-light border mb-3">
-                    No shifts yet for this week — load a template, copy the last published week, or add shifts manually.
+                <div class="alert alert-warning">
+                    This schedule is <strong>In Review</strong> and may change.
                 </div>
             }
 
-           <div class="row g-3">
-    @for (int i = 0; i < 7; i++)
-    {
-        var day = Day(i);
-        var dayGroups = GetShiftGroupsForDay(day);
+            @if (!Schedule.Positions.Any() || !employees.Any() || !shifts.Any())
+            {
+                <div class="alert alert-light border mb-3">
+                    <strong>Getting started:</strong> Add positions, create shifts, add employees, then assign them.
+                </div>
+            }
 
-        <div class="col-12 col-md">
-            <div class="card shadow-sm h-100">
-                <div class="card-header fw-semibold">
-                    <div>@day.ToString("ddd")</div>
-                    <small class="text-muted">@day.ToString("M/d")</small>
+            <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" @bind="allowOvertime">
+            <label class="form-check-label">
+                Ignore Overtime Warnings
+            </label>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Shifts Panel -->
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="fw-semibold">
+                        Week of @weekStart.ToString("MMM d, yyyy")
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-outline-dark btn-sm" @onclick="PrevWeek">◀ Prev</button>
+                        <button class="btn btn-outline-dark btn-sm" @onclick="() => weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday)">Today</button>
+                        <button class="btn btn-outline-dark btn-sm" @onclick="NextWeek">Next ▶</button>
+                    </div>
                 </div>
 
-                <div class="card-body p-2">
-                    @if (!dayGroups.Any())
-                    {
-                        <div class="text-muted small">No shifts</div>
-                    }
-                    else
-                    {
-                        @foreach (var group in dayGroups)
+                @if (!shifts.Any(s => s.Date >= weekStart && s.Date < WeekEnd))
+                {
+                    <div class="alert alert-light border mb-3">
+                        No shifts yet for this week — load a template, copy the last published week, or add shifts manually.
+                    </div>
+                }
+
+               <div class="row g-3">
+        @for (int i = 0; i < 7; i++)
+        {
+            var day = Day(i);
+            var dayGroups = GetShiftGroupsForDay(day);
+
+            <div class="col-12 col-md">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header fw-semibold">
+                        <div>@day.ToString("ddd")</div>
+                        <small class="text-muted">@day.ToString("M/d")</small>
+                    </div>
+
+                    <div class="card-body p-2">
+                        @if (!dayGroups.Any())
                         {
-                            var selectedGroupShift = GetPreferredShiftFromGroup(group);
-                            var filledCount = GetFilledCount(group);
-
-                            <div class="border rounded p-2 mb-2 @(selectedShift?.Id == selectedGroupShift.Id ? "bg-dark text-white" : "")"
-                                 style="cursor:pointer"
-                                 @onclick="() => SelectShift(selectedGroupShift)">
-                                
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="fw-semibold">
-                                        @group.Position (@filledCount/@group.Total filled)
-                                    </div>
-
-                                    <div class="d-flex align-items-center gap-2">
-                                        <button class="btn btn-sm btn-outline-danger py-0 px-2"
-                                                disabled="@IsPublished"
-                                                title="@(IsPublished ? "Week is Official. Unpublish to edit." : "Delete one shift slot")"
-                                                @onclick="() => ConfirmDeleteShift(selectedGroupShift)"
-                                                @onclick:stopPropagation="true">
-                                            ✕
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="small">
-                                    @group.StartTime.ToString(@"hh\:mm") - @group.EndTime.ToString(@"hh\:mm")
-                                </div>
-
-                                <div class="small text-muted">
-                                    @(group.Total - filledCount) open
-                                </div>
-
-                                <div class="mt-1">
-                                    @foreach (var shift in group.Shifts)
-                                    {
-                                        var assignment = assignments.FirstOrDefault(a => a.ShiftId == shift.Id);
-
-                                        if (assignment is not null)
-                                        {
-                                            var emp = employees.First(x => x.Id == assignment.EmployeeId);
-                                            <span class="badge bg-success me-1">@emp.Name</span>
-                                        }
-                                    }
-                                </div>
-                            </div>
+                            <div class="text-muted small">No shifts</div>
                         }
-                    }
+                        else
+                        {
+                            @foreach (var group in dayGroups)
+                            {
+                                var selectedGroupShift = GetPreferredShiftFromGroup(group);
+                                var filledCount = GetFilledCount(group);
+
+                                        <div class="border rounded p-2 mb-2
+                                            @(filledCount < group.Total ? "border-danger border-2" : "")
+                                            @(selectedShift?.Id == selectedGroupShift.Id ? "bg-dark text-white" : "")"
+                                             style="cursor:pointer"
+                                             @onclick="() => SelectShift(selectedGroupShift)">
+                                
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="fw-semibold">
+                                            @group.Position (@filledCount/@group.Total filled)
+                                        </div>
+
+                                        <div class="d-flex align-items-center gap-2">
+                                            <button class="btn btn-sm btn-outline-danger py-0 px-2"
+                                                    disabled="@IsPublished"
+                                                    title="@(IsPublished ? "Week is Official. Unpublish to edit." : "Delete one shift slot")"
+                                                    @onclick="() => ConfirmDeleteShift(selectedGroupShift)"
+                                                    @onclick:stopPropagation="true">
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="small">
+                                        @group.StartTime.ToString(@"hh\:mm") - @group.EndTime.ToString(@"hh\:mm")
+                                    </div>
+
+                                            <div class="small @(filledCount < group.Total ? "text-danger fw-semibold" : "text-muted")">
+                                                @(group.Total - filledCount) open
+                                            </div>
+
+                                    <div class="mt-1">
+                                        @foreach (var shift in group.Shifts)
+                                        {
+                                            var assignment = assignments.FirstOrDefault(a => a.ShiftId == shift.Id);
+
+                                            if (assignment is not null)
+                                            {
+                                                var emp = employees.First(x => x.Id == assignment.EmployeeId);
+                                                <span class="badge bg-success me-1">@emp.Name</span>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
-    }
-</div>
+        }
+    </div>
         </div>
         
     </div>
@@ -294,7 +303,7 @@
                 <div class="modal-content">
 
                     <div class="modal-header">
-                        <h5 class="modal-title">Load Week Template</h5>
+                        <h5 class="modal-title">Use Template</h5>
                         <button type="button" class="btn-close" @onclick="CloseTemplateModal"></button>
                     </div>
 
@@ -319,7 +328,7 @@
                     <div class="modal-footer">
                         <button class="btn btn-outline-secondary" @onclick="CloseTemplateModal">Cancel</button>
                         <button class="btn btn-dark" @onclick="LoadTemplateIntoWeek">
-                            Load Template
+                            Use Template
                         </button>
                     </div>
 
@@ -383,6 +392,14 @@
                             </div>
                         </div>
 
+                        <div class="mb-2 mt-2">
+                            <label class="form-label">Slots Needed</label>
+                            <input type="number"
+                                   class="form-control"
+                                   min="1"
+                                   @bind="newShiftCount" />
+                        </div>
+
                     </div>
 
                     <div class="modal-footer">
@@ -398,104 +415,111 @@
     }
 
     @if (showAssignModal && selectedShift is not null)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,.5);">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,.5);">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
 
-                <div class="modal-header">
-                    <div>
-                        <h5 class="modal-title mb-0">Assign Employees</h5>
-                        <small class="text-muted">
-                            @selectedShift.Position
-                            | @selectedShift.Date.ToString("ddd M/d")
-                            | @selectedShift.StartTime.ToString(@"hh\:mm") - @selectedShift.EndTime.ToString(@"hh\:mm")
-                        </small>
-                    </div>
-                    <button type="button" class="btn-close" @onclick="CloseAssignModal"></button>
-                </div>
-
-                <div class="modal-body">
-
-                    @if (IsPublished)
-                    {
-                        <div class="alert alert-info">
-                            This week is <strong>Official</strong>. Unpublish the week to make changes.
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title mb-0">Assign Employees</h5>
+                            <small class="text-muted">
+                                @selectedShift.Position
+                                | @selectedShift.Date.ToString("ddd M/d")
+                                | @selectedShift.StartTime.ToString(@"hh\:mm") - @selectedShift.EndTime.ToString(@"hh\:mm")
+                            </small>
                         </div>
-                    }
+                        <button type="button" class="btn-close" @onclick="CloseAssignModal"></button>
+                    </div>
 
-                    <h6 class="fw-bold">Eligible Employees</h6>
+                    <div class="modal-body">
 
-                    @if (!EligibleEmployees(selectedShift).Any())
-                    {
-                        <p class="text-muted">No eligible employees found for this shift.</p>
-                    }
-                    else
-                    {
-                        <ul class="list-group mb-3">
-                            @foreach (var e in EligibleEmployees(selectedShift))
-                            {
-                                var warnings = GetWarnings(e, selectedShift, isPreview: true);
-
-                                <li class="list-group-item d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <div class="fw-semibold">@e.Name</div>
-                                        <small class="text-muted d-block">
-                                            Max @e.MaxHoursPerWeek hrs/week
-                                        </small>
-
-                                        @if (warnings.Any())
-                                        {
-                                            <div class="mt-1">
-                                                @foreach (var warning in warnings)
-                                                {
-                                                    <span class="badge bg-warning text-dark me-1">@warning</span>
-                                                }
-                                            </div>
-                                        }
-                                    </div>
-
-                                    <button class="btn btn-sm @(warnings.Any() ? "btn-warning" : "btn-dark")"
-                                            disabled="@IsPublished"
-                                            title="@(IsPublished ? "Week is Official. Unpublish to edit." : warnings.Any() ? "Assignment has warnings" : "")"
-                                            @onclick="() => AssignEmployeeFromModal(selectedShift, e)">
-                                        Assign
-                                    </button>
-                                </li>
-                            }
-                        </ul>
-                    }
-
-                    <h6 class="fw-bold">Assignments</h6>
-
-                    @if (!assignments.Any(a => a.ShiftId == selectedShift.Id))
-                    {
-                        <p class="text-muted mb-0">No employees assigned yet.</p>
-                    }
-                    else
-                    {
-                        @foreach (var a in assignments.Where(a => a.ShiftId == selectedShift.Id))
+                        @if (IsPublished)
                         {
-                            var emp = employees.First(x => x.Id == a.EmployeeId);
-
-                            <span class="badge bg-success me-1 mb-1"
-                                  style="cursor:@(IsPublished ? "not-allowed" : "pointer"); opacity:@(IsPublished ? "0.6" : "1");"
-                                  title="@(IsPublished ? "Week is Official. Unpublish to edit." : "Click to unassign")"
-                                  @onclick="() => TryUnassign(a)">
-                                @emp.Name ✕
-                            </span>
+                            <div class="alert alert-info">
+                                This week is <strong>Official</strong>. Unpublish the week to make changes.
+                            </div>
                         }
-                    }
-                </div>
 
-                <div class="modal-footer">
-                    <button class="btn btn-outline-secondary" @onclick="CloseAssignModal">Close</button>
-                </div>
+                        <h6 class="fw-bold">Eligible Employees</h6>
 
+                        @if (!EligibleEmployees(selectedShift).Any())
+                        {
+                            <p class="text-muted">No eligible employees found for this shift.</p>
+                        }
+                        else
+                        {
+                            <ul class="list-group mb-3">
+                                @foreach (var e in EligibleEmployees(selectedShift))
+                                {
+                                    var warnings = GetWarnings(e, selectedShift, isPreview: true);
+                                    var weeklyHours = GetWeeklyHours(e);
+                                    var hourClass = weeklyHours >= e.MaxHoursPerWeek
+                                    ? "text-danger fw-semibold"
+                                    : weeklyHours >= (e.MaxHoursPerWeek * 0.8)
+                                    ? "text-warning fw-semibold"
+                                    : "text-success fw-semibold";
+
+                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="fw-semibold">@e.Name</div>
+                                            <small class="text-muted d-block">
+                                                <span class="@hourClass">@($"{weeklyHours:0.#}h assigned")</span>
+                                                • Max @e.MaxHoursPerWeek hrs/week
+                                            </small>
+
+                                            @if (warnings.Any())
+                                            {
+                                                <div class="mt-1">
+                                                    @foreach (var warning in warnings)
+                                                    {
+                                                        <span class="badge bg-warning text-dark me-1">@warning</span>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <button class="btn btn-sm @(warnings.Any() ? "btn-warning" : "btn-dark")"
+                                                disabled="@IsPublished"
+                                                title="@(IsPublished ? "Week is Official. Unpublish to edit." : warnings.Any() ? "Assignment has warnings" : "")"
+                                                @onclick="() => AssignEmployeeFromModal(selectedShift, e)">
+                                            Assign
+                                        </button>
+                                    </li>
+                                }
+                            </ul>
+                        }
+
+                        <h6 class="fw-bold">Assignments</h6>
+
+                        @if (!assignments.Any(a => a.ShiftId == selectedShift.Id))
+                        {
+                            <p class="text-muted mb-0">No employees assigned yet.</p>
+                        }
+                        else
+                        {
+                            @foreach (var a in assignments.Where(a => a.ShiftId == selectedShift.Id))
+                            {
+                                var emp = employees.First(x => x.Id == a.EmployeeId);
+
+                                <span class="badge bg-success me-1 mb-1"
+                                      style="cursor:@(IsPublished ? "not-allowed" : "pointer"); opacity:@(IsPublished ? "0.6" : "1");"
+                                      title="@(IsPublished ? "Week is Official. Unpublish to edit." : "Click to unassign")"
+                                      @onclick="() => TryUnassign(a)">
+                                    @emp.Name ✕
+                                </span>
+                            }
+                        }
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-outline-secondary" @onclick="CloseAssignModal">Close</button>
+                    </div>
+
+                </div>
             </div>
         </div>
-    </div>
-}
+    }
 </div>
 
 @code {
@@ -760,13 +784,16 @@
         if (!IsAvailableForShift(e, shift))
             warnings.Add("Availability conflict");
 
-        bool overtime =
-            isPreview
-                ? WouldCauseOvertimeIfAssigned(e, shift)
-                : IsOvertimeWarningForAssignedShift(e, shift);
+        if (!allowOvertime)
+        {
+            bool overtime =
+                isPreview
+                    ? WouldCauseOvertimeIfAssigned(e, shift)
+                    : IsOvertimeWarningForAssignedShift(e, shift);
 
-        if (overtime)
-            warnings.Add("Overtime risk");
+            if (overtime)
+                warnings.Add("Overtime risk");
+        }
 
         return warnings;
     }
@@ -950,6 +977,7 @@
         newShiftPosition = string.Empty;
         newShiftStart = new TimeSpan(9, 0, 0);
         newShiftEnd = new TimeSpan(17, 0, 0);
+        newShiftCount = 1;
 
         showAddShiftModal = true;
     }
@@ -1160,6 +1188,20 @@
     {
         return GetWeeklyWarnings()
             .Sum(day => day.Value.Sum(emp => emp.Value.Count));
+    }
+
+    private double GetWeeklyHours(int employeeId, DateTime weekStart)
+    {
+        var weekEnd = weekStart.AddDays(7);
+
+        return assignments
+            .Where(a => a.EmployeeId == employeeId)
+            .Join(shifts,
+                a => a.ShiftId,
+                s => s.Id,
+                (a, s) => s)
+            .Where(s => s.Date >= weekStart && s.Date < weekEnd)
+            .Sum(s => (s.EndTime - s.StartTime).TotalHours);
     }
 
     private void PublishThisWeek() => Schedule.PublishWeek(weekStart);
