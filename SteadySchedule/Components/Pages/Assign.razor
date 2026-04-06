@@ -1,9 +1,12 @@
 ﻿@page "/assign"
+@using SteadySchedule.Data
 @using SteadySchedule.Domain
 @using SteadySchedule.Services
 @using System.Threading.Tasks
 @inject ScheduleService Schedule
 @inject NavigationManager Nav
+@inject AppDbContext Db
+@using Microsoft.EntityFrameworkCore
 
 <PageTitle>Assign</PageTitle>
 
@@ -110,7 +113,7 @@
 
                     <div class="btn-group">
                         <button class="btn btn-outline-dark btn-sm" @onclick="PrevWeek">◀ Prev</button>
-                        <button class="btn btn-outline-dark btn-sm" @onclick="() => weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday)">Today</button>
+                    <button class="btn btn-outline-dark btn-sm" @onclick="GoToToday">Today</button>
                         <button class="btn btn-outline-dark btn-sm" @onclick="NextWeek">Next ▶</button>
                     </div>
                 </div>
@@ -149,45 +152,47 @@
 
                                         <div class="border rounded p-2 mb-2
                                             @(filledCount < group.Total ? "border-danger border-2" : "")
-                                            @(selectedShift?.Id == selectedGroupShift.Id ? "bg-dark text-white" : "")"
-                                             style="cursor:pointer"
-                                             @onclick="() => SelectShift(selectedGroupShift)">
+                                            @(selectedShift?.Id == selectedGroupShift.Id ? "bg-dark text-white border-primary border-3 shadow-lg" : "")">
                                 
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div class="fw-semibold">
-                                            @group.Position (@filledCount/@group.Total filled)
-                                        </div>
+                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                        <button type="button"
+                                                class="btn text-start w-100 p-0 border-0 bg-transparent @(selectedShift?.Id == selectedGroupShift.Id ? "text-white" : "text-dark")"
+                                                        @onclick="() => SelectShift(group)">
+                                            <div class="fw-semibold">
+                                                @group.Position (@filledCount/@group.Total filled)
+                                            </div>
 
-                                        <div class="d-flex align-items-center gap-2">
-                                            <button class="btn btn-sm btn-outline-danger py-0 px-2"
-                                                    disabled="@IsPublished"
-                                                    title="@(IsPublished ? "Week is Official. Unpublish to edit." : "Delete one shift slot")"
-                                                    @onclick="() => ConfirmDeleteShift(selectedGroupShift)"
-                                                    @onclick:stopPropagation="true">
-                                                ✕
-                                            </button>
-                                        </div>
-                                    </div>
+                                            <div class="small">
+                                                @group.StartTime.ToString(@"hh\:mm") - @group.EndTime.ToString(@"hh\:mm")
+                                            </div>
 
-                                    <div class="small">
-                                        @group.StartTime.ToString(@"hh\:mm") - @group.EndTime.ToString(@"hh\:mm")
-                                    </div>
-
-                                            <div class="small @(filledCount < group.Total ? "text-danger fw-semibold" : "text-muted")">
+                                            <div class="small @(filledCount < group.Total ? "text-danger fw-semibold" : (selectedShift?.Id == selectedGroupShift.Id ? "text-white-50" : "text-muted"))">
                                                 @(group.Total - filledCount) open
                                             </div>
 
-                                    <div class="mt-1">
-                                        @foreach (var shift in group.Shifts)
-                                        {
-                                            var assignment = assignments.FirstOrDefault(a => a.ShiftId == shift.Id);
+                                            <div class="mt-1">
+                                                @foreach (var shift in group.Shifts)
+                                                {
+                                                    var assignment = assignments.FirstOrDefault(a => a.ShiftId == shift.Id);
 
-                                            if (assignment is not null)
-                                            {
-                                                var emp = employees.First(x => x.Id == assignment.EmployeeId);
-                                                <span class="badge bg-success me-1">@emp.Name</span>
-                                            }
-                                        }
+                                                    if (assignment is not null)
+                                                    {
+                                                        var emp = employees.First(x => x.Id == assignment.EmployeeId);
+                                                        <span class="badge bg-success me-1">@emp.Name</span>
+                                                    }
+                                                }
+                                            </div>
+                                        </button>
+
+                                        <div class="d-flex align-items-center gap-2">
+                                            <button class="btn btn-sm btn-outline-danger py-0 px-2"
+                                                    type="button"
+                                                    disabled="@IsPublished"
+                                                    title="@(IsPublished ? "Week is Official. Unpublish to edit." : "Delete one shift slot")"
+                                                    @onclick="() => ConfirmDeleteShift(selectedGroupShift)">
+                                                ✕
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             }
@@ -482,7 +487,7 @@
                                         <button class="btn btn-sm @(warnings.Any() ? "btn-warning" : "btn-dark")"
                                                 disabled="@IsPublished"
                                                 title="@(IsPublished ? "Week is Official. Unpublish to edit." : warnings.Any() ? "Assignment has warnings" : "")"
-                                                @onclick="() => AssignEmployeeFromModal(selectedShift, e)">
+                                                @onclick="() => AssignEmployeeFromModal(e)">
                                             Assign
                                         </button>
                                     </li>
@@ -492,22 +497,24 @@
 
                         <h6 class="fw-bold">Assignments</h6>
 
-                        @if (!assignments.Any(a => a.ShiftId == selectedShift.Id))
+                        @if (!GetAssignmentsForSelectedGroup().Any())
                         {
                             <p class="text-muted mb-0">No employees assigned yet.</p>
                         }
                         else
                         {
-                            @foreach (var a in assignments.Where(a => a.ShiftId == selectedShift.Id))
+                            @foreach (var a in GetAssignmentsForSelectedGroup())
                             {
                                 var emp = employees.First(x => x.Id == a.EmployeeId);
 
-                                <span class="badge bg-success me-1 mb-1"
-                                      style="cursor:@(IsPublished ? "not-allowed" : "pointer"); opacity:@(IsPublished ? "0.6" : "1");"
-                                      title="@(IsPublished ? "Week is Official. Unpublish to edit." : "Click to unassign")"
-                                      @onclick="() => TryUnassign(a)">
+                                <button type="button"
+                                        class="badge bg-success border-0 me-1 mb-1"
+                                        style="opacity:@(IsPublished ? "0.6" : "1");"
+                                        disabled="@IsPublished"
+                                        title="@(IsPublished ? "Week is Official. Unpublish to edit." : "Click to unassign")"
+                                        @onclick="() => TryUnassign(a)">
                                     @emp.Name ✕
-                                </span>
+                                </button>
                             }
                         }
                     </div>
@@ -540,11 +547,25 @@
 
     private Shift? selectedShift;
 
+    private ShiftGroup? selectedGroup;
+
     private bool allowOvertime = false;
 
-    private void PrevWeek() => weekStart = weekStart.AddDays(-7);
+    //private void PrevWeek() => weekStart = weekStart.AddDays(-7);
 
-    private void NextWeek() => weekStart = weekStart.AddDays(7);
+    //private void NextWeek() => weekStart = weekStart.AddDays(7);
+
+    private async Task PrevWeek()
+    {
+        weekStart = weekStart.AddDays(-7);
+        await Schedule.LoadWeekStatusFromDbAsync(weekStart);
+    }
+
+    private async Task NextWeek()
+    {
+        weekStart = weekStart.AddDays(7);
+        await Schedule.LoadWeekStatusFromDbAsync(weekStart);
+    }
 
     private DateTime WeekEnd => weekStart.AddDays(7);
 
@@ -575,6 +596,36 @@
     private bool showDeleteShiftModal = false;
     private Shift? shiftToDelete;
     private bool showWarningsModal = false;
+
+    /*protected override async Task OnInitializedAsync()
+    {
+        var existing = await Db.Schedules
+            .FirstOrDefaultAsync(s => s.CompanyId == Schedule.Company.Id && s.WeekStart == weekStart);
+
+        if (existing != null && existing.IsPublished)
+        {
+            Schedule.PublishWeek(weekStart);
+        }
+    }*/
+
+    protected override async Task OnInitializedAsync()
+    {
+        weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
+
+        var uri = new Uri(Nav.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var weekStr = query["week"];
+
+        if (!string.IsNullOrWhiteSpace(weekStr) && DateTime.TryParse(weekStr, out var requested))
+        {
+            weekStart = StartOfWeek(requested, DayOfWeek.Monday);
+            openedFromPublished = true;
+        }
+
+        selectedShift = null;
+
+        await Schedule.LoadWeekStatusFromDbAsync(weekStart);
+    }
 
     protected override void OnInitialized()
     {
@@ -815,20 +866,30 @@
         return GetWarningsForShift(s).Any();
     }
 
-    private void SelectShift(Shift s)
+    private void SelectShift(ShiftGroup group)
     {
-        selectedShift = s;
+        selectedGroup = group;
+        selectedShift = GetPreferredShiftFromGroup(group); // still use open slot for adding
         showAssignModal = true;
     }
 
     private void CloseAssignModal()
     {
         showAssignModal = false;
+        selectedGroup = null;
     }
 
-    private void AssignEmployeeFromModal(Shift shift, Employee employee)
+    private void AssignEmployeeFromModal(Employee employee)
     {
-        AssignEmployee(shift, employee);
+        if (selectedGroup is null) return;
+
+        var openShift = selectedGroup.Shifts
+            .FirstOrDefault(s => !assignments.Any(a => a.ShiftId == s.Id));
+
+        if (openShift is null) return;
+
+        AssignEmployee(openShift, employee);
+        selectedShift = openShift;
         showAssignModal = false;
     }
 
@@ -1204,8 +1265,35 @@
             .Sum(s => (s.EndTime - s.StartTime).TotalHours);
     }
 
-    private void PublishThisWeek() => Schedule.PublishWeek(weekStart);
+    private IEnumerable<Assignment> GetAssignmentsForSelectedGroup()
+    {
+        if (selectedGroup is null)
+            return Enumerable.Empty<Assignment>();
 
-    // Per our workflow: unpublish means "In Review"
-    private void UnpublishThisWeek() => Schedule.UnpublishWeek(weekStart);
+        var shiftIds = selectedGroup.Shifts.Select(s => s.Id).ToHashSet();
+
+        return assignments.Where(a => shiftIds.Contains(a.ShiftId));
+    }
+
+    private bool IsPastWeek(DateTime targetWeekStart)
+    {
+        var currentWeekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
+        return targetWeekStart < currentWeekStart;
+    }
+
+    private async Task PublishThisWeek()
+    {
+        await Schedule.PublishWeekAsync(weekStart);
+    }
+
+    private async Task UnpublishThisWeek()
+    {
+        await Schedule.UnpublishWeekAsync(weekStart);
+    }
+
+    private async Task GoToToday()
+    {
+        weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
+        await Schedule.LoadWeekStatusFromDbAsync(weekStart);
+    }
 }

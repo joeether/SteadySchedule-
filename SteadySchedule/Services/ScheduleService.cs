@@ -1,19 +1,105 @@
 ﻿using SteadySchedule.Domain;
-
+using Microsoft.EntityFrameworkCore;
+using SteadySchedule.Data;
 namespace SteadySchedule.Services;
 
 
 public class ScheduleService
 {
+    private readonly AppDbContext _db;
+
+    public ScheduleService(AppDbContext db)
+    {
+        _db = db;
+        WeekStatuses[SeedWeekStart] = WeekStatus.Published;
+    }
 
     public Dictionary<DateTime, WeekStatus> WeekStatuses { get; } = new();
 
     private static readonly DateTime SeedWeekStart = StartOfWeek(DateTime.Today);
 
-    public ScheduleService()
+    public async Task PublishWeekAsync(DateTime weekStart)
     {
-        WeekStatuses[SeedWeekStart] = WeekStatus.Published;
+        PublishWeek(weekStart);
+
+        var existing = await _db.Schedules
+            .FirstOrDefaultAsync(s =>
+                s.CompanyId == Company.Id &&
+                s.WeekStart == weekStart);
+
+        if (existing == null)
+        {
+            _db.Schedules.Add(new SteadySchedule.Data.Schedule
+            {
+                CompanyId = Company.Id,
+                WeekStart = weekStart,
+                IsPublished = true
+            });
+        }
+        else
+        {
+            existing.IsPublished = true;
+        }
+
+        await _db.SaveChangesAsync();
     }
+
+    public async Task UnpublishWeekAsync(DateTime weekStart)
+    {
+        UnpublishWeek(weekStart);
+
+        var existing = await _db.Schedules
+            .FirstOrDefaultAsync(s =>
+                s.CompanyId == Company.Id &&
+                s.WeekStart == weekStart);
+
+        if (existing != null)
+        {
+            existing.IsPublished = false;
+            await _db.SaveChangesAsync();
+        }
+    }
+
+    public async Task<WeekStatus> GetWeekStatusAsync(DateTime weekStart)
+    {
+        var existing = await _db.Schedules
+            .FirstOrDefaultAsync(s =>
+                s.CompanyId == Company.Id &&
+                s.WeekStart == weekStart);
+
+        if (existing is not null)
+        {
+            WeekStatuses[weekStart] = existing.IsPublished
+                ? WeekStatus.Published
+                : WeekStatus.InReview;
+        }
+
+        return GetWeekStatus(weekStart);
+    }
+
+    public async Task LoadWeekStatusFromDbAsync(DateTime weekStart)
+    {
+        var existing = await _db.Schedules
+            .FirstOrDefaultAsync(s =>
+                s.CompanyId == Company.Id &&
+                s.WeekStart == weekStart);
+
+        if (existing is not null)
+        {
+            WeekStatuses[weekStart] = existing.IsPublished
+                ? WeekStatus.Published
+                : WeekStatus.InReview;
+        }
+    }
+
+    public async Task<List<SteadySchedule.Data.Schedule>> GetPublishedSchedulesAsync()
+    {
+        return await _db.Schedules
+            .Where(s => s.CompanyId == Company.Id && s.IsPublished)
+            .OrderByDescending(s => s.WeekStart)
+            .ToListAsync();
+    }
+
     public Company Company { get; } = new()
     {
         Id = 1,

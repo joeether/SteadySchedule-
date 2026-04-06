@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using SteadySchedule.Components;
+using SteadySchedule.Data;
 using SteadySchedule.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,7 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddSingleton<ScheduleService>();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite("Data Source=steadyschedule.db"));
+
+builder.Services.AddScoped<ScheduleService>();
 
 var app = builder.Build();
 

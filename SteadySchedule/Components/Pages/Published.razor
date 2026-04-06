@@ -1,8 +1,10 @@
 ﻿@page "/published"
+@using SteadySchedule.Data
 @using SteadySchedule.Domain
 @using SteadySchedule.Services
 @inject ScheduleService Schedule
 @inject NavigationManager Nav
+@inject AppDbContext Db
 
 <PageTitle>Published Schedule</PageTitle>
 
