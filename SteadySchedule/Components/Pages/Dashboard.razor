@@ -123,7 +123,8 @@
     private DateTime weekStart = ScheduleService.StartOfWeek(DateTime.Today);
     private DateTime WeekEnd => weekStart.AddDays(7);
 
-    private int TotalEmployees => Schedule.Employees.Count;
+    private int TotalEmployees => employees.Count;
+    private List<Employee> employees = new();
 
     private List<Shift> ShiftsThisWeek =>
         Schedule.Shifts
@@ -131,6 +132,11 @@
             .OrderBy(s => s.Date)
             .ThenBy(s => s.StartTime)
             .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        employees = await Schedule.GetEmployeesAsync();
+    }
 
     private int AssignedShiftCount =>
         ShiftsThisWeek.Count(s => Schedule.Assignments.Any(a => a.ShiftId == s.Id));
@@ -154,7 +160,7 @@
     {
         var assignedEmployees = Schedule.Assignments
             .Where(a => a.ShiftId == shift.Id)
-            .Select(a => Schedule.Employees.FirstOrDefault(e => e.Id == a.EmployeeId))
+            .Select(a => employees.FirstOrDefault(e => e.Id == a.EmployeeId))
             .Where(e => e != null)
             .Cast<Employee>()
             .ToList();
@@ -286,7 +292,7 @@
 
         var assignedEmployees = Schedule.Assignments
             .Where(a => a.ShiftId == shift.Id)
-            .Select(a => Schedule.Employees.FirstOrDefault(e => e.Id == a.EmployeeId))
+            .Select(a => employees.FirstOrDefault(e => e.Id == a.EmployeeId))
             .Where(e => e != null)
             .Cast<Employee>()
             .ToList();

@@ -4,7 +4,6 @@
 @using SteadySchedule.Services
 @inject ScheduleService Schedule
 @inject NavigationManager Nav
-@inject AppDbContext Db
 
 <PageTitle>Published Schedule</PageTitle>
 
@@ -16,10 +15,10 @@
 <div class="mb-3">
     <label class="form-label">Select Week</label>
 
-    <select class="form-select" @bind="selectedWeek">
+    <select class="form-select" value="@selectedWeek.ToString("yyyy-MM-dd")" @onchange="OnWeekChanged">
         @foreach (var w in publishedWeeks)
         {
-            <option value="@w">@w.ToString("MMM d, yyyy")</option>
+            <option value="@w.ToString("yyyy-MM-dd")">@w.ToString("MMM d, yyyy")</option>
         }
     </select>
 </div>
@@ -59,7 +58,7 @@
     {
         var day = selectedWeek.AddDays(i);
 
-        var dayShifts = SelectedWeekShifts
+        var dayShifts = selectedWeekShifts
         .Where(s => s.Date.Date == day.Date)
         .OrderBy(s => s.StartTime)
         .ToList();
@@ -92,10 +91,13 @@
                                 </div>
 
                                 <div class="mt-1">
-                                    @foreach (var a in SelectedWeekAssignments.Where(a => a.ShiftId == s.Id))
+                                    @foreach (var a in selectedWeekAssignments.Where(a => a.ShiftId == s.Id))
                                     {
-                                        var emp = Schedule.Employees.First(x => x.Id == a.EmployeeId);
-                                        <span class="badge bg-success me-1">@emp.Name</span>
+                                        var emp = employees.FirstOrDefault(x => x.Id == a.EmployeeId);
+                                        if (emp is not null)
+                                        {
+                                            <span class="badge bg-success me-1">@emp.Name</span>
+                                        }
                                     }
                                 </div>
 
@@ -115,35 +117,48 @@
 
     private List<DateTime> publishedWeeks = new();
     private DateTime selectedWeek;
+    private List<Shift> selectedWeekShifts = new();
+    private List<Assignment> selectedWeekAssignments = new();
+    private List<Employee> employees = new();
 
     private WeekStatus CurrentStatus =>
         Schedule.GetWeekStatus(selectedWeek);
 
-    private DateTime WeekEnd => selectedWeek.AddDays(7);
-
-    private List<Shift> SelectedWeekShifts =>
-        Schedule.Shifts
-            .Where(s => s.Date >= selectedWeek && s.Date < WeekEnd)
-            .ToList();
-
-    private List<Assignment> SelectedWeekAssignments =>
-        Schedule.Assignments
-            .Where(a => SelectedWeekShifts.Any(s => s.Id == a.ShiftId))
-            .ToList();
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        publishedWeeks = Schedule.GetPublishedWeeks().ToList();
+        publishedWeeks = (await Schedule.GetPublishedSchedulesAsync())
+            .Select(s => s.WeekStart)
+            .OrderByDescending(d => d)
+            .ToList();
 
         if (publishedWeeks.Any())
+        {
             selectedWeek = publishedWeeks.First();
+            await LoadSelectedWeekDataAsync();
+        }
     }
 
-    void UnpublishWeek()
+    private async Task LoadSelectedWeekDataAsync()
     {
-        Schedule.UnpublishWeek(selectedWeek);
+        employees = await Schedule.GetEmployeesAsync();
+        selectedWeekShifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, selectedWeek);
+        selectedWeekAssignments = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, selectedWeek);
+    }
+
+    private async Task UnpublishWeek()
+    {
+        await Schedule.UnpublishWeekAsync(selectedWeek);
 
         var week = selectedWeek.ToString("yyyy-MM-dd");
         Nav.NavigateTo($"/assign?week={week}");
+    }
+
+    private async Task OnWeekChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var week))
+        {
+            selectedWeek = week;
+            await LoadSelectedWeekDataAsync();
+        }
     }
 }

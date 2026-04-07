@@ -355,10 +355,14 @@
     private bool showDeleteTemplateModal = false;
     private string editTemplateName = string.Empty;
 
-    protected override void OnInitialized()
+    private List<Shift> shifts = new();
+
+    protected override async Task OnInitializedAsync()
     {
         templates = Schedule.WeekTemplates;
         templateShifts = Schedule.WeekTemplateShifts;
+
+        shifts = await Schedule.GetShiftsAsync();
 
         if (templates.Any())
             selectedTemplate = templates.First();
@@ -440,23 +444,18 @@
         return TimeSpan.TryParse(value, out var result) ? result : null;
     }
 
-    private void AddShift()
+    private async Task AddShift()
     {
         if (newEndTime <= newStartTime)
-        {
             return;
-        }
 
         if (newTemplateCount < 1)
-        {
             newTemplateCount = 1;
-        }
 
         for (int i = 0; i < newTemplateCount; i++)
         {
-            Schedule.Shifts.Add(new Shift
+            await Schedule.AddShiftAsync(new Shift
             {
-                Id = GetNextShiftId(),
                 CompanyId = Schedule.Company.Id,
                 Date = newShiftDate.Date,
                 Position = newShift.Position,
@@ -465,19 +464,19 @@
             });
         }
 
+        shifts = await Schedule.GetShiftsAsync();
+
         newShift = new Shift
         {
             CompanyId = Schedule.Company.Id
         };
 
         newTemplateCount = 1;
-
-        // keep selected date instead of resetting to today
         newStartTime = new(9, 0);
         newEndTime = new(17, 0);
     }
 
-    private void CopyWeek()
+    private async Task CopyWeek()
     {
         copyWeekMessage = null;
 
@@ -490,7 +489,7 @@
             return;
         }
 
-        var sourceShifts = Schedule.Shifts
+        var sourceShifts = shifts
             .Where(s => s.Date >= fromWeekStart && s.Date < fromWeekStart.AddDays(7))
             .OrderBy(s => s.Date)
             .ThenBy(s => s.StartTime)
@@ -509,7 +508,7 @@
         {
             var newDate = shift.Date.AddDays(dayOffset);
 
-            var alreadyExists = Schedule.Shifts.Any(s =>
+            var alreadyExists = shifts.Any(s =>
                 s.CompanyId == shift.CompanyId &&
                 s.Date == newDate &&
                 s.Position == shift.Position &&
@@ -517,13 +516,10 @@
                 s.EndTime == shift.EndTime);
 
             if (alreadyExists)
-            {
                 continue;
-            }
 
-            Schedule.Shifts.Add(new Shift
+            await Schedule.AddShiftAsync(new Shift
             {
-                Id = GetNextShiftId(),
                 CompanyId = Schedule.Company.Id,
                 Date = newDate,
                 Position = shift.Position,
@@ -537,14 +533,11 @@
         copyWeekMessage = addedCount > 0
             ? $"Copied {addedCount} shift(s) from {fromWeekStart:MM/dd/yyyy} to {toWeekStart:MM/dd/yyyy}."
             : "No shifts were copied because matching shifts already exist in the target week.";
+
+        shifts = await Schedule.GetShiftsAsync();
     }
 
-    private int GetNextShiftId()
-    {
-        return Schedule.Shifts.Any() ? Schedule.Shifts.Max(s => s.Id) + 1 : 1;
-    }
-
-    private void DeleteShift(Shift shift)
+    private async Task DeleteShift(Shift shift)
     {
         var hasAssignments = Schedule.Assignments
             .Any(a => a.ShiftId == shift.Id);
@@ -555,7 +548,10 @@
             return;
         }
 
-        Schedule.Shifts.Remove(shift);
+        await Schedule.DeleteShiftAsync(shift.Id);
+
+        shifts = await Schedule.GetShiftsAsync();
+
         shiftDeleteMessage = null;
     }
 
@@ -658,7 +654,7 @@
     }
 
     private IEnumerable<string> ExistingPositions =>
-        Schedule.Shifts
+        shifts
             .Select(s => s.Position)
             .Where(p => !string.IsNullOrWhiteSpace(p))
             .Distinct()

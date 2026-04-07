@@ -423,4 +423,268 @@ public class ScheduleService
         SetWeekDraft(targetWeekStart);
         return true;
     }
+
+    public async Task<List<Employee>> GetEmployeesAsync()
+    {
+        return await _db.Employees
+            .Where(e => e.CompanyId == Company.Id)
+            .OrderBy(e => e.Name)
+            .ToListAsync();
+    }
+
+    public async Task SeedEmployeesIfEmptyAsync()
+    {
+        if (await _db.Employees.AnyAsync(e => e.CompanyId == Company.Id))
+            return;
+
+        var employees = new List<Employee>
+    {
+        new Employee
+        {
+            CompanyId = 1,
+            Name = "Amy",
+            MaxHoursPerWeek = 40,
+            PositionsQualified = "Cashier",
+            MondayAvailable = true, MondayStart = new TimeSpan(9,0,0), MondayEnd = new TimeSpan(17,0,0),
+            TuesdayAvailable = true, TuesdayStart = new TimeSpan(9,0,0), TuesdayEnd = new TimeSpan(17,0,0),
+            WednesdayAvailable = true, WednesdayStart = new TimeSpan(9,0,0), WednesdayEnd = new TimeSpan(17,0,0),
+            ThursdayAvailable = true, ThursdayStart = new TimeSpan(9,0,0), ThursdayEnd = new TimeSpan(17,0,0),
+            FridayAvailable = true, FridayStart = new TimeSpan(9,0,0), FridayEnd = new TimeSpan(17,0,0)
+        },
+        new Employee
+        {
+            CompanyId = 1,
+            Name = "Brandon",
+            MaxHoursPerWeek = 40,
+            PositionsQualified = "Cook",
+            MondayAvailable = true, MondayStart = new TimeSpan(10,0,0), MondayEnd = new TimeSpan(18,0,0),
+            TuesdayAvailable = true, TuesdayStart = new TimeSpan(10,0,0), TuesdayEnd = new TimeSpan(18,0,0),
+            WednesdayAvailable = true, WednesdayStart = new TimeSpan(10,0,0), WednesdayEnd = new TimeSpan(18,0,0),
+            ThursdayAvailable = true, ThursdayStart = new TimeSpan(10,0,0), ThursdayEnd = new TimeSpan(18,0,0),
+            FridayAvailable = true, FridayStart = new TimeSpan(10,0,0), FridayEnd = new TimeSpan(18,0,0)
+        },
+        new Employee
+        {
+            CompanyId = 1,
+            Name = "Carla",
+            MaxHoursPerWeek = 24,
+            PositionsQualified = "Cashier",
+            SaturdayAvailable = true, SaturdayStart = new TimeSpan(10,0,0), SaturdayEnd = new TimeSpan(16,0,0),
+            SundayAvailable = true, SundayStart = new TimeSpan(10,0,0), SundayEnd = new TimeSpan(16,0,0)
+        },
+        new Employee
+        {
+            CompanyId = 1,
+            Name = "Derek",
+            MaxHoursPerWeek = 32,
+            PositionsQualified = "Cook,Cashier",
+            WednesdayAvailable = true, WednesdayStart = new TimeSpan(10,0,0), WednesdayEnd = new TimeSpan(20,0,0),
+            ThursdayAvailable = true, ThursdayStart = new TimeSpan(10,0,0), ThursdayEnd = new TimeSpan(20,0,0),
+            FridayAvailable = true, FridayStart = new TimeSpan(10,0,0), FridayEnd = new TimeSpan(20,0,0),
+            SaturdayAvailable = true, SaturdayStart = new TimeSpan(10,0,0), SaturdayEnd = new TimeSpan(20,0,0),
+            SundayAvailable = true, SundayStart = new TimeSpan(10,0,0), SundayEnd = new TimeSpan(20,0,0)
+        },
+        new Employee
+        {
+            CompanyId = 1,
+            Name = "Emma",
+            MaxHoursPerWeek = 20,
+            PositionsQualified = "Cashier",
+            MondayAvailable = true, MondayStart = new TimeSpan(9,0,0), MondayEnd = new TimeSpan(13,0,0),
+            WednesdayAvailable = true, WednesdayStart = new TimeSpan(9,0,0), WednesdayEnd = new TimeSpan(13,0,0),
+            FridayAvailable = true, FridayStart = new TimeSpan(9,0,0), FridayEnd = new TimeSpan(13,0,0)
+        }
+    };
+
+        _db.Employees.AddRange(employees);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task AddEmployeeAsync(Employee employee)
+    {
+        employee.CompanyId = Company.Id;
+        _db.Employees.Add(employee);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task UpdateEmployeeAsync(Employee updatedEmployee)
+    {
+        var existing = await _db.Employees
+            .FirstOrDefaultAsync(e => e.Id == updatedEmployee.Id && e.CompanyId == Company.Id);
+
+        if (existing == null)
+            return;
+
+        existing.Name = updatedEmployee.Name;
+        existing.Email = updatedEmployee.Email;
+        existing.MaxHoursPerWeek = updatedEmployee.MaxHoursPerWeek;
+        existing.PositionsQualified = updatedEmployee.PositionsQualified;
+
+        existing.MondayAvailable = updatedEmployee.MondayAvailable;
+        existing.MondayAnyTime = updatedEmployee.MondayAnyTime;
+        existing.MondayStart = updatedEmployee.MondayStart;
+        existing.MondayEnd = updatedEmployee.MondayEnd;
+
+        existing.TuesdayAvailable = updatedEmployee.TuesdayAvailable;
+        existing.TuesdayAnyTime = updatedEmployee.TuesdayAnyTime;
+        existing.TuesdayStart = updatedEmployee.TuesdayStart;
+        existing.TuesdayEnd = updatedEmployee.TuesdayEnd;
+
+        existing.WednesdayAvailable = updatedEmployee.WednesdayAvailable;
+        existing.WednesdayAnyTime = updatedEmployee.WednesdayAnyTime;
+        existing.WednesdayStart = updatedEmployee.WednesdayStart;
+        existing.WednesdayEnd = updatedEmployee.WednesdayEnd;
+
+        existing.ThursdayAvailable = updatedEmployee.ThursdayAvailable;
+        existing.ThursdayAnyTime = updatedEmployee.ThursdayAnyTime;
+        existing.ThursdayStart = updatedEmployee.ThursdayStart;
+        existing.ThursdayEnd = updatedEmployee.ThursdayEnd;
+
+        existing.FridayAvailable = updatedEmployee.FridayAvailable;
+        existing.FridayAnyTime = updatedEmployee.FridayAnyTime;
+        existing.FridayStart = updatedEmployee.FridayStart;
+        existing.FridayEnd = updatedEmployee.FridayEnd;
+
+        existing.SaturdayAvailable = updatedEmployee.SaturdayAvailable;
+        existing.SaturdayAnyTime = updatedEmployee.SaturdayAnyTime;
+        existing.SaturdayStart = updatedEmployee.SaturdayStart;
+        existing.SaturdayEnd = updatedEmployee.SaturdayEnd;
+
+        existing.SundayAvailable = updatedEmployee.SundayAvailable;
+        existing.SundayAnyTime = updatedEmployee.SundayAnyTime;
+        existing.SundayStart = updatedEmployee.SundayStart;
+        existing.SundayEnd = updatedEmployee.SundayEnd;
+
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<bool> DeleteEmployeeAsync(int employeeId)
+    {
+        var hasAssignments = await _db.Assignments
+            .AnyAsync(a => a.EmployeeId == employeeId && a.CompanyId == Company.Id);
+
+        if (hasAssignments)
+            return false;
+
+        var employee = await _db.Employees
+            .FirstOrDefaultAsync(e => e.Id == employeeId && e.CompanyId == Company.Id);
+
+        if (employee == null)
+            return false;
+
+        _db.Employees.Remove(employee);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<List<Shift>> GetShiftsAsync()
+    {
+        return await _db.Shifts
+            .Where(s => s.CompanyId == Company.Id)
+            .OrderBy(s => s.Date)
+            .ThenBy(s => s.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task AddShiftAsync(Shift shift)
+    {
+        shift.CompanyId = Company.Id;
+        _db.Shifts.Add(shift);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task UpdateShiftAsync(Shift updatedShift)
+    {
+        var existing = await _db.Shifts
+            .FirstOrDefaultAsync(s => s.Id == updatedShift.Id && s.CompanyId == Company.Id);
+
+        if (existing == null)
+            return;
+
+        existing.Date = updatedShift.Date;
+        existing.Position = updatedShift.Position;
+        existing.StartTime = updatedShift.StartTime;
+        existing.EndTime = updatedShift.EndTime;
+        existing.SlotGroupId = updatedShift.SlotGroupId;
+
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task DeleteShiftAsync(int shiftId)
+    {
+        var shift = await _db.Shifts
+            .FirstOrDefaultAsync(s => s.Id == shiftId && s.CompanyId == Company.Id);
+
+        if (shift == null)
+            return;
+
+        var assignments = await _db.Assignments
+            .Where(a => a.ShiftId == shiftId && a.CompanyId == Company.Id)
+            .ToListAsync();
+
+        if (assignments.Any())
+            _db.Assignments.RemoveRange(assignments);
+
+        _db.Shifts.Remove(shift);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<List<Assignment>> GetAssignmentsAsync()
+    {
+        return await _db.Assignments
+            .Where(a => a.CompanyId == Company.Id)
+            .Include(a => a.Employee)
+            .Include(a => a.Shift)
+            .ToListAsync();
+    }
+
+    public async Task AddAssignmentAsync(Assignment assignment)
+    {
+        assignment.CompanyId = Company.Id;
+        _db.Assignments.Add(assignment);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task DeleteAssignmentAsync(int assignmentId)
+    {
+        var assignment = await _db.Assignments
+            .FirstOrDefaultAsync(a => a.Id == assignmentId && a.CompanyId == Company.Id);
+
+        if (assignment == null)
+            return;
+
+        _db.Assignments.Remove(assignment);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<List<Shift>> GetWeekShiftsAsync(int companyId, DateTime weekStart)
+    {
+        weekStart = StartOfWeek(weekStart);
+        var weekEnd = weekStart.AddDays(7);
+
+        return await _db.Shifts
+            .Where(s => s.CompanyId == companyId &&
+                        s.Date >= weekStart &&
+                        s.Date < weekEnd)
+            .OrderBy(s => s.Date)
+            .ThenBy(s => s.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task<List<Assignment>> GetWeekAssignmentsAsync(int companyId, DateTime weekStart)
+    {
+        weekStart = StartOfWeek(weekStart);
+        var weekEnd = weekStart.AddDays(7);
+
+        return await _db.Assignments
+            .Include(a => a.Employee)
+            .Include(a => a.Shift)
+            .Where(a => a.CompanyId == companyId &&
+                        a.Shift != null &&
+                        a.Shift.Date >= weekStart &&
+                        a.Shift.Date < weekEnd)
+            .OrderBy(a => a.Shift!.Date)
+            .ThenBy(a => a.Shift!.StartTime)
+            .ToListAsync();
+    }
 }

@@ -317,7 +317,7 @@
 
     Employee? editingEmployee = null;
 
-    private List<Employee> employees => Schedule.Employees;
+    private List<Employee> employees = new();
 
     private string? deleteMessage;
 
@@ -330,29 +330,35 @@
         MaxHoursPerWeek = 40
     };
 
-    private void AddEmployee()
+    protected override async Task OnInitializedAsync()
+    {
+        employees = await Schedule.GetEmployeesAsync();
+    }
+
+    private async Task AddEmployee()
     {
         NormalizeAvailability(newEmployee);
 
-        newEmployee.Id = employees.Count + 1;
+        newEmployee.CompanyId = 1;
         newEmployee.PositionsQualified = string.Join(", ", selectedPositions);
 
-        employees.Add(newEmployee);
+        await Schedule.AddEmployeeAsync(newEmployee);
+
+        employees = await Schedule.GetEmployeesAsync();
         ClearForm();
     }
 
-    private void DeleteEmployee(Employee employee)
+    private async Task DeleteEmployee(Employee employee)
     {
-        var hasAssignments = Schedule.Assignments
-            .Any(a => a.EmployeeId == employee.Id);
+        var deleted = await Schedule.DeleteEmployeeAsync(employee.Id);
 
-        if (hasAssignments)
+        if (!deleted)
         {
             deleteMessage = $"{employee.Name} cannot be deleted because they are assigned to one or more shifts.";
             return;
         }
 
-        Schedule.Employees.Remove(employee);
+        employees = await Schedule.GetEmployeesAsync();
         deleteMessage = null;
     }
 
@@ -432,56 +438,20 @@
         await JS.InvokeVoidAsync("scrollToElement", "employee-form");
     }
 
-    void SaveEmployee()
+    private async Task SaveEmployee()
     {
         if (editingEmployee == null)
             return;
 
         NormalizeAvailability(newEmployee);
+        newEmployee.PositionsQualified = string.Join(", ", selectedPositions);
 
-        editingEmployee.Name = newEmployee.Name;
-        editingEmployee.Email = newEmployee.Email;
-        editingEmployee.MaxHoursPerWeek = newEmployee.MaxHoursPerWeek;
-        editingEmployee.PositionsQualified = string.Join(", ", selectedPositions);
+        await Schedule.UpdateEmployeeAsync(newEmployee);
 
-        editingEmployee.MondayAvailable = newEmployee.MondayAvailable;
-        editingEmployee.MondayAnyTime = newEmployee.MondayAnyTime;
-        editingEmployee.MondayStart = newEmployee.MondayStart;
-        editingEmployee.MondayEnd = newEmployee.MondayEnd;
-
-        editingEmployee.TuesdayAvailable = newEmployee.TuesdayAvailable;
-        editingEmployee.TuesdayAnyTime = newEmployee.TuesdayAnyTime;
-        editingEmployee.TuesdayStart = newEmployee.TuesdayStart;
-        editingEmployee.TuesdayEnd = newEmployee.TuesdayEnd;
-
-        editingEmployee.WednesdayAvailable = newEmployee.WednesdayAvailable;
-        editingEmployee.WednesdayAnyTime = newEmployee.WednesdayAnyTime;
-        editingEmployee.WednesdayStart = newEmployee.WednesdayStart;
-        editingEmployee.WednesdayEnd = newEmployee.WednesdayEnd;
-
-        editingEmployee.ThursdayAvailable = newEmployee.ThursdayAvailable;
-        editingEmployee.ThursdayAnyTime = newEmployee.ThursdayAnyTime;
-        editingEmployee.ThursdayStart = newEmployee.ThursdayStart;
-        editingEmployee.ThursdayEnd = newEmployee.ThursdayEnd;
-
-        editingEmployee.FridayAvailable = newEmployee.FridayAvailable;
-        editingEmployee.FridayAnyTime = newEmployee.FridayAnyTime;
-        editingEmployee.FridayStart = newEmployee.FridayStart;
-        editingEmployee.FridayEnd = newEmployee.FridayEnd;
-
-        editingEmployee.SaturdayAvailable = newEmployee.SaturdayAvailable;
-        editingEmployee.SaturdayAnyTime = newEmployee.SaturdayAnyTime;
-        editingEmployee.SaturdayStart = newEmployee.SaturdayStart;
-        editingEmployee.SaturdayEnd = newEmployee.SaturdayEnd;
-
-        editingEmployee.SundayAvailable = newEmployee.SundayAvailable;
-        editingEmployee.SundayAnyTime = newEmployee.SundayAnyTime;
-        editingEmployee.SundayStart = newEmployee.SundayStart;
-        editingEmployee.SundayEnd = newEmployee.SundayEnd;
+        employees = await Schedule.GetEmployeesAsync();
 
         editingEmployee = null;
-        newEmployee = new Employee();
-        selectedPositions.Clear();
+        ClearForm();
     }
 
     void ClearForm()
