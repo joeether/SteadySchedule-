@@ -14,6 +14,10 @@ namespace SteadySchedule.Data
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Shift> Shifts { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
+        public DbSet<WeekTemplate> WeekTemplates { get; set; }
+        public DbSet<WeekTemplateShift> WeekTemplateShifts { get; set; }
+
+        public DbSet<Position> Positions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,6 +34,12 @@ namespace SteadySchedule.Data
                 .WithMany()
                 .HasForeignKey(a => a.EmployeeId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WeekTemplateShift>()
+                .HasOne<WeekTemplate>()
+                .WithMany()
+                .HasForeignKey(wts => wts.WeekTemplateId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

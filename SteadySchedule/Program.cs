@@ -19,6 +19,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var scheduleService = scope.ServiceProvider.GetRequiredService<ScheduleService>();
+    await scheduleService.SeedPositionsIfEmptyAsync();
     await scheduleService.SeedEmployeesIfEmptyAsync();
 }
 

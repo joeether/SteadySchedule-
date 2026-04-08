@@ -1,5 +1,6 @@
 ﻿@page "/positions"
 @using SteadySchedule.Services
+@using SteadySchedule.Domain
 @inject ScheduleService Schedule
 
 <PageTitle>Positions</PageTitle>
@@ -10,6 +11,11 @@
         <h2 class="fw-bold">Positions</h2>
         <span class="badge bg-dark">Company: @Schedule.Company.Name</span>
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="alert alert-warning">@message</div>
+    }
 
     <div class="card shadow-sm mb-4">
         <div class="card-header fw-semibold">
@@ -36,15 +42,22 @@
 
         <div class="card-body p-0">
             <ul class="list-group list-group-flush">
-                @foreach (var p in Schedule.Positions.OrderBy(p => p))
+                @if (!positions.Any())
                 {
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        @p
-                        <button class="btn btn-sm btn-outline-danger"
-                                @onclick="() => DeletePosition(p)">
-                            Delete
-                        </button>
-                    </li>
+                    <li class="list-group-item text-muted">No positions yet.</li>
+                }
+                else
+                {
+                    @foreach (var p in positions.OrderBy(p => p.Name))
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @p.Name
+                            <button class="btn btn-sm btn-outline-danger"
+                                    @onclick="() => DeletePosition(p.Name)">
+                                Delete
+                            </button>
+                        </li>
+                    }
                 }
             </ul>
         </div>
@@ -53,38 +66,51 @@
 </div>
 
 @code {
-
+    private List<Position> positions = new();
     private string newPosition = string.Empty;
     private string? message;
 
-    private void AddPosition()
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPositionsAsync();
+    }
+
+    private async Task LoadPositionsAsync()
+    {
+        positions = await Schedule.GetPositionsAsync();
+    }
+
+    private async Task AddPosition()
     {
         if (string.IsNullOrWhiteSpace(newPosition))
             return;
 
-        if (Schedule.Positions.Contains(newPosition, StringComparer.OrdinalIgnoreCase))
+        var trimmed = newPosition.Trim();
+
+        if (positions.Any(p => string.Equals(p.Name, trimmed, StringComparison.OrdinalIgnoreCase)))
         {
             message = "Position already exists.";
             return;
         }
 
-        Schedule.Positions.Add(newPosition.Trim());
+        await Schedule.AddPositionAsync(trimmed);
         newPosition = string.Empty;
         message = null;
+
+        await LoadPositionsAsync();
     }
 
-    private void DeletePosition(string position)
+    private async Task DeletePosition(string position)
     {
-        var usedInShift = Schedule.Shifts.Any(s =>
-            string.Equals(s.Position, position, StringComparison.OrdinalIgnoreCase));
+        var deleted = await Schedule.DeletePositionAsync(position);
 
-        if (usedInShift)
+        if (!deleted)
         {
-            message = $"Cannot delete '{position}' because it is used by one or more shifts.";
+            message = $"Cannot delete '{position}' because it is used by one or more shifts, or it does not exist.";
             return;
         }
 
-        Schedule.Positions.Remove(position);
         message = null;
+        await LoadPositionsAsync();
     }
 }

@@ -100,6 +100,12 @@ public class ScheduleService
             .ToListAsync();
     }
 
+    public List<string> Positions { get; } = new()
+{
+    "Cashier",
+    "Cook"
+};
+
     public Company Company { get; } = new()
     {
         Id = 1,
@@ -107,11 +113,74 @@ public class ScheduleService
         AdminEmail = "admin@mamasburgers.com"
     };
 
-    public List<string> Positions { get; } = new()
+    public async Task<List<Position>> GetPositionsAsync()
     {
-        "Cashier",
-        "Cook"
+        return await _db.Positions
+            .Where(p => p.CompanyId == Company.Id)
+            .OrderBy(p => p.Name)
+            .ToListAsync();
+    }
+
+    public async Task SeedPositionsIfEmptyAsync()
+    {
+        if (await _db.Positions.AnyAsync(p => p.CompanyId == Company.Id))
+            return;
+
+        var positions = new List<Position>
+    {
+        new Position { CompanyId = Company.Id, Name = "Cashier" },
+        new Position { CompanyId = Company.Id, Name = "Cook" }
     };
+
+        _db.Positions.AddRange(positions);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task AddPositionAsync(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return;
+
+        var trimmed = name.Trim();
+
+        var exists = await _db.Positions.AnyAsync(p =>
+            p.CompanyId == Company.Id &&
+            p.Name == trimmed);
+
+        if (exists)
+            return;
+
+        _db.Positions.Add(new Position
+        {
+            CompanyId = Company.Id,
+            Name = trimmed
+        });
+
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<bool> DeletePositionAsync(string name)
+    {
+        var trimmed = name.Trim();
+
+        var usedInShift = await _db.Shifts.AnyAsync(s =>
+            s.CompanyId == Company.Id &&
+            s.Position == trimmed);
+
+        if (usedInShift)
+            return false;
+
+        var position = await _db.Positions.FirstOrDefaultAsync(p =>
+            p.CompanyId == Company.Id &&
+            p.Name == trimmed);
+
+        if (position == null)
+            return false;
+
+        _db.Positions.Remove(position);
+        await _db.SaveChangesAsync();
+        return true;
+    }
 
     public List<Employee> Employees { get; } = new()
 {
@@ -224,9 +293,6 @@ public class ScheduleService
             .Select(kvp => kvp.Key)
             .OrderByDescending(d => d);
     }
-
-    //public List<WeekTemplate> WeekTemplates { get; set; } = new();
-    //public List<WeekTemplateShift> WeekTemplateShifts { get; set; } = new();
 
     // TEMP test data for development - remove before release
     public List<WeekTemplate> WeekTemplates { get; set; } = new()
@@ -345,14 +411,17 @@ public class ScheduleService
         new Assignment { Id = 14, ShiftId = 21, EmployeeId = 4, ApprovedOvertime = false }
     };
 
-    public bool CopyLastPublishedWeek(DateTime targetWeekStart)
+    public async Task<bool> CopyLastPublishedWeekAsync(DateTime targetWeekStart)
     {
         targetWeekStart = StartOfWeek(targetWeekStart);
 
-        var sourceWeekStart = GetPublishedWeeks()
-            .Where(d => d < targetWeekStart)
-            .OrderByDescending(d => d)
-            .FirstOrDefault();
+        var sourceWeekStart = await _db.Schedules
+            .Where(s => s.CompanyId == Company.Id &&
+                        s.IsPublished &&
+                        s.WeekStart < targetWeekStart)
+            .OrderByDescending(s => s.WeekStart)
+            .Select(s => s.WeekStart)
+            .FirstOrDefaultAsync();
 
         if (sourceWeekStart == default)
             return false;
@@ -360,27 +429,42 @@ public class ScheduleService
         var sourceWeekEnd = sourceWeekStart.AddDays(7);
         var targetWeekEnd = targetWeekStart.AddDays(7);
 
-        var sourceShifts = Shifts
-            .Where(s => s.Date >= sourceWeekStart && s.Date < sourceWeekEnd)
+        var sourceShifts = await _db.Shifts
+            .Where(s => s.CompanyId == Company.Id &&
+                        s.Date >= sourceWeekStart &&
+                        s.Date < sourceWeekEnd)
             .OrderBy(s => s.Date)
             .ThenBy(s => s.StartTime)
-            .ToList();
+            .ToListAsync();
 
         if (!sourceShifts.Any())
             return false;
 
-        var targetShiftIds = Shifts
-            .Where(s => s.Date >= targetWeekStart && s.Date < targetWeekEnd)
+        var targetShifts = await _db.Shifts
+            .Where(s => s.CompanyId == Company.Id &&
+                        s.Date >= targetWeekStart &&
+                        s.Date < targetWeekEnd)
+            .ToListAsync();
+
+        var targetShiftIds = targetShifts
             .Select(s => s.Id)
             .ToHashSet();
 
-        Assignments.RemoveAll(a => targetShiftIds.Contains(a.ShiftId));
-        Shifts.RemoveAll(s => s.Date >= targetWeekStart && s.Date < targetWeekEnd);
+        var targetAssignments = await _db.Assignments
+            .Where(a => a.CompanyId == Company.Id &&
+                        targetShiftIds.Contains(a.ShiftId))
+            .ToListAsync();
 
-        int nextShiftId = Shifts.Any() ? Shifts.Max(s => s.Id) + 1 : 1;
-        int nextAssignmentId = Assignments.Any() ? Assignments.Max(a => a.Id) + 1 : 1;
+        if (targetAssignments.Any())
+            _db.Assignments.RemoveRange(targetAssignments);
+
+        if (targetShifts.Any())
+            _db.Shifts.RemoveRange(targetShifts);
+
+        await _db.SaveChangesAsync();
 
         var shiftIdMap = new Dictionary<int, int>();
+        var newShifts = new List<Shift>();
 
         foreach (var sourceShift in sourceShifts)
         {
@@ -388,36 +472,55 @@ public class ScheduleService
 
             var newShift = new Shift
             {
-                Id = nextShiftId++,
-                CompanyId = sourceShift.CompanyId,
+                CompanyId = Company.Id,
                 Date = targetWeekStart.AddDays(dayOffset),
                 Position = sourceShift.Position,
                 StartTime = sourceShift.StartTime,
-                EndTime = sourceShift.EndTime
+                EndTime = sourceShift.EndTime,
+                SlotGroupId = sourceShift.SlotGroupId
             };
 
-            Shifts.Add(newShift);
-            shiftIdMap[sourceShift.Id] = newShift.Id;
+            newShifts.Add(newShift);
+            shiftIdMap[sourceShift.Id] = 0; // placeholder until IDs are generated
         }
 
-        var sourceShiftIds = sourceShifts.Select(s => s.Id).ToHashSet();
+        _db.Shifts.AddRange(newShifts);
+        await _db.SaveChangesAsync();
 
-        var sourceAssignments = Assignments
-            .Where(a => sourceShiftIds.Contains(a.ShiftId))
-            .ToList();
+        for (int i = 0; i < sourceShifts.Count; i++)
+        {
+            shiftIdMap[sourceShifts[i].Id] = newShifts[i].Id;
+        }
+
+        var sourceShiftIds = sourceShifts
+            .Select(s => s.Id)
+            .ToHashSet();
+
+        var sourceAssignments = await _db.Assignments
+            .Where(a => a.CompanyId == Company.Id &&
+                        sourceShiftIds.Contains(a.ShiftId))
+            .ToListAsync();
+
+        var newAssignments = new List<Assignment>();
 
         foreach (var sourceAssignment in sourceAssignments)
         {
             if (!shiftIdMap.TryGetValue(sourceAssignment.ShiftId, out var newShiftId))
                 continue;
 
-            Assignments.Add(new Assignment
+            newAssignments.Add(new Assignment
             {
-                Id = nextAssignmentId++,
+                CompanyId = Company.Id,
                 ShiftId = newShiftId,
                 EmployeeId = sourceAssignment.EmployeeId,
                 ApprovedOvertime = sourceAssignment.ApprovedOvertime
             });
+        }
+
+        if (newAssignments.Any())
+        {
+            _db.Assignments.AddRange(newAssignments);
+            await _db.SaveChangesAsync();
         }
 
         SetWeekDraft(targetWeekStart);
@@ -686,5 +789,125 @@ public class ScheduleService
             .OrderBy(a => a.Shift!.Date)
             .ThenBy(a => a.Shift!.StartTime)
             .ToListAsync();
+    }
+
+    public async Task<bool> ShiftHasAssignmentsAsync(int shiftId)
+    {
+        return await _db.Assignments
+            .AnyAsync(a => a.CompanyId == Company.Id && a.ShiftId == shiftId);
+    }
+
+    public async Task<bool> PositionIsUsedInShiftsAsync(string position)
+    {
+        return await _db.Shifts.AnyAsync(s =>
+            s.CompanyId == Company.Id &&
+            s.Position == position);
+    }
+
+    public async Task ClearWeekAsync(DateTime weekStart)
+    {
+        weekStart = StartOfWeek(weekStart);
+        var weekEnd = weekStart.AddDays(7);
+
+        var weekShifts = await _db.Shifts
+            .Where(s => s.CompanyId == Company.Id &&
+                        s.Date >= weekStart &&
+                        s.Date < weekEnd)
+            .ToListAsync();
+
+        var weekShiftIds = weekShifts.Select(s => s.Id).ToHashSet();
+
+        var weekAssignments = await _db.Assignments
+            .Where(a => a.CompanyId == Company.Id &&
+                        weekShiftIds.Contains(a.ShiftId))
+            .ToListAsync();
+
+        if (weekAssignments.Any())
+            _db.Assignments.RemoveRange(weekAssignments);
+
+        if (weekShifts.Any())
+            _db.Shifts.RemoveRange(weekShifts);
+
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<List<WeekTemplate>> GetWeekTemplatesAsync()
+    {
+        return await _db.WeekTemplates
+            .Where(t => t.CompanyId == Company.Id)
+            .OrderBy(t => t.Name)
+            .ToListAsync();
+    }
+
+    public async Task<List<WeekTemplateShift>> GetWeekTemplateShiftsAsync()
+    {
+        return await _db.WeekTemplateShifts
+            .OrderBy(s => s.DayOfWeek)
+            .ThenBy(s => s.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task<WeekTemplate> AddWeekTemplateAsync(string name)
+    {
+        var template = new WeekTemplate
+        {
+            CompanyId = Company.Id,
+            Name = name.Trim()
+        };
+
+        _db.WeekTemplates.Add(template);
+        await _db.SaveChangesAsync();
+        return template;
+    }
+
+    public async Task AddWeekTemplateShiftAsync(WeekTemplateShift shift)
+    {
+        _db.WeekTemplateShifts.Add(shift);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task UpdateWeekTemplateShiftAsync(WeekTemplateShift updatedShift)
+    {
+        var existing = await _db.WeekTemplateShifts.FirstOrDefaultAsync(s => s.Id == updatedShift.Id);
+        if (existing == null) return;
+
+        existing.DayOfWeek = updatedShift.DayOfWeek;
+        existing.Position = updatedShift.Position;
+        existing.StartTime = updatedShift.StartTime;
+        existing.EndTime = updatedShift.EndTime;
+        existing.Count = updatedShift.Count;
+
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task DeleteWeekTemplateShiftAsync(int id)
+    {
+        var shift = await _db.WeekTemplateShifts.FirstOrDefaultAsync(s => s.Id == id);
+        if (shift == null) return;
+
+        _db.WeekTemplateShifts.Remove(shift);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task RenameWeekTemplateAsync(int id, string newName)
+    {
+        var template = await _db.WeekTemplates.FirstOrDefaultAsync(t => t.Id == id && t.CompanyId == Company.Id);
+        if (template == null) return;
+
+        template.Name = newName.Trim();
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task DeleteWeekTemplateAsync(int id)
+    {
+        var template = await _db.WeekTemplates.FirstOrDefaultAsync(t => t.Id == id && t.CompanyId == Company.Id);
+        if (template == null) return;
+
+        var shifts = await _db.WeekTemplateShifts.Where(s => s.WeekTemplateId == id).ToListAsync();
+        if (shifts.Any())
+            _db.WeekTemplateShifts.RemoveRange(shifts);
+
+        _db.WeekTemplates.Remove(template);
+        await _db.SaveChangesAsync();
     }
 }

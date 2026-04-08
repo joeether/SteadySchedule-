@@ -314,6 +314,7 @@
 </div>
 
 @code {
+    private List<Position> positions = new();
 
     Employee? editingEmployee = null;
 
@@ -322,7 +323,7 @@
     private string? deleteMessage;
 
     private IEnumerable<string> ExistingPositions =>
-    Schedule.Positions.OrderBy(p => p);
+        positions.OrderBy(p => p.Name).Select(p => p.Name);
 
     private Employee newEmployee = new()
     {
@@ -333,6 +334,7 @@
     protected override async Task OnInitializedAsync()
     {
         employees = await Schedule.GetEmployeesAsync();
+        positions = await Schedule.GetPositionsAsync();
     }
 
     private async Task AddEmployee()

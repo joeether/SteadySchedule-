@@ -25,10 +25,10 @@
 
 @if (selectedWeek != default)
 {
-    <div class="alert @(CurrentStatus == WeekStatus.Published ? "alert-success" : "alert-warning") d-flex justify-content-between align-items-center">
+    <div class="alert @(currentStatus == WeekStatus.Published ? "alert-success" : "alert-warning") d-flex justify-content-between align-items-center">
 
         <div>
-            @if (CurrentStatus == WeekStatus.Published)
+            @if (currentStatus == WeekStatus.Published)
             {
                 <strong>Official Schedule</strong>
             }
@@ -41,7 +41,7 @@
 
         </div>
         @* TEMP: manager-only action, may move to admin review page later *@
-        @if (CurrentStatus == WeekStatus.Published)
+        @if (currentStatus == WeekStatus.Published)
         {
             <button class="btn btn-sm btn-danger"
                     @onclick="UnpublishWeek">
@@ -121,8 +121,7 @@
     private List<Assignment> selectedWeekAssignments = new();
     private List<Employee> employees = new();
 
-    private WeekStatus CurrentStatus =>
-        Schedule.GetWeekStatus(selectedWeek);
+    private WeekStatus currentStatus = WeekStatus.Draft;
 
     protected override async Task OnInitializedAsync()
     {
@@ -143,6 +142,7 @@
         employees = await Schedule.GetEmployeesAsync();
         selectedWeekShifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, selectedWeek);
         selectedWeekAssignments = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, selectedWeek);
+        currentStatus = await Schedule.GetWeekStatusAsync(selectedWeek);
     }
 
     private async Task UnpublishWeek()

@@ -26,7 +26,7 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <div class="text-muted small">Shifts This Week</div>
-                    <div class="fs-4 fw-bold">@ShiftsThisWeek.Count</div>
+                    <div class="fs-4 fw-bold">@shiftsThisWeek.Count</div>
                 </div>
             </div>
         </div>
@@ -124,41 +124,43 @@
     private DateTime WeekEnd => weekStart.AddDays(7);
 
     private int TotalEmployees => employees.Count;
-    private List<Employee> employees = new();
 
-    private List<Shift> ShiftsThisWeek =>
-        Schedule.Shifts
-            .Where(s => s.Date >= weekStart && s.Date < WeekEnd)
-            .OrderBy(s => s.Date)
-            .ThenBy(s => s.StartTime)
-            .ToList();
+    private List<Employee> employees = new();
+    private List<Shift> shiftsThisWeek = new();
+    private List<Assignment> assignmentsThisWeek = new();
+    private WeekStatus currentWeekStatus = WeekStatus.Draft;
+    private int publishedWeekCount = 0;
 
     protected override async Task OnInitializedAsync()
     {
         employees = await Schedule.GetEmployeesAsync();
+        shiftsThisWeek = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
+        assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
+        currentWeekStatus = await Schedule.GetWeekStatusAsync(weekStart);
+        publishedWeekCount = (await Schedule.GetPublishedSchedulesAsync()).Count;
     }
 
     private int AssignedShiftCount =>
-        ShiftsThisWeek.Count(s => Schedule.Assignments.Any(a => a.ShiftId == s.Id));
+        shiftsThisWeek.Count(s => assignmentsThisWeek.Any(a => a.ShiftId == s.Id));
 
     private int OpenShiftCount =>
-        ShiftsThisWeek.Count - AssignedShiftCount;
+        shiftsThisWeek.Count - AssignedShiftCount;
 
     private WeekStatus CurrentWeekStatus =>
-        Schedule.GetWeekStatus(weekStart);
+        currentWeekStatus;
 
     private int PublishedWeekCount =>
-        Schedule.GetPublishedWeeks().Count();
+        publishedWeekCount;
 
     private int WarningCount =>
-        ShiftsThisWeek.Sum(GetShiftWarningCount);
+        shiftsThisWeek.Sum(GetShiftWarningCount);
 
     private List<Shift> WarningShifts =>
-        ShiftsThisWeek.Where(s => GetShiftWarningCount(s) > 0).ToList();
+        shiftsThisWeek.Where(s => GetShiftWarningCount(s) > 0).ToList();
 
     private int GetShiftWarningCount(Shift shift)
     {
-        var assignedEmployees = Schedule.Assignments
+        var assignedEmployees = assignmentsThisWeek
             .Where(a => a.ShiftId == shift.Id)
             .Select(a => employees.FirstOrDefault(e => e.Id == a.EmployeeId))
             .Where(e => e != null)
@@ -183,7 +185,7 @@
 
     private bool IsOvertimeWarningForAssignedShift(Employee e, Shift targetShift)
     {
-        var employeeWeekShifts = Schedule.Assignments
+        var employeeWeekShifts = assignmentsThisWeek
             .Where(a => a.EmployeeId == e.Id)
             .Join(Schedule.Shifts,
                   a => a.ShiftId,
@@ -219,7 +221,7 @@
 
     private int GetWeeklyHours(Employee employee)
     {
-        var employeeAssignments = Schedule.Assignments
+        var employeeAssignments = assignmentsThisWeek
             .Where(a => a.EmployeeId == employee.Id)
             .Join(Schedule.Shifts,
                   a => a.ShiftId,
@@ -290,7 +292,7 @@
     {
         var warningDetails = new List<string>();
 
-        var assignedEmployees = Schedule.Assignments
+        var assignedEmployees = assignmentsThisWeek
             .Where(a => a.ShiftId == shift.Id)
             .Select(a => employees.FirstOrDefault(e => e.Id == a.EmployeeId))
             .Where(e => e != null)

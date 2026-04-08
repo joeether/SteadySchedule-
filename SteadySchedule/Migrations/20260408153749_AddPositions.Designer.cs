@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SteadySchedule.Data;
 
@@ -11,9 +12,11 @@ using SteadySchedule.Data;
 namespace SteadySchedule.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260408153749_AddPositions")]
+    partial class AddPositions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -241,60 +244,6 @@ namespace SteadySchedule.Migrations
                     b.ToTable("Shifts");
                 });
 
-            modelBuilder.Entity("SteadySchedule.Domain.WeekTemplate", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("WeekTemplates");
-                });
-
-            modelBuilder.Entity("SteadySchedule.Domain.WeekTemplateShift", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Count")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("int");
-
-                    b.Property<TimeSpan>("EndTime")
-                        .HasColumnType("time");
-
-                    b.Property<string>("Position")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<TimeSpan>("StartTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("WeekTemplateId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WeekTemplateId");
-
-                    b.ToTable("WeekTemplateShifts");
-                });
-
             modelBuilder.Entity("SteadySchedule.Domain.Assignment", b =>
                 {
                     b.HasOne("SteadySchedule.Domain.Employee", "Employee")
@@ -312,15 +261,6 @@ namespace SteadySchedule.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("Shift");
-                });
-
-            modelBuilder.Entity("SteadySchedule.Domain.WeekTemplateShift", b =>
-                {
-                    b.HasOne("SteadySchedule.Domain.WeekTemplate", null)
-                        .WithMany()
-                        .HasForeignKey("WeekTemplateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

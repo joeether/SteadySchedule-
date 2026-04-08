@@ -94,9 +94,9 @@
                         <label class="form-label">Position</label>
                         <select class="form-select" @bind="newTemplatePosition">
                             <option value="">Select Position</option>
-                            @foreach (var p in Schedule.Positions)
+                            @foreach (var p in positions.OrderBy(p => p.Name))
                             {
-                                <option value="@p">@p</option>
+                                <option value="@p.Name">@p.Name</option>
                             }
                         </select>
                     </div>
@@ -211,9 +211,9 @@
                             <label class="form-label">Position</label>
                             <select class="form-select" @bind="editTemplatePosition">
                                 <option value="">Select Position</option>
-                                @foreach (var p in Schedule.Positions)
+                                @foreach (var p in positions.OrderBy(p => p.Name))
                                 {
-                                    <option value="@p">@p</option>
+                                    <option value="@p.Name">@p.Name</option>
                                 }
                             </select>
                         </div>
@@ -318,6 +318,8 @@
         CompanyId = 1
     };
 
+    private List<Position> positions = new();
+
     private string? shiftDeleteMessage;
     private string? copyWeekMessage;
 
@@ -359,8 +361,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        templates = Schedule.WeekTemplates;
-        templateShifts = Schedule.WeekTemplateShifts;
+        positions = await Schedule.GetPositionsAsync();
+        templates = await Schedule.GetWeekTemplatesAsync();
+        templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
 
         shifts = await Schedule.GetShiftsAsync();
 
@@ -368,24 +371,18 @@
             selectedTemplate = templates.First();
     }
 
-    private void AddTemplate()
+    private async Task AddTemplate()
     {
         if (string.IsNullOrWhiteSpace(newTemplateName))
             return;
 
-        var template = new WeekTemplate
-        {
-            Id = templates.Any() ? templates.Max(t => t.Id) + 1 : 1,
-            CompanyId = Schedule.Company.Id,
-            Name = newTemplateName.Trim()
-        };
-
-        templates.Add(template);
+        var template = await Schedule.AddWeekTemplateAsync(newTemplateName);
+        templates = await Schedule.GetWeekTemplatesAsync();
         selectedTemplate = template;
         newTemplateName = string.Empty;
     }
 
-    private void AddTemplateShift()
+    private async Task AddTemplateShift()
     {
         if (selectedTemplate is null || string.IsNullOrWhiteSpace(newTemplatePosition))
             return;
@@ -396,9 +393,8 @@
         if (newTemplateCount < 1)
             newTemplateCount = 1;
 
-        templateShifts.Add(new WeekTemplateShift
+        await Schedule.AddWeekTemplateShiftAsync(new WeekTemplateShift
         {
-            Id = templateShifts.Any() ? templateShifts.Max(s => s.Id) + 1 : 1,
             WeekTemplateId = selectedTemplate.Id,
             DayOfWeek = newTemplateDay,
             Position = newTemplatePosition.Trim(),
@@ -406,6 +402,8 @@
             EndTime = newTemplateEnd,
             Count = newTemplateCount
         });
+
+        templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
 
         newTemplatePosition = string.Empty;
         newTemplateDay = DayOfWeek.Monday;
@@ -429,9 +427,10 @@
             .ThenBy(s => s.StartTime)
             .ToList();
 
-    private void DeleteTemplateShift(WeekTemplateShift shift)
+    private async Task DeleteTemplateShift(WeekTemplateShift shift)
     {
-        templateShifts.Remove(shift);
+        await Schedule.DeleteWeekTemplateShiftAsync(shift.Id);
+        templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
     }
 
     private string FormatTime(TimeSpan time)
@@ -489,6 +488,8 @@
             return;
         }
 
+        shifts = await Schedule.GetShiftsAsync();
+
         var sourceShifts = shifts
             .Where(s => s.Date >= fromWeekStart && s.Date < fromWeekStart.AddDays(7))
             .OrderBy(s => s.Date)
@@ -539,8 +540,7 @@
 
     private async Task DeleteShift(Shift shift)
     {
-        var hasAssignments = Schedule.Assignments
-            .Any(a => a.ShiftId == shift.Id);
+        var hasAssignments = await Schedule.ShiftHasAssignmentsAsync(shift.Id);
 
         if (hasAssignments)
         {
@@ -574,7 +574,7 @@
         templateShiftToEdit = null;
     }
 
-    private void SaveEditedTemplateShift()
+    private async Task SaveEditedTemplateShift()
     {
         if (templateShiftToEdit is null)
             return;
@@ -588,11 +588,18 @@
         if (editTemplateCount < 1)
             editTemplateCount = 1;
 
-        templateShiftToEdit.DayOfWeek = editTemplateDay;
-        templateShiftToEdit.Position = editTemplatePosition.Trim();
-        templateShiftToEdit.StartTime = editTemplateStart;
-        templateShiftToEdit.EndTime = editTemplateEnd;
-        templateShiftToEdit.Count = editTemplateCount;
+        await Schedule.UpdateWeekTemplateShiftAsync(new WeekTemplateShift
+        {
+            Id = templateShiftToEdit.Id,
+            WeekTemplateId = templateShiftToEdit.WeekTemplateId,
+            DayOfWeek = editTemplateDay,
+            Position = editTemplatePosition.Trim(),
+            StartTime = editTemplateStart,
+            EndTime = editTemplateEnd,
+            Count = editTemplateCount
+        });
+
+        templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
 
         showEditTemplateShiftModal = false;
         templateShiftToEdit = null;
@@ -613,7 +620,7 @@
         editTemplateName = string.Empty;
     }
 
-    private void SaveTemplateRename()
+    private async Task SaveTemplateRename()
     {
         if (selectedTemplate is null)
             return;
@@ -621,7 +628,11 @@
         if (string.IsNullOrWhiteSpace(editTemplateName))
             return;
 
-        selectedTemplate.Name = editTemplateName.Trim();
+        await Schedule.RenameWeekTemplateAsync(selectedTemplate.Id, editTemplateName);
+
+        templates = await Schedule.GetWeekTemplatesAsync();
+        selectedTemplate = templates.FirstOrDefault(t => t.Id == selectedTemplate.Id);
+
         showRenameTemplateModal = false;
     }
 
@@ -638,15 +649,17 @@
         showDeleteTemplateModal = false;
     }
 
-    private void DeleteSelectedTemplate()
+    private async Task DeleteSelectedTemplate()
     {
         if (selectedTemplate is null)
             return;
 
         var templateId = selectedTemplate.Id;
 
-        templateShifts.RemoveAll(s => s.WeekTemplateId == templateId);
-        templates.Remove(selectedTemplate);
+        await Schedule.DeleteWeekTemplateAsync(templateId);
+
+        templates = await Schedule.GetWeekTemplatesAsync();
+        templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
 
         selectedTemplate = templates.Any() ? templates.First() : null;
 
