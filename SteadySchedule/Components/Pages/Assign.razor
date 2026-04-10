@@ -314,14 +314,14 @@
 
                     <div class="modal-body">
 
-                        @if (!Schedule.WeekTemplates.Any())
+                        @if (!templates.Any())
                         {
                             <p class="text-muted">No templates available.</p>
                         }
                         else
                         {
                             <select class="form-select" @bind="selectedTemplateId">
-                                @foreach (var t in Schedule.WeekTemplates)
+                                @foreach (var t in templates)
                                 {
                                     <option value="@t.Id">@t.Name</option>
                                 }
@@ -587,12 +587,16 @@
 
     private int newShiftCount = 1;
 
+    private List<WeekTemplate> templates = new();
+    private List<WeekTemplateShift> templateShifts = new();
     private async Task LoadWeekDataAsync()
     {
         employees = await Schedule.GetEmployeesAsync();
         positions = await Schedule.GetPositionsAsync();
         shifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
         assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
+        templates = await Schedule.GetWeekTemplatesAsync();
+        templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
     }
 
     protected override async Task OnInitializedAsync()
@@ -900,9 +904,9 @@
 
     private void ShowTemplatePicker()
     {
-        if (Schedule.WeekTemplates.Any())
+        if (templates.Any())
         {
-            selectedTemplateId = Schedule.WeekTemplates.First().Id;
+            selectedTemplateId = templates.First().Id;
         }
 
         showTemplateModal = true;
@@ -917,13 +921,13 @@
     {
         if (IsPublished) return;
 
-        var templateShifts = Schedule.WeekTemplateShifts
-            .Where(s => s.WeekTemplateId == selectedTemplateId)
-            .ToList();
+        var selectedTemplateShifts = templateShifts
+    .Where(s => s.WeekTemplateId == selectedTemplateId)
+    .ToList();
 
         int addedCount = 0;
 
-        foreach (var ts in templateShifts)
+        foreach (var ts in selectedTemplateShifts)
         {
             var shiftDate = weekStart.AddDays(((int)ts.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7);
 
