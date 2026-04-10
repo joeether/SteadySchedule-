@@ -197,7 +197,7 @@ protected override async Task OnParametersSetAsync()
     {
         var employeeWeekShifts = assignmentsThisWeek
             .Where(a => a.EmployeeId == e.Id)
-            .Join(Schedule.Shifts,
+            .Join(shiftsThisWeek,
                   a => a.ShiftId,
                   s => s.Id,
                   (a, s) => s)
@@ -233,7 +233,7 @@ protected override async Task OnParametersSetAsync()
     {
         var employeeAssignments = assignmentsThisWeek
             .Where(a => a.EmployeeId == employee.Id)
-            .Join(Schedule.Shifts,
+            .Join(shiftsThisWeek,
                   a => a.ShiftId,
                   s => s.Id,
                   (a, s) => s)
