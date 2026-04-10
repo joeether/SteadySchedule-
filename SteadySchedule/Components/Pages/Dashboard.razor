@@ -132,13 +132,23 @@
     private int publishedWeekCount = 0;
 
     protected override async Task OnInitializedAsync()
-    {
-        employees = await Schedule.GetEmployeesAsync();
-        shiftsThisWeek = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
-        assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
-        currentWeekStatus = await Schedule.GetWeekStatusAsync(weekStart);
-        publishedWeekCount = (await Schedule.GetPublishedSchedulesAsync()).Count;
-    }
+{
+    await LoadDashboardData();
+}
+
+private async Task LoadDashboardData()
+{
+    employees = await Schedule.GetEmployeesAsync();
+    shiftsThisWeek = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
+    assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
+    currentWeekStatus = await Schedule.GetWeekStatusAsync(weekStart);
+    publishedWeekCount = (await Schedule.GetPublishedSchedulesAsync()).Count;
+}
+
+protected override async Task OnParametersSetAsync()
+{
+    await LoadDashboardData();
+}
 
     private int AssignedShiftCount =>
         shiftsThisWeek.Count(s => assignmentsThisWeek.Any(a => a.ShiftId == s.Id));
