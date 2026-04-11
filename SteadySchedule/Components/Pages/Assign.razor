@@ -98,7 +98,7 @@
             <div class="form-check form-switch mt-2">
             <input class="form-check-input" type="checkbox" @bind="allowOvertime">
             <label class="form-check-label">
-                Ignore Overtime Warnings
+                Allow Overtime
             </label>
         </div>
 
@@ -848,7 +848,7 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
     private bool WouldCauseOvertime(Employee e, Shift shift)
     {
         var currentHours = GetWeeklyHours(e);
-        var shiftHours = (int)(shift.EndTime - shift.StartTime).TotalHours;
+        var shiftHours = GetShiftHours(shift);
         return currentHours + shiftHours > e.MaxHoursPerWeek;
     }
 
@@ -1129,7 +1129,7 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
     private bool WouldCauseOvertimeIfAssigned(Employee e, Shift shift)
     {
         var currentHours = GetWeeklyHours(e);
-        var shiftHours = (shift.EndTime - shift.StartTime).TotalHours;
+        var shiftHours = GetShiftHours(shift);
         return currentHours + shiftHours > e.MaxHoursPerWeek;
     }
 
@@ -1151,8 +1151,7 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
 
         foreach (var s in employeeWeekShifts)
         {
-            var shiftHours = (s.EndTime - s.StartTime).TotalHours;
-
+            var shiftHours = GetShiftHours(shift);
             if (!alreadyCrossed && runningHours + shiftHours > e.MaxHoursPerWeek)
             {
                 alreadyCrossed = true;
@@ -1313,4 +1312,22 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
         await Schedule.LoadWeekStatusFromDbAsync(weekStart);
         await LoadWeekDataAsync();
     }
+
+    private static double GetShiftHours(Shift shift)
+{
+    var start = shift.StartTime;
+    var end = shift.EndTime;
+
+    if (end < start)
+    {
+        return (TimeSpan.FromHours(24) - start + end).TotalHours;
+    }
+
+    if (end == start)
+    {
+        return 24;
+    }
+
+    return (end - start).TotalHours;
+}
 }
