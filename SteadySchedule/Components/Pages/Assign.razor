@@ -485,11 +485,19 @@
                                         </div>
 
                                         <button class="btn btn-sm @(warnings.Any() ? "btn-warning" : "btn-dark")"
-                                                disabled="@IsPublished"
-                                                title="@(IsPublished ? "Week is Official. Unpublish to edit." : warnings.Any() ? "Assignment has warnings" : "")"
-                                                @onclick="() => AssignEmployeeFromModal(e)">
-                                            Assign
-                                        </button>
+        disabled="@(IsPublished || IsBlockedFromAssigning(e, selectedShift))"
+        title="@(IsPublished
+            ? "Week is Official. Unpublish to edit."
+            : !IsAvailableForShift(e, selectedShift)
+                ? "Availability conflict"
+                : (!allowOvertime && WouldCauseOvertimeIfAssigned(e, selectedShift))
+                    ? "Enable overtime to assign"
+                    : warnings.Any()
+                        ? "Assignment has warnings"
+                        : "")"
+        @onclick="() => AssignEmployeeFromModal(e)">
+    Assign
+</button>
                                     </li>
                                 }
                             </ul>
@@ -809,25 +817,33 @@
     }
 
     private List<string> GetWarnings(Employee e, Shift shift, bool isPreview = false)
-    {
-        var warnings = new List<string>();
+{
+    var warnings = new List<string>();
 
-        if (!IsAvailableForShift(e, shift))
-            warnings.Add("Availability conflict");
+    if (!IsAvailableForShift(e, shift))
+        warnings.Add("Availability conflict");
 
-        if (!allowOvertime)
-        {
-            bool overtime =
-                isPreview
-                    ? WouldCauseOvertimeIfAssigned(e, shift)
-                    : IsOvertimeWarningForAssignedShift(e, shift);
+    bool overtime =
+        isPreview
+            ? WouldCauseOvertimeIfAssigned(e, shift)
+            : IsOvertimeWarningForAssignedShift(e, shift);
 
-            if (overtime)
-                warnings.Add("Overtime risk");
-        }
+    if (overtime)
+        warnings.Add("Overtime risk");
 
-        return warnings;
-    }
+    return warnings;
+}
+
+private bool IsBlockedFromAssigning(Employee e, Shift shift)
+{
+    if (!IsAvailableForShift(e, shift))
+        return true;
+
+    if (!allowOvertime && WouldCauseOvertimeIfAssigned(e, shift))
+        return true;
+
+    return false;
+}
 
     private bool WouldCauseOvertime(Employee e, Shift shift)
     {
