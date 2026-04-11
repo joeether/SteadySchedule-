@@ -657,7 +657,7 @@
                   (a, s) => s)
             .Where(s => s.Date >= weekStart && s.Date < WeekEnd);
 
-        return employeeAssignments.Sum(s => (int)(s.EndTime - s.StartTime).TotalHours);
+        return (int)employeeAssignments.Sum(s => GetShiftHours(s));
     }
 
     private static bool IsQualified(Employee e, string position)
@@ -1151,7 +1151,7 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
 
         foreach (var s in employeeWeekShifts)
         {
-            var shiftHours = GetShiftHours(shift);
+            var shiftHours = GetShiftHours(s);
             if (!alreadyCrossed && runningHours + shiftHours > e.MaxHoursPerWeek)
             {
                 alreadyCrossed = true;
@@ -1261,7 +1261,7 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
                 s => s.Id,
                 (a, s) => s)
             .Where(s => s.Date >= weekStart && s.Date < weekEnd)
-            .Sum(s => (s.EndTime - s.StartTime).TotalHours);
+            .Sum(s => GetShiftHours(s));
     }
 
     private IEnumerable<Assignment> GetAssignmentsForSelectedGroup()
