@@ -1049,7 +1049,10 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
     {
         if (IsPublished) return;
         if (string.IsNullOrWhiteSpace(newShiftPosition)) return;
-        if (newShiftEnd <= newShiftStart) return;
+        if (newShiftEnd == newShiftStart)
+{
+    // allow 24-hour shift
+}
 
         if (newShiftCount < 1)
             newShiftCount = 1;
