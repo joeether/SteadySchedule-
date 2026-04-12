@@ -604,11 +604,11 @@
     private List<WeekTemplateShift> templateShifts = new();
 
     private string? addShiftMessage;
-    private bool IsInvalidSundayShift(DateTime shiftDate, TimeOnly start, TimeOnly end)
+    private bool IsInvalidSundayShift(DateTime shiftDate, TimeSpan start, TimeSpan end)
 {
     return shiftDate.DayOfWeek == DayOfWeek.Sunday
         && end <= start
-        && end != TimeOnly.MinValue;
+        && end != TimeSpan.Zero;
 }
 
     private async Task LoadWeekDataAsync()
@@ -1062,45 +1062,46 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
     }
 
     private async Task AddShiftToWeek()
+{
+    if (IsPublished) return;
+    if (string.IsNullOrWhiteSpace(newShiftPosition)) return;
+
+    if (newShiftEnd == newShiftStart)
     {
-        if (IsPublished) return;
-        if (string.IsNullOrWhiteSpace(newShiftPosition)) return;
-        if (newShiftEnd == newShiftStart)
-{
-    // comment 
-}
-
-        if (newShiftCount < 1)
-            newShiftCount = 1;
-
-        var shiftDate = weekStart.AddDays(newShiftDayOffset);
-        var slotGroupId = Guid.NewGuid().ToString();
-        addShiftMessage = null;
-
-if (IsInvalidSundayShift(newShiftDate, newStartTime, newEndTime))
-{
-    addShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
-    return;
-}
-
-        for (int i = 0; i < newShiftCount; i++)
-        {
-            await Schedule.AddShiftAsync(new Shift
-            {
-                CompanyId = Schedule.Company.Id,
-                Date = shiftDate,
-                Position = newShiftPosition,
-                StartTime = newShiftStart,
-                EndTime = newShiftEnd,
-                SlotGroupId = slotGroupId
-            });
-        }
-
-        await LoadWeekDataAsync();
-
-        newShiftCount = 1;
-        showAddShiftModal = false;
+        // comment
     }
+
+    if (newShiftCount < 1)
+        newShiftCount = 1;
+
+    var shiftDate = weekStart.AddDays(newShiftDayOffset);
+    var slotGroupId = Guid.NewGuid().ToString();
+    addShiftMessage = null;
+
+    if (IsInvalidSundayShift(shiftDate, newShiftStart, newShiftEnd))
+    {
+        addShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
+        return;
+    }
+
+    for (int i = 0; i < newShiftCount; i++)
+    {
+        await Schedule.AddShiftAsync(new Shift
+        {
+            CompanyId = Schedule.Company.Id,
+            Date = shiftDate,
+            Position = newShiftPosition,
+            StartTime = newShiftStart,
+            EndTime = newShiftEnd,
+            SlotGroupId = slotGroupId
+        });
+    }
+
+    await LoadWeekDataAsync();
+
+    newShiftCount = 1;
+    showAddShiftModal = false;
+}
 
     private string FormatTemplateTime(TimeSpan time)
     {
