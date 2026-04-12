@@ -404,7 +404,12 @@
                                    min="1"
                                    @bind="newShiftCount" />
                         </div>
-
+                        @if (!string.IsNullOrWhiteSpace(addShiftMessage))
+{
+    <div class="alert alert-warning mt-3 mb-0">
+        @addShiftMessage
+    </div>
+}
                     </div>
 
                     <div class="modal-footer">
@@ -597,6 +602,15 @@
 
     private List<WeekTemplate> templates = new();
     private List<WeekTemplateShift> templateShifts = new();
+
+    private string? addShiftMessage;
+    private bool IsInvalidSundayShift(DateTime shiftDate, TimeOnly start, TimeOnly end)
+{
+    return shiftDate.DayOfWeek == DayOfWeek.Sunday
+        && end <= start
+        && end != TimeOnly.MinValue;
+}
+
     private async Task LoadWeekDataAsync()
     {
         employees = await Schedule.GetEmployeesAsync();
@@ -1031,6 +1045,7 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
 
     private void ShowAddShiftModal()
     {
+        addShiftMessage = null;
         newShiftDayOffset = 0;
         newShiftPosition = string.Empty;
         newShiftStart = new TimeSpan(9, 0, 0);
@@ -1042,6 +1057,7 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
 
     private void CloseAddShiftModal()
     {
+        addShiftMessage = null;
         showAddShiftModal = false;
     }
 
@@ -1051,7 +1067,7 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
         if (string.IsNullOrWhiteSpace(newShiftPosition)) return;
         if (newShiftEnd == newShiftStart)
 {
-    // allow 24-hour shift
+    // comment 
 }
 
         if (newShiftCount < 1)
@@ -1059,6 +1075,13 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
 
         var shiftDate = weekStart.AddDays(newShiftDayOffset);
         var slotGroupId = Guid.NewGuid().ToString();
+        addShiftMessage = null;
+
+if (IsInvalidSundayShift(newShiftDate, newStartTime, newEndTime))
+{
+    addShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
+    return;
+}
 
         for (int i = 0; i < newShiftCount; i++)
         {
