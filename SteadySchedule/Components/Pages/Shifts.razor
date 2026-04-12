@@ -359,6 +359,15 @@
 
     private List<Shift> shifts = new();
 
+    private string? templateShiftMessage;
+
+private bool IsInvalidSundayShift(DayOfWeek day, TimeSpan start, TimeSpan end)
+{
+    return day == DayOfWeek.Sunday
+        && end <= start
+        && end != TimeSpan.Zero;
+}
+
     protected override async Task OnInitializedAsync()
     {
         positions = await Schedule.GetPositionsAsync();
@@ -383,36 +392,44 @@
     }
 
     private async Task AddTemplateShift()
-    {
-        if (selectedTemplate is null || string.IsNullOrWhiteSpace(newTemplatePosition))
-            return;
-
-        if (newTemplateEnd == newTemplateStart)
 {
-    // allow 24-hour shift
-}
+    templateShiftMessage = null;
 
-        if (newTemplateCount < 1)
-            newTemplateCount = 1;
+    if (selectedTemplate is null || string.IsNullOrWhiteSpace(newTemplatePosition))
+        return;
 
-        await Schedule.AddWeekTemplateShiftAsync(new WeekTemplateShift
-        {
-            WeekTemplateId = selectedTemplate.Id,
-            DayOfWeek = newTemplateDay,
-            Position = newTemplatePosition.Trim(),
-            StartTime = newTemplateStart,
-            EndTime = newTemplateEnd,
-            Count = newTemplateCount
-        });
-
-        templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
-
-        newTemplatePosition = string.Empty;
-        newTemplateDay = DayOfWeek.Monday;
-        newTemplateStart = new TimeSpan(9, 0, 0);
-        newTemplateEnd = new TimeSpan(17, 0, 0);
-        newTemplateCount = 1;
+    if (newTemplateEnd == newTemplateStart)
+    {
+        // do nothing for now i might add something 
     }
+
+    if (IsInvalidSundayShift(newTemplateDay, newTemplateStart, newTemplateEnd))
+    {
+        templateShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
+        return;
+    }
+
+    if (newTemplateCount < 1)
+        newTemplateCount = 1;
+
+    await Schedule.AddWeekTemplateShiftAsync(new WeekTemplateShift
+    {
+        WeekTemplateId = selectedTemplate.Id,
+        DayOfWeek = newTemplateDay,
+        Position = newTemplatePosition.Trim(),
+        StartTime = newTemplateStart,
+        EndTime = newTemplateEnd,
+        Count = newTemplateCount
+    });
+
+    templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+
+    newTemplatePosition = string.Empty;
+    newTemplateDay = DayOfWeek.Monday;
+    newTemplateStart = new TimeSpan(9, 0, 0);
+    newTemplateEnd = new TimeSpan(17, 0, 0);
+    newTemplateCount = 1;
+}
 
     private void OnTemplateChanged(ChangeEventArgs e)
     {
@@ -420,12 +437,24 @@
             selectedTemplate = templates.FirstOrDefault(t => t.Id == id);
     }
 
-    private List<WeekTemplateShift> SelectedTemplateShifts =>
+    private int GetMondayBasedDayOrder(DayOfWeek day) => day switch
+{
+    DayOfWeek.Monday => 1,
+    DayOfWeek.Tuesday => 2,
+    DayOfWeek.Wednesday => 3,
+    DayOfWeek.Thursday => 4,
+    DayOfWeek.Friday => 5,
+    DayOfWeek.Saturday => 6,
+    DayOfWeek.Sunday => 7,
+    _ => 99
+};
+
+private List<WeekTemplateShift> SelectedTemplateShifts =>
     selectedTemplate is null
         ? new()
         : templateShifts
             .Where(s => s.WeekTemplateId == selectedTemplate.Id)
-            .OrderBy(s => s.DayOfWeek)
+            .OrderBy(s => GetMondayBasedDayOrder(s.DayOfWeek))
             .ThenBy(s => s.StartTime)
             .ToList();
 
@@ -575,33 +604,40 @@
     }
 
     private async Task SaveEditedTemplateShift()
+{
+    templateShiftMessage = null;
+
+    if (templateShiftToEdit is null)
+        return;
+
+    if (string.IsNullOrWhiteSpace(editTemplatePosition))
+        return;
+
+    if (editTemplateCount < 1)
+        editTemplateCount = 1;
+
+    if (IsInvalidSundayShift(editTemplateDay, editTemplateStart, editTemplateEnd))
     {
-        if (templateShiftToEdit is null)
-            return;
-
-        if (string.IsNullOrWhiteSpace(editTemplatePosition))
-            return;
-
-        if (editTemplateCount < 1)
-            editTemplateCount = 1;
-
-        await Schedule.UpdateWeekTemplateShiftAsync(new WeekTemplateShift
-        {
-            Id = templateShiftToEdit.Id,
-            WeekTemplateId = templateShiftToEdit.WeekTemplateId,
-            DayOfWeek = editTemplateDay,
-            Position = editTemplatePosition.Trim(),
-            StartTime = editTemplateStart,
-            EndTime = editTemplateEnd,
-            Count = editTemplateCount
-        });
-
-        templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
-
-        showEditTemplateShiftModal = false;
-        templateShiftToEdit = null;
+        templateShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
+        return;
     }
 
+    await Schedule.UpdateWeekTemplateShiftAsync(new WeekTemplateShift
+    {
+        Id = templateShiftToEdit.Id,
+        WeekTemplateId = templateShiftToEdit.WeekTemplateId,
+        DayOfWeek = editTemplateDay,
+        Position = editTemplatePosition.Trim(),
+        StartTime = editTemplateStart,
+        EndTime = editTemplateEnd,
+        Count = editTemplateCount
+    });
+
+    templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+
+    showEditTemplateShiftModal = false;
+    templateShiftToEdit = null;
+}
     private void ShowRenameTemplateModal()
     {
         if (selectedTemplate is null)
