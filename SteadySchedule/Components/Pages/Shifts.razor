@@ -129,6 +129,12 @@
                     </div>
 
                 </div>
+                @if (!string.IsNullOrWhiteSpace(templateShiftMessage))
+{
+    <div class="alert alert-warning mt-3 mb-0">
+        @templateShiftMessage
+    </div>
+}
 
             </div>
         </div>
@@ -240,6 +246,12 @@
                             <label class="form-label">Slots</label>
                             <input type="number" class="form-control" @bind="editTemplateCount" min="1" />
                         </div>
+                        @if (!string.IsNullOrWhiteSpace(templateShiftMessage))
+{
+    <div class="alert alert-warning mt-3 mb-0">
+        @templateShiftMessage
+    </div>
+}
 
                     </div>
 
