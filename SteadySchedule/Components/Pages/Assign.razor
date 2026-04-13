@@ -40,7 +40,7 @@
         </span>
     </div>
 
-    <span class="badge bg-dark">Company: @Schedule.Company.Name</span>
+        <span class="badge bg-dark">Company: @company.Name</span>
 </div>
 
 <div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
@@ -546,7 +546,8 @@
 
     private DateTime weekStart;
 
-    private WeekStatus CurrentWeekStatus => Schedule.GetWeekStatus(weekStart);
+    private WeekStatus currentWeekStatus = WeekStatus.InReview;
+    private WeekStatus CurrentWeekStatus => currentWeekStatus;
 
     private bool IsPublished => CurrentWeekStatus == WeekStatus.Published;
 
@@ -621,6 +622,11 @@
         templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
     }
 
+    private async Task RefreshWeekStatusAsync()
+    {
+        currentWeekStatus = await Schedule.GetWeekStatusAsync(weekStart);
+    }
+
     protected override async Task OnInitializedAsync()
     {
         weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
@@ -637,8 +643,8 @@
 
         selectedShift = null;
 
-        await Schedule.LoadWeekStatusFromDbAsync(weekStart);
         await LoadWeekDataAsync();
+        await RefreshWeekStatusAsync();
     }
 
     private static DateTime StartOfWeek(DateTime date, DayOfWeek startDay)
@@ -737,7 +743,7 @@
     {
         var copied = await Schedule.CopyLastPublishedWeekAsync(weekStart);
 
-        await Schedule.LoadWeekStatusFromDbAsync(weekStart);
+        await RefreshWeekStatusAsync();
         await LoadWeekDataAsync();
 
         selectedShift = null;
@@ -1310,33 +1316,33 @@ private bool IsBlockedFromAssigning(Employee e, Shift shift)
     private async Task PublishThisWeek()
     {
         await Schedule.PublishWeekAsync(weekStart);
-        await Schedule.LoadWeekStatusFromDbAsync(weekStart);
+        await RefreshWeekStatusAsync();
     }
 
     private async Task UnpublishThisWeek()
     {
         await Schedule.UnpublishWeekAsync(weekStart);
-        await Schedule.LoadWeekStatusFromDbAsync(weekStart);
+        await RefreshWeekStatusAsync();
     }
 
     private async Task GoToToday()
     {
         weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
-        await Schedule.LoadWeekStatusFromDbAsync(weekStart);
+        await RefreshWeekStatusAsync();
         await LoadWeekDataAsync();
     }
 
     private async Task PrevWeek()
     {
         weekStart = weekStart.AddDays(-7);
-        await Schedule.LoadWeekStatusFromDbAsync(weekStart);
+        await RefreshWeekStatusAsync();
         await LoadWeekDataAsync();
     }
 
     private async Task NextWeek()
     {
         weekStart = weekStart.AddDays(7);
-        await Schedule.LoadWeekStatusFromDbAsync(weekStart);
+        await RefreshWeekStatusAsync();
         await LoadWeekDataAsync();
     }
 

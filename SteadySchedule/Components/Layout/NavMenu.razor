@@ -4,7 +4,7 @@
     </div>
 </div>
 
-<input type="checkbox" id="nav-toggle" class="nav-toggle" />
+<input type="checkbox" id="nav-toggle" class="nav-toggle" @bind="navOpen" />
 
 <label for="nav-toggle" class="navbar-toggler"></label>
 
@@ -12,40 +12,49 @@
     <nav class="flex-column">
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All" @onclick="CloseMenu">
                 Dashboard
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="positions">
+            <NavLink class="nav-link" href="positions" @onclick="CloseMenu">
                 Positions
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="shifts">
+            <NavLink class="nav-link" href="shifts" @onclick="CloseMenu">
                 Shifts
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="employees">
+            <NavLink class="nav-link" href="employees" @onclick="CloseMenu">
                 Employees
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="assign">
+            <NavLink class="nav-link" href="assign" @onclick="CloseMenu">
                 Assign
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="published">
+            <NavLink class="nav-link" href="published" @onclick="CloseMenu">
                 Published Schedule
             </NavLink>
         </div>
 
     </nav>
 </div>
+
+@code {
+    private bool navOpen;
+
+    private void CloseMenu()
+    {
+        navOpen = false;
+    }
+}

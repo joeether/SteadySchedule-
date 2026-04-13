@@ -7,21 +7,12 @@ namespace SteadySchedule.Services;
 public class ScheduleService
 {
     private readonly AppDbContext _db;
-
     public ScheduleService(AppDbContext db)
     {
         _db = db;
-        WeekStatuses[SeedWeekStart] = WeekStatus.Published;
     }
-
-    public Dictionary<DateTime, WeekStatus> WeekStatuses { get; } = new();
-
-    private static readonly DateTime SeedWeekStart = StartOfWeek(DateTime.Today);
-
     public async Task PublishWeekAsync(DateTime weekStart)
     {
-        PublishWeek(weekStart);
-
         var existing = await _db.Schedules
             .FirstOrDefaultAsync(s =>
                 s.CompanyId == Company.Id &&
@@ -46,8 +37,6 @@ public class ScheduleService
 
     public async Task UnpublishWeekAsync(DateTime weekStart)
     {
-        UnpublishWeek(weekStart);
-
         var existing = await _db.Schedules
             .FirstOrDefaultAsync(s =>
                 s.CompanyId == Company.Id &&
@@ -62,6 +51,8 @@ public class ScheduleService
 
     public async Task<WeekStatus> GetWeekStatusAsync(DateTime weekStart)
     {
+        weekStart = StartOfWeek(weekStart);
+
         var existing = await _db.Schedules
             .FirstOrDefaultAsync(s =>
                 s.CompanyId == Company.Id &&
@@ -69,27 +60,12 @@ public class ScheduleService
 
         if (existing is not null)
         {
-            WeekStatuses[weekStart] = existing.IsPublished
+            return existing.IsPublished
                 ? WeekStatus.Published
                 : WeekStatus.InReview;
         }
 
-        return GetWeekStatus(weekStart);
-    }
-
-    public async Task LoadWeekStatusFromDbAsync(DateTime weekStart)
-    {
-        var existing = await _db.Schedules
-            .FirstOrDefaultAsync(s =>
-                s.CompanyId == Company.Id &&
-                s.WeekStart == weekStart);
-
-        if (existing is not null)
-        {
-            WeekStatuses[weekStart] = existing.IsPublished
-                ? WeekStatus.Published
-                : WeekStatus.InReview;
-        }
+        return WeekStatus.Draft;
     }
 
     public async Task<List<SteadySchedule.Data.Schedule>> GetPublishedSchedulesAsync()
@@ -182,69 +158,69 @@ public class ScheduleService
         return true;
     }
 
-    public List<Employee> Employees { get; } = new()
-{
-    new Employee
+    /*public List<Employee> Employees { get; } = new()
     {
-        Id = 1,
-        CompanyId = 1,
-        Name = "Amy",
-        MaxHoursPerWeek = 40,
-        PositionsQualified = "Cashier",
-        MondayAvailable = true, MondayStart = new TimeSpan(9,0,0), MondayEnd = new TimeSpan(17,0,0),
-        TuesdayAvailable = true, TuesdayStart = new TimeSpan(9,0,0), TuesdayEnd = new TimeSpan(17,0,0),
-        WednesdayAvailable = true, WednesdayStart = new TimeSpan(9,0,0), WednesdayEnd = new TimeSpan(17,0,0),
-        ThursdayAvailable = true, ThursdayStart = new TimeSpan(9,0,0), ThursdayEnd = new TimeSpan(17,0,0),
-        FridayAvailable = true, FridayStart = new TimeSpan(9,0,0), FridayEnd = new TimeSpan(17,0,0)
-    },
-    new Employee
-    {
-        Id = 2,
-        CompanyId = 1,
-        Name = "Brandon",
-        MaxHoursPerWeek = 40,
-        PositionsQualified = "Cook",
-        MondayAvailable = true, MondayStart = new TimeSpan(10,0,0), MondayEnd = new TimeSpan(18,0,0),
-        TuesdayAvailable = true, TuesdayStart = new TimeSpan(10,0,0), TuesdayEnd = new TimeSpan(18,0,0),
-        WednesdayAvailable = true, WednesdayStart = new TimeSpan(10,0,0), WednesdayEnd = new TimeSpan(18,0,0),
-        ThursdayAvailable = true, ThursdayStart = new TimeSpan(10,0,0), ThursdayEnd = new TimeSpan(18,0,0),
-        FridayAvailable = true, FridayStart = new TimeSpan(10,0,0), FridayEnd = new TimeSpan(18,0,0)
-    },
-    new Employee
-    {
-        Id = 3,
-        CompanyId = 1,
-        Name = "Carla",
-        MaxHoursPerWeek = 24,
-        PositionsQualified = "Cashier",
-        SaturdayAvailable = true, SaturdayStart = new TimeSpan(10,0,0), SaturdayEnd = new TimeSpan(16,0,0),
-        SundayAvailable = true, SundayStart = new TimeSpan(10,0,0), SundayEnd = new TimeSpan(16,0,0)
-    },
-    new Employee
-    {
-        Id = 4,
-        CompanyId = 1,
-        Name = "Derek",
-        MaxHoursPerWeek = 32,
-        PositionsQualified = "Cook,Cashier",
-        WednesdayAvailable = true, WednesdayStart = new TimeSpan(10,0,0), WednesdayEnd = new TimeSpan(20,0,0),
-        ThursdayAvailable = true, ThursdayStart = new TimeSpan(10,0,0), ThursdayEnd = new TimeSpan(20,0,0),
-        FridayAvailable = true, FridayStart = new TimeSpan(10,0,0), FridayEnd = new TimeSpan(20,0,0),
-        SaturdayAvailable = true, SaturdayStart = new TimeSpan(10,0,0), SaturdayEnd = new TimeSpan(20,0,0),
-        SundayAvailable = true, SundayStart = new TimeSpan(10,0,0), SundayEnd = new TimeSpan(20,0,0)
-    },
-    new Employee
-    {
-        Id = 5,
-        CompanyId = 1,
-        Name = "Emma",
-        MaxHoursPerWeek = 20,
-        PositionsQualified = "Cashier",
-        MondayAvailable = true, MondayStart = new TimeSpan(9,0,0), MondayEnd = new TimeSpan(13,0,0),
-        WednesdayAvailable = true, WednesdayStart = new TimeSpan(9,0,0), WednesdayEnd = new TimeSpan(13,0,0),
-        FridayAvailable = true, FridayStart = new TimeSpan(9,0,0), FridayEnd = new TimeSpan(13,0,0)
-    }
-};
+        new Employee
+        {
+            Id = 1,
+            CompanyId = 1,
+            Name = "Amy",
+            MaxHoursPerWeek = 40,
+            PositionsQualified = "Cashier",
+            MondayAvailable = true, MondayStart = new TimeSpan(9,0,0), MondayEnd = new TimeSpan(17,0,0),
+            TuesdayAvailable = true, TuesdayStart = new TimeSpan(9,0,0), TuesdayEnd = new TimeSpan(17,0,0),
+            WednesdayAvailable = true, WednesdayStart = new TimeSpan(9,0,0), WednesdayEnd = new TimeSpan(17,0,0),
+            ThursdayAvailable = true, ThursdayStart = new TimeSpan(9,0,0), ThursdayEnd = new TimeSpan(17,0,0),
+            FridayAvailable = true, FridayStart = new TimeSpan(9,0,0), FridayEnd = new TimeSpan(17,0,0)
+        },
+        new Employee
+        {
+            Id = 2,
+            CompanyId = 1,
+            Name = "Brandon",
+            MaxHoursPerWeek = 40,
+            PositionsQualified = "Cook",
+            MondayAvailable = true, MondayStart = new TimeSpan(10,0,0), MondayEnd = new TimeSpan(18,0,0),
+            TuesdayAvailable = true, TuesdayStart = new TimeSpan(10,0,0), TuesdayEnd = new TimeSpan(18,0,0),
+            WednesdayAvailable = true, WednesdayStart = new TimeSpan(10,0,0), WednesdayEnd = new TimeSpan(18,0,0),
+            ThursdayAvailable = true, ThursdayStart = new TimeSpan(10,0,0), ThursdayEnd = new TimeSpan(18,0,0),
+            FridayAvailable = true, FridayStart = new TimeSpan(10,0,0), FridayEnd = new TimeSpan(18,0,0)
+        },
+        new Employee
+        {
+            Id = 3,
+            CompanyId = 1,
+            Name = "Carla",
+            MaxHoursPerWeek = 24,
+            PositionsQualified = "Cashier",
+            SaturdayAvailable = true, SaturdayStart = new TimeSpan(10,0,0), SaturdayEnd = new TimeSpan(16,0,0),
+            SundayAvailable = true, SundayStart = new TimeSpan(10,0,0), SundayEnd = new TimeSpan(16,0,0)
+        },
+        new Employee
+        {
+            Id = 4,
+            CompanyId = 1,
+            Name = "Derek",
+            MaxHoursPerWeek = 32,
+            PositionsQualified = "Cook,Cashier",
+            WednesdayAvailable = true, WednesdayStart = new TimeSpan(10,0,0), WednesdayEnd = new TimeSpan(20,0,0),
+            ThursdayAvailable = true, ThursdayStart = new TimeSpan(10,0,0), ThursdayEnd = new TimeSpan(20,0,0),
+            FridayAvailable = true, FridayStart = new TimeSpan(10,0,0), FridayEnd = new TimeSpan(20,0,0),
+            SaturdayAvailable = true, SaturdayStart = new TimeSpan(10,0,0), SaturdayEnd = new TimeSpan(20,0,0),
+            SundayAvailable = true, SundayStart = new TimeSpan(10,0,0), SundayEnd = new TimeSpan(20,0,0)
+        },
+        new Employee
+        {
+            Id = 5,
+            CompanyId = 1,
+            Name = "Emma",
+            MaxHoursPerWeek = 20,
+            PositionsQualified = "Cashier",
+            MondayAvailable = true, MondayStart = new TimeSpan(9,0,0), MondayEnd = new TimeSpan(13,0,0),
+            WednesdayAvailable = true, WednesdayStart = new TimeSpan(9,0,0), WednesdayEnd = new TimeSpan(13,0,0),
+            FridayAvailable = true, FridayStart = new TimeSpan(9,0,0), FridayEnd = new TimeSpan(13,0,0)
+        }
+    };*/
 
     public static DateTime StartOfWeek(DateTime date)
     {
@@ -253,49 +229,8 @@ public class ScheduleService
         return date.Date.AddDays(-diff);
     }
 
-    public WeekStatus GetWeekStatus(DateTime weekStart)
-    {
-        weekStart = StartOfWeek(weekStart);
-
-        if (WeekStatuses.TryGetValue(weekStart, out var status))
-            return status;
-
-        return WeekStatus.Draft;
-    }
-
-    public void PublishWeek(DateTime weekStart)
-    {
-        weekStart = StartOfWeek(weekStart);
-        WeekStatuses[weekStart] = WeekStatus.Published;
-    }
-
-    public void UnpublishWeek(DateTime weekStart)
-    {
-        weekStart = StartOfWeek(weekStart);
-
-        // If it was ever published, unpublishing means "InReview"
-        var current = GetWeekStatus(weekStart);
-        WeekStatuses[weekStart] = current == WeekStatus.Draft
-            ? WeekStatus.Draft
-            : WeekStatus.InReview;
-    }
-
-    public void SetWeekDraft(DateTime weekStart)
-    {
-        weekStart = StartOfWeek(weekStart);
-        WeekStatuses[weekStart] = WeekStatus.Draft;
-    }
-
-    public IEnumerable<DateTime> GetPublishedWeeks()
-    {
-        return WeekStatuses
-            .Where(kvp => kvp.Value == WeekStatus.Published || kvp.Value == WeekStatus.InReview)
-            .Select(kvp => kvp.Key)
-            .OrderByDescending(d => d);
-    }
-
     // TEMP test data for development - remove before release
-    public List<WeekTemplate> WeekTemplates { get; set; } = new()
+    /*public List<WeekTemplate> WeekTemplates { get; set; } = new()
     {
         new WeekTemplate
         {
@@ -303,9 +238,9 @@ public class ScheduleService
             CompanyId = 1,
             Name = "Week A"
         }
-    };
+    };*/
     // TEMP test data for development - remove before release
-    public List<WeekTemplateShift> WeekTemplateShifts { get; set; } = new()
+    /*public List<WeekTemplateShift> WeekTemplateShifts { get; set; } = new()
     {
         new WeekTemplateShift
         {
@@ -347,9 +282,9 @@ public class ScheduleService
             EndTime = new TimeSpan(18, 0, 0),
             Count = 2
         }
-    };
+    };*/
     // TEMP test data for development - remove before release
-    public List<Shift> Shifts { get; } = new()
+    /*public List<Shift> Shifts { get; } = new()
     {
         // Monday
         new Shift { Id = 1, CompanyId = 1, Date = SeedWeekStart.AddDays(0), Position = "Cashier", StartTime = new TimeSpan(9,0,0), EndTime = new TimeSpan(13,0,0) },
@@ -385,9 +320,9 @@ public class ScheduleService
         new Shift { Id = 19, CompanyId = 1, Date = SeedWeekStart.AddDays(6), Position = "Cashier", StartTime = new TimeSpan(10,0,0), EndTime = new TimeSpan(14,0,0) },
         new Shift { Id = 20, CompanyId = 1, Date = SeedWeekStart.AddDays(6), Position = "Cashier", StartTime = new TimeSpan(10,0,0), EndTime = new TimeSpan(14,0,0) },
         new Shift { Id = 21, CompanyId = 1, Date = SeedWeekStart.AddDays(6), Position = "Cook",    StartTime = new TimeSpan(11,0,0), EndTime = new TimeSpan(19,0,0) }
-    };
+    };*/
     // TEMP test data for development - remove before release
-    public List<Assignment> Assignments { get; } = new()
+    /*public List<Assignment> Assignments { get; } = new()
     {
         new Assignment { Id = 1, ShiftId = 1,  EmployeeId = 1, ApprovedOvertime = false },
         new Assignment { Id = 2, ShiftId = 3,  EmployeeId = 2, ApprovedOvertime = false },
@@ -409,7 +344,7 @@ public class ScheduleService
 
         new Assignment { Id = 13, ShiftId = 19, EmployeeId = 3, ApprovedOvertime = false },
         new Assignment { Id = 14, ShiftId = 21, EmployeeId = 4, ApprovedOvertime = false }
-    };
+    };*/
 
     public async Task<bool> CopyLastPublishedWeekAsync(DateTime targetWeekStart)
     {
@@ -523,7 +458,6 @@ public class ScheduleService
             await _db.SaveChangesAsync();
         }
 
-        SetWeekDraft(targetWeekStart);
         return true;
     }
 
