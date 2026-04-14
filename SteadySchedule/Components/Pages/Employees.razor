@@ -249,14 +249,18 @@
 
             @if (editingEmployee == null)
             {
-                <button class="btn btn-primary" @onclick="AddEmployee">
-                    Add Employee
+                <button class="btn btn-primary"
+                        @onclick="AddEmployee"
+                        disabled="@isBusy">
+                    @(isBusy ? "Working..." : "Add Employee")
                 </button>
             }
             else
             {
-                <button class="btn btn-success" @onclick="SaveEmployee">
-                    Save Changes
+                <button class="btn btn-success"
+                        @onclick="SaveEmployee"
+                        disabled="@isBusy">
+                    @(isBusy ? "Saving..." : "Save Changes")
                 </button>
             }
 
@@ -295,12 +299,14 @@
 
                         <div class="d-flex gap-2 ms-auto">
                             <button class="btn btn-secondary btn-sm"
-                                    @onclick="() => StartEdit(e)">
+                                    @onclick="() => StartEdit(e)"
+                                    disabled="@isBusy">
                                 Edit
                             </button>
 
                             <button class="btn btn-danger btn-sm"
-                                    @onclick="() => DeleteEmployee(e)">
+                                    @onclick="() => DeleteEmployee(e)"
+                                    disabled="@isBusy">
                                 Delete
                             </button>
                         </div>
@@ -327,9 +333,29 @@
 
     private Employee newEmployee = new()
     {
-        CompanyId = 1,
         MaxHoursPerWeek = 40
     };
+
+    private bool isBusy;
+
+    private async Task RunBusy(Func<Task> action)
+    {
+        if (isBusy)
+            return;
+
+        isBusy = true;
+        StateHasChanged();
+
+        try
+        {
+            await action();
+        }
+        finally
+        {
+            isBusy = false;
+            StateHasChanged();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -339,29 +365,43 @@
 
     private async Task AddEmployee()
     {
-        NormalizeAvailability(newEmployee);
+        await RunBusy(async () =>
+        {
+            NormalizeAvailability(newEmployee);
 
-        newEmployee.CompanyId = 1;
-        newEmployee.PositionsQualified = string.Join(", ", selectedPositions);
+            newEmployee.CompanyId = Schedule.Company.Id;
+            newEmployee.PositionsQualified = string.Join(", ", selectedPositions);
 
-        await Schedule.AddEmployeeAsync(newEmployee);
+            await Schedule.AddEmployeeAsync(newEmployee);
 
-        employees = await Schedule.GetEmployeesAsync();
-        ClearForm();
+            employees = await Schedule.GetEmployeesAsync();
+            ClearForm();
+        });
     }
 
     private async Task DeleteEmployee(Employee employee)
     {
-        var deleted = await Schedule.DeleteEmployeeAsync(employee.Id);
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"Delete {employee.Name}?"
+        );
 
-        if (!deleted)
-        {
-            deleteMessage = $"{employee.Name} cannot be deleted because they are assigned to one or more shifts.";
+        if (!confirmed)
             return;
-        }
 
-        employees = await Schedule.GetEmployeesAsync();
-        deleteMessage = null;
+        await RunBusy(async () =>
+        {
+            var deleted = await Schedule.DeleteEmployeeAsync(employee.Id);
+
+            if (!deleted)
+            {
+                deleteMessage = $"{employee.Name} cannot be deleted because they are assigned to one or more shifts.";
+                return;
+            }
+
+            employees = await Schedule.GetEmployeesAsync();
+            deleteMessage = null;
+        });
     }
 
     private HashSet<string> selectedPositions = new();
@@ -442,25 +482,27 @@
 
     private async Task SaveEmployee()
     {
-        if (editingEmployee == null)
-            return;
+        await RunBusy(async () =>
+        {
+            if (editingEmployee == null)
+                return;
 
-        NormalizeAvailability(newEmployee);
-        newEmployee.PositionsQualified = string.Join(", ", selectedPositions);
+            NormalizeAvailability(newEmployee);
+            newEmployee.PositionsQualified = string.Join(", ", selectedPositions);
 
-        await Schedule.UpdateEmployeeAsync(newEmployee);
+            await Schedule.UpdateEmployeeAsync(newEmployee);
 
-        employees = await Schedule.GetEmployeesAsync();
+            employees = await Schedule.GetEmployeesAsync();
 
-        editingEmployee = null;
-        ClearForm();
+            editingEmployee = null;
+            ClearForm();
+        });
     }
 
     void ClearForm()
     {
         newEmployee = new Employee
         {
-            CompanyId = 1,
             MaxHoursPerWeek = 40
         };
 

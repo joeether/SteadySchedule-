@@ -15,7 +15,10 @@
 <div class="mb-3">
     <label class="form-label">Select Week</label>
 
-    <select class="form-select" value="@selectedWeek.ToString("yyyy-MM-dd")" @onchange="OnWeekChanged">
+    <select class="form-select"
+            value="@selectedWeek.ToString("yyyy-MM-dd")"
+            @onchange="OnWeekChanged"
+            disabled="@isBusy">
         @foreach (var w in publishedWeeks)
         {
             <option value="@w.ToString("yyyy-MM-dd")">@w.ToString("MMM d, yyyy")</option>
@@ -44,8 +47,9 @@
         @if (currentStatus == WeekStatus.Published)
         {
             <button class="btn btn-sm btn-danger"
-                    @onclick="UnpublishWeek">
-                Edit Schedule
+                    @onclick="UnpublishWeek"
+                    disabled="@isBusy">
+                @(isBusy ? "Working..." : "Edit Schedule")
             </button>
         }
 
@@ -123,18 +127,51 @@
 
     private WeekStatus currentStatus = WeekStatus.Draft;
 
+    private bool isBusy;
+
+    private async Task RunBusy(Func<Task> action)
+    {
+        if (isBusy)
+            return;
+
+        isBusy = true;
+        StateHasChanged();
+
+        try
+        {
+            await action();
+        }
+        finally
+        {
+            isBusy = false;
+            StateHasChanged();
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         publishedWeeks = (await Schedule.GetPublishedSchedulesAsync())
-            .Select(s => s.WeekStart)
+            .Select(s => s.WeekStart.Date)
+            .Distinct()
             .OrderByDescending(d => d)
             .ToList();
 
+        var currentWeek = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
+
         if (publishedWeeks.Any())
         {
-            selectedWeek = publishedWeeks.First();
+            selectedWeek = publishedWeeks.Contains(currentWeek)
+                ? currentWeek
+                : publishedWeeks.First();
+
             await LoadSelectedWeekDataAsync();
         }
+    }
+
+    private static DateTime StartOfWeek(DateTime date, DayOfWeek startDay)
+    {
+        int diff = (7 + (date.DayOfWeek - startDay)) % 7;
+        return date.Date.AddDays(-diff);
     }
 
     private async Task LoadSelectedWeekDataAsync()
@@ -147,18 +184,24 @@
 
     private async Task UnpublishWeek()
     {
-        await Schedule.UnpublishWeekAsync(selectedWeek);
+        await RunBusy(async () =>
+        {
+            await Schedule.UnpublishWeekAsync(selectedWeek);
 
-        var week = selectedWeek.ToString("yyyy-MM-dd");
-        Nav.NavigateTo($"/assign?week={week}");
+            var week = selectedWeek.ToString("yyyy-MM-dd");
+            Nav.NavigateTo($"/assign?week={week}");
+        });
     }
 
     private async Task OnWeekChanged(ChangeEventArgs e)
     {
-        if (DateTime.TryParse(e.Value?.ToString(), out var week))
+        await RunBusy(async () =>
         {
-            selectedWeek = week;
-            await LoadSelectedWeekDataAsync();
-        }
+            if (DateTime.TryParse(e.Value?.ToString(), out var week))
+            {
+                selectedWeek = week;
+                await LoadSelectedWeekDataAsync();
+            }
+        });
     }
 }

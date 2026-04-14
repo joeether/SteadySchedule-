@@ -2,6 +2,7 @@
 @using SteadySchedule.Services
 @using SteadySchedule.Domain
 @inject ScheduleService Schedule
+@inject IJSRuntime JS
 
 <PageTitle>Positions</PageTitle>
 
@@ -28,8 +29,9 @@
                    @bind="newPosition" />
 
             <button class="btn btn-dark mt-3"
-                    @onclick="AddPosition">
-                Add Position
+                    @onclick="AddPosition"
+                    disabled="@isAdding">
+                @(isAdding ? "Adding..." : "Add Position")
             </button>
 
         </div>
@@ -53,7 +55,8 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             @p.Name
                             <button class="btn btn-sm btn-outline-danger"
-                                    @onclick="() => DeletePosition(p.Name)">
+                                    @onclick="() => DeletePosition(p.Name)"
+                                    disabled="@isDeleting">
                                 Delete
                             </button>
                         </li>
@@ -69,6 +72,8 @@
     private List<Position> positions = new();
     private string newPosition = string.Empty;
     private string? message;
+    private bool isAdding = false;
+    private bool isDeleting = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -82,35 +87,64 @@
 
     private async Task AddPosition()
     {
-        if (string.IsNullOrWhiteSpace(newPosition))
+        if (isAdding)
             return;
 
-        var trimmed = newPosition.Trim();
+        isAdding = true;
 
-        if (positions.Any(p => string.Equals(p.Name, trimmed, StringComparison.OrdinalIgnoreCase)))
+        try
         {
-            message = "Position already exists.";
-            return;
+            if (string.IsNullOrWhiteSpace(newPosition))
+                return;
+
+            var trimmed = newPosition.Trim();
+
+            if (positions.Any(p => string.Equals(p.Name, trimmed, StringComparison.OrdinalIgnoreCase)))
+            {
+                message = "Position already exists.";
+                return;
+            }
+
+            await Schedule.AddPositionAsync(trimmed);
+            newPosition = string.Empty;
+            message = null;
+
+            await LoadPositionsAsync();
         }
-
-        await Schedule.AddPositionAsync(trimmed);
-        newPosition = string.Empty;
-        message = null;
-
-        await LoadPositionsAsync();
+        finally
+        {
+            isAdding = false;
+        }
     }
 
     private async Task DeletePosition(string position)
     {
-        var deleted = await Schedule.DeletePositionAsync(position);
-
-        if (!deleted)
-        {
-            message = $"Cannot delete '{position}' because it is used by one or more shifts, or it does not exist.";
+        if (isDeleting)
             return;
-        }
 
-        message = null;
-        await LoadPositionsAsync();
+        var confirmed = await JS.InvokeAsync<bool>("confirm", $"Delete '{position}'?");
+
+        if (!confirmed)
+            return;
+
+        isDeleting = true;
+
+        try
+        {
+            var deleted = await Schedule.DeletePositionAsync(position);
+
+            if (!deleted)
+            {
+                message = $"Cannot delete '{position}' because it is used by one or more shifts, or it does not exist.";
+                return;
+            }
+
+            message = null;
+            await LoadPositionsAsync();
+        }
+        finally
+        {
+            isDeleting = false;
+        }
     }
 }

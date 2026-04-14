@@ -2,719 +2,826 @@
 @using SteadySchedule.Domain
 @using SteadySchedule.Services
 @inject ScheduleService Schedule
+@inject IJSRuntime JS
 
 <PageTitle>Shifts</PageTitle>
 
 <div class="container mt-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0">Shifts</h2>
-        <span class="badge bg-dark">Company: @Schedule.Company.Name</span>
-    </div>
+	<div class="d-flex justify-content-between align-items-center mb-4">
+		<h2 class="fw-bold mb-0">Shifts</h2>
+		<span class="badge bg-dark">Company: @Schedule.Company.Name</span>
+	</div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-header fw-semibold">
-            Create Template
-        </div>
-        <div class="card-body">
+	<div class="card shadow-sm mb-4">
+		<div class="card-header fw-semibold">
+			Create Template
+		</div>
+		<div class="card-body">
 
-            <div class="row g-3 align-items-end">
-                <div class="col-md-8">
-                    <label class="form-label">Template Name</label>
-                    <input class="form-control"
-                           @bind="newTemplateName"
-                           placeholder="Week A" />
-                </div>
+			<div class="row g-3 align-items-end">
+				<div class="col-md-8">
+					<label class="form-label">Template Name</label>
+					<input class="form-control"
+						   @bind="newTemplateName"
+						   placeholder="Week A" />
+				</div>
 
-                <div class="col-md-4">
-                    <button class="btn btn-dark w-100" @onclick="AddTemplate">
-                        Add Template
-                    </button>
-                </div>
-            </div>
+				<div class="col-md-4">
+					<button class="btn btn-dark w-100"
+							@onclick="AddTemplate"
+							disabled="@isBusy">
+						@(isBusy ? "Working..." : "Add Template")
+					</button>
+				</div>
+			</div>
 
-            <div class="mt-3">
-                <label class="form-label">Select Template</label>
+			<div class="mt-3">
+				<label class="form-label">Select Template</label>
 
-                <select class="form-select" @onchange="OnTemplateChanged">
-                    @if (!templates.Any())
-                    {
-                        <option value="">No templates yet</option>
-                    }
-                    else
-                    {
-                        @foreach (var t in templates)
-                        {
-                            <option value="@t.Id" selected="@(selectedTemplate?.Id == t.Id)">
-                                @t.Name
-                            </option>
-                        }
-                    }
-                </select>
-            </div>
-            @if (selectedTemplate is not null)
-            {
-                <div class="mt-3 d-flex gap-2">
-                    <button class="btn btn-outline-secondary btn-sm" @onclick="ShowRenameTemplateModal">
-                        Rename Template
-                    </button>
+				<select class="form-select" @onchange="OnTemplateChanged">
+					@if (!templates.Any())
+					{
+						<option value="">No templates yet</option>
+					}
+					else
+					{
+						@foreach (var t in templates)
+						{
+							<option value="@t.Id" selected="@(selectedTemplate?.Id == t.Id)">
+								@t.Name
+							</option>
+						}
+					}
+				</select>
+			</div>
+			@if (selectedTemplate is not null)
+			{
+				<div class="mt-3 d-flex gap-2">
+					<button class="btn btn-outline-secondary btn-sm"
+							@onclick="ShowRenameTemplateModal"
+							disabled="@isBusy">
+						Rename Template
+					</button>
 
-                    <button class="btn btn-outline-danger btn-sm" @onclick="ShowDeleteTemplateModal">
-                        Delete Template
-                    </button>
-                </div>
-            }
-        </div>
-    </div>
+					<button class="btn btn-outline-danger btn-sm"
+							@onclick="ShowDeleteTemplateModal"
+							disabled="@isBusy">
+						Delete Template
+					</button>
+				</div>
+			}
+		</div>
+	</div>
 
-    @if (selectedTemplate is not null)
-    {
-        <div class="card shadow-sm mb-4">
-            <div class="card-header fw-semibold">
-                Add Shift to @selectedTemplate.Name
-            </div>
-            <div class="card-body">
+	@if (selectedTemplate is not null)
+	{
+		<div class="card shadow-sm mb-4">
+			<div class="card-header fw-semibold">
+				Add Shift to @selectedTemplate.Name
+			</div>
+			<div class="card-body">
 
-                <div class="row g-3">
+				<div class="row g-3">
 
-                    <div class="col-md-2">
-                        <label class="form-label">Day</label>
-                        <select class="form-select" @bind="newTemplateDay">
-                            <option value="@DayOfWeek.Monday">Monday</option>
-                            <option value="@DayOfWeek.Tuesday">Tuesday</option>
-                            <option value="@DayOfWeek.Wednesday">Wednesday</option>
-                            <option value="@DayOfWeek.Thursday">Thursday</option>
-                            <option value="@DayOfWeek.Friday">Friday</option>
-                            <option value="@DayOfWeek.Saturday">Saturday</option>
-                            <option value="@DayOfWeek.Sunday">Sunday</option>
-                        </select>
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">Day</label>
+						<select class="form-select" @bind="newTemplateDay">
+							<option value="@DayOfWeek.Monday">Monday</option>
+							<option value="@DayOfWeek.Tuesday">Tuesday</option>
+							<option value="@DayOfWeek.Wednesday">Wednesday</option>
+							<option value="@DayOfWeek.Thursday">Thursday</option>
+							<option value="@DayOfWeek.Friday">Friday</option>
+							<option value="@DayOfWeek.Saturday">Saturday</option>
+							<option value="@DayOfWeek.Sunday">Sunday</option>
+						</select>
+					</div>
 
-                    <div class="col-md-3">
-                        <label class="form-label">Position</label>
-                        <select class="form-select" @bind="newTemplatePosition">
-                            <option value="">Select Position</option>
-                            @foreach (var p in positions.OrderBy(p => p.Name))
-                            {
-                                <option value="@p.Name">@p.Name</option>
-                            }
-                        </select>
-                    </div>
+					<div class="col-md-3">
+						<label class="form-label">Position</label>
+						<select class="form-select" @bind="newTemplatePosition">
+							<option value="">Select Position</option>
+							@foreach (var p in positions.OrderBy(p => p.Name))
+							{
+								<option value="@p.Name">@p.Name</option>
+							}
+						</select>
+					</div>
 
-                    <div class="col-md-2">
-                        <label class="form-label">Start Time</label>
-                        <input type="time"
-                               class="form-control"
-                               value="@FormatTime(newTemplateStart)"
-                               @onchange="e => newTemplateStart = ParseTimeSpan(e.Value?.ToString()) ?? TimeSpan.Zero" />
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">Start Time</label>
+						<input type="time"
+							   class="form-control"
+							   value="@FormatTime(newTemplateStart)"
+							   @onchange="e => newTemplateStart = ParseTimeSpan(e.Value?.ToString()) ?? TimeSpan.Zero" />
+					</div>
 
-                    <div class="col-md-2">
-                        <label class="form-label">End Time</label>
-                        <input type="time"
-                               class="form-control"
-                               value="@FormatTime(newTemplateEnd)"
-                               @onchange="e => newTemplateEnd = ParseTimeSpan(e.Value?.ToString()) ?? TimeSpan.Zero" />
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">End Time</label>
+						<input type="time"
+							   class="form-control"
+							   value="@FormatTime(newTemplateEnd)"
+							   @onchange="e => newTemplateEnd = ParseTimeSpan(e.Value?.ToString()) ?? TimeSpan.Zero" />
+					</div>
 
-                    <div class="col-md-1">
-                        <label class="form-label">Slots</label>
-                        <input type="number" class="form-control" @bind="newTemplateCount" min="1" />
-                    </div>
+					<div class="col-md-1">
+						<label class="form-label">Slots</label>
+						<input type="number" class="form-control" @bind="newTemplateCount" min="1" />
+					</div>
 
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button class="btn btn-dark w-100" @onclick="AddTemplateShift">
-                            Add Shift
-                        </button>
-                    </div>
+					<div class="col-md-2 d-flex align-items-end">
+						<button class="btn btn-dark w-100"
+								@onclick="AddTemplateShift"
+								disabled="@isBusy">
+							@(isBusy ? "Working..." : "Add Shift")
+						</button>
+					</div>
 
-                </div>
-                @if (!string.IsNullOrWhiteSpace(templateShiftMessage))
-{
-    <div class="alert alert-warning mt-3 mb-0">
-        @templateShiftMessage
-    </div>
-}
+				</div>
+				@if (!string.IsNullOrWhiteSpace(templateShiftMessage))
+				{
+					<div class="alert alert-warning mt-3 mb-0">
+						@templateShiftMessage
+					</div>
+				}
 
-            </div>
-        </div>
+			</div>
+		</div>
 
-        <div class="card shadow-sm">
-            <div class="card-header fw-semibold">
-                @selectedTemplate.Name Shifts
-            </div>
+		<div class="card shadow-sm">
+			<div class="card-header fw-semibold">
+				@selectedTemplate.Name Shifts
+			</div>
 
-            <div class="card-body p-0">
-                @if (!SelectedTemplateShifts.Any())
-                {
-                    <div class="p-3 text-muted">
-                        No shifts in this template yet.
-                    </div>
-                }
-                else
-                {
-                    <ul class="list-group list-group-flush">
-                        @foreach (var s in SelectedTemplateShifts)
-                        {
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
+			<div class="card-body p-0">
+				@if (!SelectedTemplateShifts.Any())
+				{
+					<div class="p-3 text-muted">
+						No shifts in this template yet.
+					</div>
+				}
+				else
+				{
+					<ul class="list-group list-group-flush">
+						@foreach (var s in SelectedTemplateShifts)
+						{
+							<li class="list-group-item d-flex justify-content-between align-items-center">
 
-                                <div>
-                                    <div class="fw-semibold">
-                                        @s.DayOfWeek - @s.Position (@s.Count slot@(s.Count == 1 ? "" : "s"))
-                                    </div>
-                                    <small>
-                                        @s.StartTime.ToString(@"hh\:mm")
-                                        - @s.EndTime.ToString(@"hh\:mm")
-                                    </small>
-                                </div>
+								<div>
+									<div class="fw-semibold">
+										@s.DayOfWeek - @s.Position (@s.Count slot@(s.Count == 1 ? "" : "s"))
+									</div>
+									<small>
+										@s.StartTime.ToString(@"hh\:mm")
+										- @s.EndTime.ToString(@"hh\:mm")
+									</small>
+								</div>
 
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-outline-secondary"
-                                            @onclick="() => ShowEditTemplateShiftModal(s)">
-                                        Edit
-                                    </button>
+								<div class="d-flex gap-2">
+									<button class="btn btn-sm btn-outline-secondary"
+											@onclick="() => ShowEditTemplateShiftModal(s)"
+											disabled="@isBusy">
+										Edit
+									</button>
 
-                                    <button class="btn btn-sm btn-outline-danger"
-                                            @onclick="() => DeleteTemplateShift(s)">
-                                        Delete
-                                    </button>
-                                </div>
+									<button class="btn btn-sm btn-outline-danger"
+											@onclick="() => DeleteTemplateShift(s)"
+											disabled="@isBusy">
+										Delete
+									</button>
+								</div>
 
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
-        </div>
-    }
-    @if (showEditTemplateShiftModal && templateShiftToEdit is not null)
-    {
-        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,.5);">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
+							</li>
+						}
+					</ul>
+				}
+			</div>
+		</div>
+	}
+	@if (showEditTemplateShiftModal && templateShiftToEdit is not null)
+	{
+		<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,.5);">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
 
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Shift</h5>
-                        <button type="button" class="btn-close" @onclick="CloseEditTemplateShiftModal"></button>
-                    </div>
+					<div class="modal-header">
+						<h5 class="modal-title">Edit Shift</h5>
+						<button type="button" class="btn-close" @onclick="CloseEditTemplateShiftModal"></button>
+					</div>
 
-                    <div class="modal-body">
+					<div class="modal-body">
 
-                        <div class="mb-2">
-                            <label class="form-label">Day</label>
-                            <select class="form-select" @bind="editTemplateDay">
-                                <option value="@DayOfWeek.Monday">Monday</option>
-                                <option value="@DayOfWeek.Tuesday">Tuesday</option>
-                                <option value="@DayOfWeek.Wednesday">Wednesday</option>
-                                <option value="@DayOfWeek.Thursday">Thursday</option>
-                                <option value="@DayOfWeek.Friday">Friday</option>
-                                <option value="@DayOfWeek.Saturday">Saturday</option>
-                                <option value="@DayOfWeek.Sunday">Sunday</option>
-                            </select>
-                        </div>
+						<div class="mb-2">
+							<label class="form-label">Day</label>
+							<select class="form-select" @bind="editTemplateDay">
+								<option value="@DayOfWeek.Monday">Monday</option>
+								<option value="@DayOfWeek.Tuesday">Tuesday</option>
+								<option value="@DayOfWeek.Wednesday">Wednesday</option>
+								<option value="@DayOfWeek.Thursday">Thursday</option>
+								<option value="@DayOfWeek.Friday">Friday</option>
+								<option value="@DayOfWeek.Saturday">Saturday</option>
+								<option value="@DayOfWeek.Sunday">Sunday</option>
+							</select>
+						</div>
 
-                        <div class="mb-2">
-                            <label class="form-label">Position</label>
-                            <select class="form-select" @bind="editTemplatePosition">
-                                <option value="">Select Position</option>
-                                @foreach (var p in positions.OrderBy(p => p.Name))
-                                {
-                                    <option value="@p.Name">@p.Name</option>
-                                }
-                            </select>
-                        </div>
+						<div class="mb-2">
+							<label class="form-label">Position</label>
+							<select class="form-select" @bind="editTemplatePosition">
+								<option value="">Select Position</option>
+								@foreach (var p in positions.OrderBy(p => p.Name))
+								{
+									<option value="@p.Name">@p.Name</option>
+								}
+							</select>
+						</div>
 
-                        <div class="row g-2">
-                            <div class="col">
-                                <label class="form-label">Start Time</label>
-                                <input type="time"
-                                       class="form-control"
-                                       value="@FormatTime(editTemplateStart)"
-                                       @onchange="e => editTemplateStart = ParseTimeSpan(e.Value?.ToString()) ?? TimeSpan.Zero" />
-                            </div>
+						<div class="row g-2">
+							<div class="col">
+								<label class="form-label">Start Time</label>
+								<input type="time"
+									   class="form-control"
+									   value="@FormatTime(editTemplateStart)"
+									   @onchange="e => editTemplateStart = ParseTimeSpan(e.Value?.ToString()) ?? TimeSpan.Zero" />
+							</div>
 
-                            <div class="col">
-                                <label class="form-label">End Time</label>
-                                <input type="time"
-                                       class="form-control"
-                                       value="@FormatTime(editTemplateEnd)"
-                                       @onchange="e => editTemplateEnd = ParseTimeSpan(e.Value?.ToString()) ?? TimeSpan.Zero" />
-                            </div>
-                        </div>
+							<div class="col">
+								<label class="form-label">End Time</label>
+								<input type="time"
+									   class="form-control"
+									   value="@FormatTime(editTemplateEnd)"
+									   @onchange="e => editTemplateEnd = ParseTimeSpan(e.Value?.ToString()) ?? TimeSpan.Zero" />
+							</div>
+						</div>
 
-                        <div class="mt-2">
-                            <label class="form-label">Slots</label>
-                            <input type="number" class="form-control" @bind="editTemplateCount" min="1" />
-                        </div>
-                        @if (!string.IsNullOrWhiteSpace(templateShiftMessage))
-{
-    <div class="alert alert-warning mt-3 mb-0">
-        @templateShiftMessage
-    </div>
-}
+						<div class="mt-2">
+							<label class="form-label">Slots</label>
+							<input type="number" class="form-control" @bind="editTemplateCount" min="1" />
+						</div>
+						@if (!string.IsNullOrWhiteSpace(templateShiftMessage))
+						{
+							<div class="alert alert-warning mt-3 mb-0">
+								@templateShiftMessage
+							</div>
+						}
 
-                    </div>
+					</div>
 
-                    <div class="modal-footer">
-                        <button class="btn btn-outline-secondary" @onclick="CloseEditTemplateShiftModal">Cancel</button>
-                        <button class="btn btn-dark" @onclick="SaveEditedTemplateShift">Save</button>
-                    </div>
+					<div class="modal-footer">
+						<button class="btn btn-outline-secondary"
+								@onclick="CloseEditTemplateShiftModal"
+								disabled="@isBusy">
+							Cancel
+						</button>
+						<button class="btn btn-dark"
+								@onclick="SaveEditedTemplateShift"
+								disabled="@isBusy">
+							@(isBusy ? "Saving..." : "Save")
+						</button>
+					</div>
 
-                </div>
-            </div>
-        </div>
-    }
+				</div>
+			</div>
+		</div>
+	}
 
-    @if (showRenameTemplateModal && selectedTemplate is not null)
-    {
-        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,.5);">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
+	@if (showRenameTemplateModal && selectedTemplate is not null)
+	{
+		<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,.5);">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
 
-                    <div class="modal-header">
-                        <h5 class="modal-title">Rename Template</h5>
-                        <button type="button" class="btn-close" @onclick="CloseRenameTemplateModal"></button>
-                    </div>
+					<div class="modal-header">
+						<h5 class="modal-title">Rename Template</h5>
+						<button type="button" class="btn-close" @onclick="CloseRenameTemplateModal"></button>
+					</div>
 
-                    <div class="modal-body">
-                        <label class="form-label">Template Name</label>
-                        <input class="form-control" @bind="editTemplateName" />
-                    </div>
+					<div class="modal-body">
+						<label class="form-label">Template Name</label>
+						<input class="form-control" @bind="editTemplateName" />
+					</div>
 
-                    <div class="modal-footer">
-                        <button class="btn btn-outline-secondary" @onclick="CloseRenameTemplateModal">Cancel</button>
-                        <button class="btn btn-dark" @onclick="SaveTemplateRename">Save</button>
-                    </div>
+					<div class="modal-footer">
+						<button class="btn btn-outline-secondary"
+								@onclick="CloseRenameTemplateModal"
+								disabled="@isBusy">
+							Cancel
+						</button>
+						<button class="btn btn-dark"
+								@onclick="SaveTemplateRename"
+								disabled="@isBusy">
+							@(isBusy ? "Saving..." : "Save")
+						</button>
+					</div>
 
-                </div>
-            </div>
-        </div>
-    }
+				</div>
+			</div>
+		</div>
+	}
 
-    @if (showDeleteTemplateModal && selectedTemplate is not null)
-    {
-        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,.5);">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
+	@if (showDeleteTemplateModal && selectedTemplate is not null)
+	{
+		<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,.5);">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
 
-                    <div class="modal-header">
-                        <h5 class="modal-title">Delete Template</h5>
-                        <button type="button" class="btn-close" @onclick="CloseDeleteTemplateModal"></button>
-                    </div>
+					<div class="modal-header">
+						<h5 class="modal-title">Delete Template</h5>
+						<button type="button" class="btn-close" @onclick="CloseDeleteTemplateModal"></button>
+					</div>
 
-                    <div class="modal-body">
-                        <p class="mb-2">
-                            Are you sure you want to delete <strong>@selectedTemplate.Name</strong>?
-                        </p>
-                        <div class="alert alert-warning mb-0">
-                            This will also delete all shifts in this template.
-                        </div>
-                    </div>
+					<div class="modal-body">
+						<p class="mb-2">
+							Are you sure you want to delete <strong>@selectedTemplate.Name</strong>?
+						</p>
+						<div class="alert alert-warning mb-0">
+							This will also delete all shifts in this template.
+						</div>
+					</div>
 
-                    <div class="modal-footer">
-                        <button class="btn btn-outline-secondary" @onclick="CloseDeleteTemplateModal">Cancel</button>
-                        <button class="btn btn-danger" @onclick="DeleteSelectedTemplate">Delete Template</button>
-                    </div>
+					<div class="modal-footer">
+						<button class="btn btn-outline-secondary"
+								@onclick="CloseDeleteTemplateModal"
+								disabled="@isBusy">
+							Cancel
+						</button>
+						<button class="btn btn-danger"
+								@onclick="DeleteSelectedTemplate"
+								disabled="@isBusy">
+							@(isBusy ? "Deleting..." : "Delete Template")
+						</button>
+					</div>
 
-                </div>
-            </div>
-        </div>
-    }
+				</div>
+			</div>
+		</div>
+	}
 
 </div>
 
 @code {
 
-    private Shift newShift = new()
-    {
-        CompanyId = 1
-    };
-
-    private List<Position> positions = new();
-
-    private string? shiftDeleteMessage;
-    private string? copyWeekMessage;
-
-    private DateTime newShiftDate = DateTime.Today;
-
-    private DateTime copyFromWeekStart = DateTime.Today;
-    private DateTime copyToWeekStart = DateTime.Today.AddDays(7);
-
-    // UI-only fields
-    private TimeOnly newStartTime = new(9, 0);
-    private TimeOnly newEndTime = new(17, 0);
-
-    private List<WeekTemplate> templates = new();
-    private List<WeekTemplateShift> templateShifts = new();
-
-    private WeekTemplate? selectedTemplate;
-    private string newTemplateName = string.Empty;
-
-    private DayOfWeek newTemplateDay = DayOfWeek.Monday;
-    private string newTemplatePosition = string.Empty;
-    private TimeSpan newTemplateStart = new(9, 0, 0);
-    private TimeSpan newTemplateEnd = new(17, 0, 0);
-    private int newTemplateCount = 1;
-
-    private bool showEditTemplateShiftModal = false;
-    private WeekTemplateShift? templateShiftToEdit;
-
-    private DayOfWeek editTemplateDay;
-    private string editTemplatePosition = string.Empty;
-    private TimeSpan editTemplateStart = new(9, 0, 0);
-    private TimeSpan editTemplateEnd = new(17, 0, 0);
-    private int editTemplateCount = 1;
-
-    private bool showRenameTemplateModal = false;
-    private bool showDeleteTemplateModal = false;
-    private string editTemplateName = string.Empty;
-
-    private List<Shift> shifts = new();
-
-    private string? templateShiftMessage;
-
-private bool IsInvalidSundayShift(DayOfWeek day, TimeSpan start, TimeSpan end)
-{
-    return day == DayOfWeek.Sunday
-        && end <= start
-        && end != TimeSpan.Zero;
-}
-
-    protected override async Task OnInitializedAsync()
-    {
-        positions = await Schedule.GetPositionsAsync();
-        templates = await Schedule.GetWeekTemplatesAsync();
-        templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
-
-        shifts = await Schedule.GetShiftsAsync();
-
-        if (templates.Any())
-            selectedTemplate = templates.First();
-    }
-
-    private async Task AddTemplate()
-    {
-        if (string.IsNullOrWhiteSpace(newTemplateName))
-            return;
-
-        var template = await Schedule.AddWeekTemplateAsync(newTemplateName);
-        templates = await Schedule.GetWeekTemplatesAsync();
-        selectedTemplate = template;
-        newTemplateName = string.Empty;
-    }
-
-    private async Task AddTemplateShift()
-{
-    templateShiftMessage = null;
-
-    if (selectedTemplate is null || string.IsNullOrWhiteSpace(newTemplatePosition))
-        return;
-
-    if (newTemplateEnd == newTemplateStart)
-    {
-        // do nothing for now i might add something 
-    }
-
-    if (IsInvalidSundayShift(newTemplateDay, newTemplateStart, newTemplateEnd))
-    {
-        templateShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
-        return;
-    }
-
-    if (newTemplateCount < 1)
-        newTemplateCount = 1;
-
-    await Schedule.AddWeekTemplateShiftAsync(new WeekTemplateShift
-    {
-        WeekTemplateId = selectedTemplate.Id,
-        DayOfWeek = newTemplateDay,
-        Position = newTemplatePosition.Trim(),
-        StartTime = newTemplateStart,
-        EndTime = newTemplateEnd,
-        Count = newTemplateCount
-    });
-
-    templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
-
-    newTemplatePosition = string.Empty;
-    newTemplateDay = DayOfWeek.Monday;
-    newTemplateStart = new TimeSpan(9, 0, 0);
-    newTemplateEnd = new TimeSpan(17, 0, 0);
-    newTemplateCount = 1;
-}
-
-    private void OnTemplateChanged(ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out var id))
-            selectedTemplate = templates.FirstOrDefault(t => t.Id == id);
-    }
-
-    private int GetMondayBasedDayOrder(DayOfWeek day) => day switch
-{
-    DayOfWeek.Monday => 1,
-    DayOfWeek.Tuesday => 2,
-    DayOfWeek.Wednesday => 3,
-    DayOfWeek.Thursday => 4,
-    DayOfWeek.Friday => 5,
-    DayOfWeek.Saturday => 6,
-    DayOfWeek.Sunday => 7,
-    _ => 99
-};
-
-private List<WeekTemplateShift> SelectedTemplateShifts =>
-    selectedTemplate is null
-        ? new()
-        : templateShifts
-            .Where(s => s.WeekTemplateId == selectedTemplate.Id)
-            .OrderBy(s => GetMondayBasedDayOrder(s.DayOfWeek))
-            .ThenBy(s => s.StartTime)
-            .ToList();
-
-    private async Task DeleteTemplateShift(WeekTemplateShift shift)
-    {
-        await Schedule.DeleteWeekTemplateShiftAsync(shift.Id);
-        templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
-    }
-
-    private string FormatTime(TimeSpan time)
-    {
-        return time.ToString(@"hh\:mm");
-    }
-
-    private TimeSpan? ParseTimeSpan(string? value)
-    {
-        return TimeSpan.TryParse(value, out var result) ? result : null;
-    }
-
-    private async Task AddShift()
-    {
-
-        if (newTemplateCount < 1)
-            newTemplateCount = 1;
-
-        for (int i = 0; i < newTemplateCount; i++)
-        {
-            await Schedule.AddShiftAsync(new Shift
-            {
-                CompanyId = Schedule.Company.Id,
-                Date = newShiftDate.Date,
-                Position = newShift.Position,
-                StartTime = newStartTime.ToTimeSpan(),
-                EndTime = newEndTime.ToTimeSpan()
-            });
-        }
-
-        shifts = await Schedule.GetShiftsAsync();
-
-        newShift = new Shift
-        {
-            CompanyId = Schedule.Company.Id
-        };
-
-        newTemplateCount = 1;
-        newStartTime = new(9, 0);
-        newEndTime = new(17, 0);
-    }
-
-    private async Task CopyWeek()
-    {
-        copyWeekMessage = null;
-
-        var fromWeekStart = copyFromWeekStart.Date;
-        var toWeekStart = copyToWeekStart.Date;
-
-        if (fromWeekStart == toWeekStart)
-        {
-            copyWeekMessage = "Copy-from week and copy-to week cannot be the same.";
-            return;
-        }
-
-        shifts = await Schedule.GetShiftsAsync();
-
-        var sourceShifts = shifts
-            .Where(s => s.Date >= fromWeekStart && s.Date < fromWeekStart.AddDays(7))
-            .OrderBy(s => s.Date)
-            .ThenBy(s => s.StartTime)
-            .ToList();
-
-        if (!sourceShifts.Any())
-        {
-            copyWeekMessage = $"No shifts found for the week starting {fromWeekStart:MM/dd/yyyy}.";
-            return;
-        }
-
-        var dayOffset = (toWeekStart - fromWeekStart).Days;
-        var addedCount = 0;
-
-        foreach (var shift in sourceShifts)
-        {
-            var newDate = shift.Date.AddDays(dayOffset);
-
-            var alreadyExists = shifts.Any(s =>
-                s.CompanyId == shift.CompanyId &&
-                s.Date == newDate &&
-                s.Position == shift.Position &&
-                s.StartTime == shift.StartTime &&
-                s.EndTime == shift.EndTime);
-
-            if (alreadyExists)
-                continue;
-
-            await Schedule.AddShiftAsync(new Shift
-            {
-                CompanyId = Schedule.Company.Id,
-                Date = newDate,
-                Position = shift.Position,
-                StartTime = shift.StartTime,
-                EndTime = shift.EndTime
-            });
-
-            addedCount++;
-        }
-
-        copyWeekMessage = addedCount > 0
-            ? $"Copied {addedCount} shift(s) from {fromWeekStart:MM/dd/yyyy} to {toWeekStart:MM/dd/yyyy}."
-            : "No shifts were copied because matching shifts already exist in the target week.";
-
-        shifts = await Schedule.GetShiftsAsync();
-    }
-
-    private async Task DeleteShift(Shift shift)
-    {
-        var hasAssignments = await Schedule.ShiftHasAssignmentsAsync(shift.Id);
-
-        if (hasAssignments)
-        {
-            shiftDeleteMessage = $"{shift.Position} on {shift.Date:MM/dd} cannot be deleted because employees are assigned.";
-            return;
-        }
-
-        await Schedule.DeleteShiftAsync(shift.Id);
-
-        shifts = await Schedule.GetShiftsAsync();
-
-        shiftDeleteMessage = null;
-    }
-
-    private void ShowEditTemplateShiftModal(WeekTemplateShift shift)
-    {
-        templateShiftToEdit = shift;
-
-        editTemplateDay = shift.DayOfWeek;
-        editTemplatePosition = shift.Position;
-        editTemplateStart = shift.StartTime;
-        editTemplateEnd = shift.EndTime;
-        editTemplateCount = shift.Count;
-
-        showEditTemplateShiftModal = true;
-    }
-
-    private void CloseEditTemplateShiftModal()
-    {
-        showEditTemplateShiftModal = false;
-        templateShiftToEdit = null;
-    }
-
-    private async Task SaveEditedTemplateShift()
-{
-    templateShiftMessage = null;
-
-    if (templateShiftToEdit is null)
-        return;
-
-    if (string.IsNullOrWhiteSpace(editTemplatePosition))
-        return;
-
-    if (editTemplateCount < 1)
-        editTemplateCount = 1;
-
-    if (IsInvalidSundayShift(editTemplateDay, editTemplateStart, editTemplateEnd))
-    {
-        templateShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
-        return;
-    }
-
-    await Schedule.UpdateWeekTemplateShiftAsync(new WeekTemplateShift
-    {
-        Id = templateShiftToEdit.Id,
-        WeekTemplateId = templateShiftToEdit.WeekTemplateId,
-        DayOfWeek = editTemplateDay,
-        Position = editTemplatePosition.Trim(),
-        StartTime = editTemplateStart,
-        EndTime = editTemplateEnd,
-        Count = editTemplateCount
-    });
-
-    templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
-
-    showEditTemplateShiftModal = false;
-    templateShiftToEdit = null;
-}
-    private void ShowRenameTemplateModal()
-    {
-        if (selectedTemplate is null)
-            return;
-
-        editTemplateName = selectedTemplate.Name;
-        showRenameTemplateModal = true;
-    }
-
-    private void CloseRenameTemplateModal()
-    {
-        showRenameTemplateModal = false;
-        editTemplateName = string.Empty;
-    }
-
-    private async Task SaveTemplateRename()
-    {
-        if (selectedTemplate is null)
-            return;
-
-        if (string.IsNullOrWhiteSpace(editTemplateName))
-            return;
-
-        await Schedule.RenameWeekTemplateAsync(selectedTemplate.Id, editTemplateName);
-
-        templates = await Schedule.GetWeekTemplatesAsync();
-        selectedTemplate = templates.FirstOrDefault(t => t.Id == selectedTemplate.Id);
-
-        showRenameTemplateModal = false;
-    }
-
-    private void ShowDeleteTemplateModal()
-    {
-        if (selectedTemplate is null)
-            return;
-
-        showDeleteTemplateModal = true;
-    }
-
-    private void CloseDeleteTemplateModal()
-    {
-        showDeleteTemplateModal = false;
-    }
-
-    private async Task DeleteSelectedTemplate()
-    {
-        if (selectedTemplate is null)
-            return;
-
-        var templateId = selectedTemplate.Id;
-
-        await Schedule.DeleteWeekTemplateAsync(templateId);
-
-        templates = await Schedule.GetWeekTemplatesAsync();
-        templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
-
-        selectedTemplate = templates.Any() ? templates.First() : null;
-
-        showDeleteTemplateModal = false;
-    }
-
-    private IEnumerable<string> ExistingPositions =>
-        shifts
-            .Select(s => s.Position)
-            .Where(p => !string.IsNullOrWhiteSpace(p))
-            .Distinct()
-            .OrderBy(p => p);
+	private Shift newShift = new()
+	{
+		CompanyId = 1
+	};
+
+	private List<Position> positions = new();
+
+	private string? shiftDeleteMessage;
+	private string? copyWeekMessage;
+
+	private DateTime newShiftDate = DateTime.Today;
+
+	private DateTime copyFromWeekStart = DateTime.Today;
+	private DateTime copyToWeekStart = DateTime.Today.AddDays(7);
+
+	// UI-only fields
+	private TimeOnly newStartTime = new(9, 0);
+	private TimeOnly newEndTime = new(17, 0);
+
+	private List<WeekTemplate> templates = new();
+	private List<WeekTemplateShift> templateShifts = new();
+
+	private WeekTemplate? selectedTemplate;
+	private string newTemplateName = string.Empty;
+
+	private DayOfWeek newTemplateDay = DayOfWeek.Monday;
+	private string newTemplatePosition = string.Empty;
+	private TimeSpan newTemplateStart = new(9, 0, 0);
+	private TimeSpan newTemplateEnd = new(17, 0, 0);
+	private int newTemplateCount = 1;
+
+	private bool showEditTemplateShiftModal = false;
+	private WeekTemplateShift? templateShiftToEdit;
+
+	private DayOfWeek editTemplateDay;
+	private string editTemplatePosition = string.Empty;
+	private TimeSpan editTemplateStart = new(9, 0, 0);
+	private TimeSpan editTemplateEnd = new(17, 0, 0);
+	private int editTemplateCount = 1;
+
+	private bool showRenameTemplateModal = false;
+	private bool showDeleteTemplateModal = false;
+	private string editTemplateName = string.Empty;
+
+	private List<Shift> shifts = new();
+
+	private string? templateShiftMessage;
+
+	private bool IsInvalidSundayShift(DayOfWeek day, TimeSpan start, TimeSpan end)
+	{
+		return day == DayOfWeek.Sunday
+			&& end <= start
+			&& end != TimeSpan.Zero;
+	}
+
+	private bool isBusy;
+
+	private async Task RunBusy(Func<Task> action)
+	{
+		if (isBusy)
+			return;
+
+		isBusy = true;
+		StateHasChanged();
+
+		try
+		{
+			await action();
+		}
+		finally
+		{
+			isBusy = false;
+			StateHasChanged();
+		}
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		positions = await Schedule.GetPositionsAsync();
+		templates = await Schedule.GetWeekTemplatesAsync();
+		templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+
+		shifts = await Schedule.GetShiftsAsync();
+
+		if (templates.Any())
+			selectedTemplate = templates.First();
+	}
+
+	private async Task AddTemplate()
+	{
+		await RunBusy(async () =>
+		{
+			if (string.IsNullOrWhiteSpace(newTemplateName))
+				return;
+
+			var template = await Schedule.AddWeekTemplateAsync(newTemplateName);
+			templates = await Schedule.GetWeekTemplatesAsync();
+			selectedTemplate = template;
+			newTemplateName = string.Empty;
+		});
+	}
+
+	private async Task AddTemplateShift()
+	{
+		await RunBusy(async () =>
+		{
+			templateShiftMessage = null;
+
+			if (selectedTemplate is null || string.IsNullOrWhiteSpace(newTemplatePosition))
+				return;
+
+			if (newTemplateEnd == newTemplateStart)
+			{
+				// do nothing for now i might add something
+			}
+
+			if (IsInvalidSundayShift(newTemplateDay, newTemplateStart, newTemplateEnd))
+			{
+				templateShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
+				return;
+			}
+
+			if (newTemplateCount < 1)
+				newTemplateCount = 1;
+
+			await Schedule.AddWeekTemplateShiftAsync(new WeekTemplateShift
+			{
+				WeekTemplateId = selectedTemplate.Id,
+				DayOfWeek = newTemplateDay,
+				Position = newTemplatePosition.Trim(),
+				StartTime = newTemplateStart,
+				EndTime = newTemplateEnd,
+				Count = newTemplateCount
+			});
+
+			templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+
+			newTemplatePosition = string.Empty;
+			newTemplateDay = DayOfWeek.Monday;
+			newTemplateStart = new TimeSpan(9, 0, 0);
+			newTemplateEnd = new TimeSpan(17, 0, 0);
+			newTemplateCount = 1;
+		});
+	}
+
+	private void OnTemplateChanged(ChangeEventArgs e)
+	{
+		if (int.TryParse(e.Value?.ToString(), out var id))
+			selectedTemplate = templates.FirstOrDefault(t => t.Id == id);
+	}
+
+	private int GetMondayBasedDayOrder(DayOfWeek day) => day switch
+	{
+		DayOfWeek.Monday => 1,
+		DayOfWeek.Tuesday => 2,
+		DayOfWeek.Wednesday => 3,
+		DayOfWeek.Thursday => 4,
+		DayOfWeek.Friday => 5,
+		DayOfWeek.Saturday => 6,
+		DayOfWeek.Sunday => 7,
+		_ => 99
+	};
+
+	private List<WeekTemplateShift> SelectedTemplateShifts =>
+		selectedTemplate is null
+			? new()
+			: templateShifts
+				.Where(s => s.WeekTemplateId == selectedTemplate.Id)
+				.OrderBy(s => GetMondayBasedDayOrder(s.DayOfWeek))
+				.ThenBy(s => s.StartTime)
+				.ToList();
+
+	private async Task DeleteTemplateShift(WeekTemplateShift shift)
+	{
+		var confirmed = await JS.InvokeAsync<bool>(
+			"confirm",
+			$"Delete template shift '{shift.Position}' on {shift.DayOfWeek}?"
+		);
+
+		if (!confirmed)
+			return;
+
+		await RunBusy(async () =>
+		{
+			await Schedule.DeleteWeekTemplateShiftAsync(shift.Id);
+			templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+		});
+	}
+
+	private string FormatTime(TimeSpan time)
+	{
+		return time.ToString(@"hh\:mm");
+	}
+
+	private TimeSpan? ParseTimeSpan(string? value)
+	{
+		return TimeSpan.TryParse(value, out var result) ? result : null;
+	}
+
+	private async Task AddShift()
+	{
+		await RunBusy(async () =>
+		{
+			if (newTemplateCount < 1)
+				newTemplateCount = 1;
+
+			for (int i = 0; i < newTemplateCount; i++)
+			{
+				await Schedule.AddShiftAsync(new Shift
+				{
+					CompanyId = Schedule.Company.Id,
+					Date = newShiftDate.Date,
+					Position = newShift.Position,
+					StartTime = newStartTime.ToTimeSpan(),
+					EndTime = newEndTime.ToTimeSpan()
+				});
+			}
+
+			shifts = await Schedule.GetShiftsAsync();
+
+			newShift = new Shift
+			{
+				CompanyId = Schedule.Company.Id
+			};
+
+			newTemplateCount = 1;
+			newStartTime = new(9, 0);
+			newEndTime = new(17, 0);
+		});
+	}
+
+	private async Task CopyWeek()
+	{
+		await RunBusy(async () =>
+		{
+			copyWeekMessage = null;
+
+			var fromWeekStart = copyFromWeekStart.Date;
+			var toWeekStart = copyToWeekStart.Date;
+
+			if (fromWeekStart == toWeekStart)
+			{
+				copyWeekMessage = "Copy-from week and copy-to week cannot be the same.";
+				return;
+			}
+
+			shifts = await Schedule.GetShiftsAsync();
+
+			var sourceShifts = shifts
+				.Where(s => s.Date >= fromWeekStart && s.Date < fromWeekStart.AddDays(7))
+				.OrderBy(s => s.Date)
+				.ThenBy(s => s.StartTime)
+				.ToList();
+
+			if (!sourceShifts.Any())
+			{
+				copyWeekMessage = $"No shifts found for the week starting {fromWeekStart:MM/dd/yyyy}.";
+				return;
+			}
+
+			var dayOffset = (toWeekStart - fromWeekStart).Days;
+			var addedCount = 0;
+
+			foreach (var shift in sourceShifts)
+			{
+				var newDate = shift.Date.AddDays(dayOffset);
+
+				var alreadyExists = shifts.Any(s =>
+					s.CompanyId == shift.CompanyId &&
+					s.Date == newDate &&
+					s.Position == shift.Position &&
+					s.StartTime == shift.StartTime &&
+					s.EndTime == shift.EndTime);
+
+				if (alreadyExists)
+					continue;
+
+				await Schedule.AddShiftAsync(new Shift
+				{
+					CompanyId = Schedule.Company.Id,
+					Date = newDate,
+					Position = shift.Position,
+					StartTime = shift.StartTime,
+					EndTime = shift.EndTime
+				});
+
+				addedCount++;
+			}
+
+			copyWeekMessage = addedCount > 0
+				? $"Copied {addedCount} shift(s) from {fromWeekStart:MM/dd/yyyy} to {toWeekStart:MM/dd/yyyy}."
+				: "No shifts were copied because matching shifts already exist in the target week.";
+
+			shifts = await Schedule.GetShiftsAsync();
+		});
+	}
+
+	private async Task DeleteShift(Shift shift)
+	{
+		var confirmed = await JS.InvokeAsync<bool>(
+			"confirm",
+			$"Delete {shift.Position} on {shift.Date:MM/dd}?"
+		);
+
+		if (!confirmed)
+			return;
+
+		await RunBusy(async () =>
+		{
+			var hasAssignments = await Schedule.ShiftHasAssignmentsAsync(shift.Id);
+
+			if (hasAssignments)
+			{
+				shiftDeleteMessage = $"{shift.Position} on {shift.Date:MM/dd} cannot be deleted because employees are assigned.";
+				return;
+			}
+
+			await Schedule.DeleteShiftAsync(shift.Id);
+
+			shifts = await Schedule.GetShiftsAsync();
+
+			shiftDeleteMessage = null;
+		});
+	}
+
+	private void ShowEditTemplateShiftModal(WeekTemplateShift shift)
+	{
+		templateShiftToEdit = shift;
+
+		editTemplateDay = shift.DayOfWeek;
+		editTemplatePosition = shift.Position;
+		editTemplateStart = shift.StartTime;
+		editTemplateEnd = shift.EndTime;
+		editTemplateCount = shift.Count;
+
+		showEditTemplateShiftModal = true;
+	}
+
+	private void CloseEditTemplateShiftModal()
+	{
+		showEditTemplateShiftModal = false;
+		templateShiftToEdit = null;
+	}
+
+	private async Task SaveEditedTemplateShift()
+	{
+		await RunBusy(async () =>
+		{
+			templateShiftMessage = null;
+
+			if (templateShiftToEdit is null)
+				return;
+
+			if (string.IsNullOrWhiteSpace(editTemplatePosition))
+				return;
+
+			if (editTemplateCount < 1)
+				editTemplateCount = 1;
+
+			if (IsInvalidSundayShift(editTemplateDay, editTemplateStart, editTemplateEnd))
+			{
+				templateShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
+				return;
+			}
+
+			await Schedule.UpdateWeekTemplateShiftAsync(new WeekTemplateShift
+			{
+				Id = templateShiftToEdit.Id,
+				WeekTemplateId = templateShiftToEdit.WeekTemplateId,
+				DayOfWeek = editTemplateDay,
+				Position = editTemplatePosition.Trim(),
+				StartTime = editTemplateStart,
+				EndTime = editTemplateEnd,
+				Count = editTemplateCount
+			});
+
+			templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+
+			showEditTemplateShiftModal = false;
+			templateShiftToEdit = null;
+		});
+	}
+
+	private void ShowRenameTemplateModal()
+	{
+		if (selectedTemplate is null)
+			return;
+
+		editTemplateName = selectedTemplate.Name;
+		showRenameTemplateModal = true;
+	}
+
+	private void CloseRenameTemplateModal()
+	{
+		showRenameTemplateModal = false;
+		editTemplateName = string.Empty;
+	}
+
+	private async Task SaveTemplateRename()
+	{
+		await RunBusy(async () =>
+		{
+			if (selectedTemplate is null)
+				return;
+
+			if (string.IsNullOrWhiteSpace(editTemplateName))
+				return;
+
+			await Schedule.RenameWeekTemplateAsync(selectedTemplate.Id, editTemplateName);
+
+			templates = await Schedule.GetWeekTemplatesAsync();
+			selectedTemplate = templates.FirstOrDefault(t => t.Id == selectedTemplate.Id);
+
+			showRenameTemplateModal = false;
+		});
+	}
+
+	private void ShowDeleteTemplateModal()
+	{
+		if (selectedTemplate is null)
+			return;
+
+		showDeleteTemplateModal = true;
+	}
+
+	private void CloseDeleteTemplateModal()
+	{
+		showDeleteTemplateModal = false;
+	}
+
+	private async Task DeleteSelectedTemplate()
+	{
+		if (selectedTemplate is null)
+			return;
+
+		var confirmed = await JS.InvokeAsync<bool>(
+			"confirm",
+			$"Delete template '{selectedTemplate.Name}'?"
+		);
+
+		if (!confirmed)
+			return;
+
+		await RunBusy(async () =>
+		{
+			var templateId = selectedTemplate.Id;
+
+			await Schedule.DeleteWeekTemplateAsync(templateId);
+
+			templates = await Schedule.GetWeekTemplatesAsync();
+			templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+
+			selectedTemplate = templates.Any() ? templates.First() : null;
+
+			showDeleteTemplateModal = false;
+		});
+	}
+
+	private IEnumerable<string> ExistingPositions =>
+		shifts
+			.Select(s => s.Position)
+			.Where(p => !string.IsNullOrWhiteSpace(p))
+			.Distinct()
+			.OrderBy(p => p);
 }
