@@ -8,6 +8,8 @@
 @inject AppDbContext Db
 @using Microsoft.EntityFrameworkCore
 @inject IJSRuntime JS
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
 
 <PageTitle>Assign</PageTitle>
 

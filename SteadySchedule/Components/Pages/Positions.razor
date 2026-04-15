@@ -3,6 +3,8 @@
 @using SteadySchedule.Domain
 @inject ScheduleService Schedule
 @inject IJSRuntime JS
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
 
 <PageTitle>Positions</PageTitle>
 

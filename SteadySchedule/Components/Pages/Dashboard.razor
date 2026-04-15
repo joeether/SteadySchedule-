@@ -1,4 +1,6 @@
-﻿@page "/"
+﻿@page "/dashboard"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
 @using SteadySchedule.Domain
 @using SteadySchedule.Services
 @inject ScheduleService Schedule

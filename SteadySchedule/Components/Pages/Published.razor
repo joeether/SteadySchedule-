@@ -4,6 +4,8 @@
 @using SteadySchedule.Services
 @inject ScheduleService Schedule
 @inject NavigationManager Nav
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
 
 <PageTitle>Published Schedule</PageTitle>
 

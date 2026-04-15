@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SteadySchedule.Domain;
 
 namespace SteadySchedule.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
@@ -16,7 +17,6 @@ namespace SteadySchedule.Data
         public DbSet<Assignment> Assignments { get; set; }
         public DbSet<WeekTemplate> WeekTemplates { get; set; }
         public DbSet<WeekTemplateShift> WeekTemplateShifts { get; set; }
-
         public DbSet<Position> Positions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

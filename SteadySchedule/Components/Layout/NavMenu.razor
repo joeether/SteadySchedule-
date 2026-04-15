@@ -1,3 +1,6 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">SteadySchedule</a>
@@ -12,7 +15,7 @@
     <nav class="flex-column">
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All" @onclick="CloseMenu">
+            <NavLink class="nav-link" href="/dashboard" @onclick="CloseMenu">
                 Dashboard
             </NavLink>
         </div>
@@ -47,14 +50,56 @@
             </NavLink>
         </div>
 
+        <div class="nav-item px-3">
+            @if (isAuthenticated)
+            {
+                <div class="nav-item px-3">
+                    <form method="post" action="/Account/Logout">
+                        <AntiforgeryToken />
+                        <button type="submit"
+                                class="nav-link btn btn-link p-0 border-0 text-start w-100"
+                                @onclick="CloseMenu">
+                            Log Out
+                        </button>
+                    </form>
+                </div>
+
+                <div class="nav-item px-3">
+                    <div class="nav-link text-muted small">
+                        @userEmail
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/Account/Login" @onclick="CloseMenu">
+                        Log In
+                    </NavLink>
+                </div>
+            }
+        </div>
+
     </nav>
 </div>
 
 @code {
+    private bool isAuthenticated;
+    private string? userEmail;
+
     private bool navOpen;
 
     private void CloseMenu()
     {
         navOpen = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+        userEmail = user.Identity?.Name;
     }
 }
