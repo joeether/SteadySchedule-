@@ -744,10 +744,14 @@
         if (IsPublished) return;
 
         // 🚨 HARD BLOCK: prevent duplicate assignment
-        if (assignmentsThisWeek.Any(a => a.ShiftId == shift.Id && a.EmployeeId == employee.Id))
-        {
-            return;
-        }
+        if (shifts
+    .Where(s => s.SlotGroupId == shift.SlotGroupId)
+    .Any(s => assignmentsThisWeek.Any(a =>
+        a.ShiftId == s.Id &&
+        a.EmployeeId == employee.Id)))
+{
+    return;
+}
 
         await Schedule.AddAssignmentAsync(new Assignment
         {
@@ -951,19 +955,28 @@
 	}
 
 	private async Task AssignEmployeeFromModal(Employee employee)
-	{
-		if (selectedGroup is null) return;
+{
+    if (selectedGroup is null) return;
 
-		var openShift = selectedGroup.Shifts
-			.FirstOrDefault(s => !assignments.Any(a => a.ShiftId == s.Id));
+    // 🚨 HARD BLOCK: already assigned anywhere in this group
+    if (selectedGroup.Shifts.Any(s =>
+        assignments.Any(a =>
+            a.ShiftId == s.Id &&
+            a.EmployeeId == employee.Id)))
+    {
+        return;
+    }
 
-		if (openShift is null) return;
+    var openShift = selectedGroup.Shifts
+        .FirstOrDefault(s => !assignments.Any(a => a.ShiftId == s.Id));
 
-		await AssignEmployeeAsync(openShift, employee);
+    if (openShift is null) return;
 
-		selectedShift = openShift;
-		showAssignModal = false;
-	}
+    await AssignEmployeeAsync(openShift, employee);
+
+    selectedShift = openShift;
+    showAssignModal = false;
+}
 
 	private void ToggleWarnings(int shiftId)
 	{
