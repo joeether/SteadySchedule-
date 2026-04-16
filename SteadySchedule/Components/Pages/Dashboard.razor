@@ -97,6 +97,70 @@
         </div>
     </div>
 
+@if (showWarningsModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Warnings</h5>
+                    <button class="btn-close" @onclick="CloseWarningsModal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    @if (!WarningShifts.Any())
+                    {
+                        <div class="text-muted">No warnings this week.</div>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var shift in WarningShifts)
+                            {
+                                <li class="list-group-item">
+
+                                    <div class="fw-semibold">@shift.Position</div>
+
+                                    <small class="d-block mb-1">
+                                        @shift.Date.ToString("ddd M/d")
+                                        |
+                                        @shift.StartTime.ToString(@"hh\:mm") -
+                                        @shift.EndTime.ToString(@"hh\:mm")
+                                    </small>
+
+                                    @foreach (var detail in GetShiftWarningDetails(shift))
+                                    {
+                                        <div>
+                                            <span class="badge bg-warning text-dark me-1">
+                                                @detail
+                                            </span>
+                                        </div>
+                                    }
+
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                </div>
+
+                <div class="modal-footer">
+                    <NavLink href="/assign" class="btn btn-primary">
+                        Go to Assign
+                    </NavLink>
+
+                    <button class="btn btn-secondary" @onclick="CloseWarningsModal">
+                        Close
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
 </div>
 
 @code {
@@ -115,6 +179,11 @@ private bool showWarningsModal = false;
 private void ShowWarningsModal()
 {
     showWarningsModal = true;
+}
+
+private void CloseWarningsModal()
+{
+    showWarningsModal = false;
 }
 
     protected override async Task OnInitializedAsync()
