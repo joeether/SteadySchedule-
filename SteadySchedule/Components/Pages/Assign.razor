@@ -738,21 +738,27 @@
 	}
 
 	private async Task AssignEmployeeAsync(Shift shift, Employee employee)
-	{
-		await RunBusy(async () =>
-		{
-			if (IsPublished) return;
+{
+    await RunBusy(async () =>
+    {
+        if (IsPublished) return;
 
-			await Schedule.AddAssignmentAsync(new Assignment
-			{
-				ShiftId = shift.Id,
-				EmployeeId = employee.Id,
-				ApprovedOvertime = false
-			});
+        // 🚨 HARD BLOCK: prevent duplicate assignment
+        if (assignmentsThisWeek.Any(a => a.ShiftId == shift.Id && a.EmployeeId == employee.Id))
+        {
+            return;
+        }
 
-			assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
-		});
-	}
+        await Schedule.AddAssignmentAsync(new Assignment
+        {
+            ShiftId = shift.Id,
+            EmployeeId = employee.Id,
+            ApprovedOvertime = false
+        });
+
+        assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
+    });
+}
 
 	private async Task UnassignAsync(Assignment assignment)
 	{
