@@ -110,6 +110,12 @@
     private List<Assignment> assignmentsThisWeek = new();
     private WeekStatus currentWeekStatus = WeekStatus.Draft;
     private int publishedWeekCount = 0;
+private bool showWarningsModal = false;
+
+private void ShowWarningsModal()
+{
+    showWarningsModal = true;
+}
 
     protected override async Task OnInitializedAsync()
 {
