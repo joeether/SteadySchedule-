@@ -458,8 +458,10 @@
 
 						<h6 class="fw-bold">Eligible Employees</h6>
 
+    @{
     var eligible = EligibleEmployees(selectedShift)
-    .Where(e => !IsAlreadyAssignedToGroup(e, selectedGroup!));
+        .Where(e => !IsAlreadyAssignedToGroup(e, selectedGroup!));
+}
 						@if (!eligible.Any())
 {
     <p class="text-muted">No eligible employees found for this shift.</p>
