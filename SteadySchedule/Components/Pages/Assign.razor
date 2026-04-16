@@ -458,14 +458,16 @@
 
 						<h6 class="fw-bold">Eligible Employees</h6>
 
-						@if (!EligibleEmployees(selectedShift).Any())
-						{
-							<p class="text-muted">No eligible employees found for this shift.</p>
-						}
+    var eligible = EligibleEmployees(selectedShift)
+    .Where(e => !IsAlreadyAssignedToGroup(e, selectedGroup!));
+						@if (!eligible.Any())
+{
+    <p class="text-muted">No eligible employees found for this shift.</p>
+}
 						else
-						{
-							<ul class="list-group mb-3">
-								@foreach (var e in EligibleEmployees(selectedShift))
+{
+    <ul class="list-group mb-3">
+        @foreach (var e in eligible)
 								{
 									var warnings = GetWarnings(e, selectedShift, isPreview: true);
 									var weeklyHours = GetWeeklyHours(e);
@@ -712,6 +714,14 @@
 			.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
 			.Any(p => string.Equals(p, position, StringComparison.OrdinalIgnoreCase));
 	}
+
+private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
+{
+    return group.Shifts.Any(s =>
+        assignments.Any(a =>
+            a.ShiftId == s.Id &&
+            a.EmployeeId == e.Id));
+}
 
 	private IEnumerable<Employee> EligibleEmployees(Shift shift)
 	{
