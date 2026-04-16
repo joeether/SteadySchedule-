@@ -16,7 +16,61 @@
 
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Open Shifts</div>
+                    <div class="fs-4 fw-bold">@OpenShiftCount</div>
+
+                    @if (OpenShiftCount > 0)
+                    {
+                        <NavLink href="/assign" class="btn btn-primary w-100 mt-2">
+                            Fill Shifts
+                        </NavLink>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4 col-lg-2">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Warnings</div>
+                    <div class="fs-4 fw-bold">@WarningCount</div>
+
+                    @if (WarningCount > 0)
+                    {
+                        <button class="btn btn-warning w-100 mt-2" @onclick="ShowWarningsModal">
+                            View Warnings
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4 col-lg-2">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Week Status</div>
+                    <div class="fw-bold">@CurrentWeekStatus</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-semibold">
+                    This Week Overview
+                </div>
+                <div class="card-body">
+                    <div><strong>Week of:</strong> @weekStart.ToString("MMM d, yyyy")</div>
+                    <div><strong>Company:</strong> @Schedule.Company.Name</div>
+                    <div><strong>Published Weeks:</strong> @PublishedWeekCount</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4 col-lg-2">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-muted small">Employees</div>
                     <div class="fs-4 fw-bold">@TotalEmployees</div>
@@ -25,7 +79,7 @@
         </div>
 
         <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-muted small">Shifts This Week</div>
                     <div class="fs-4 fw-bold">@shiftsThisWeek.Count</div>
@@ -34,88 +88,12 @@
         </div>
 
         <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-muted small">Assigned</div>
                     <div class="fs-4 fw-bold">@AssignedShiftCount</div>
                 </div>
             </div>
-        </div>
-
-        <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Open Shifts</div>
-                    <div class="fs-4 fw-bold">@OpenShiftCount</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Warnings</div>
-                    <div class="fs-4 fw-bold">@WarningCount</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Week Status</div>
-                    <div class="fw-bold">@CurrentWeekStatus</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-header fw-semibold">
-            This Week Overview
-        </div>
-        <div class="card-body">
-            <div><strong>Week of:</strong> @weekStart.ToString("MMM d, yyyy")</div>
-            <div><strong>Company:</strong> @Schedule.Company.Name</div>
-            <div><strong>Published Weeks:</strong> @PublishedWeekCount</div>
-        </div>
-    </div>
-
-    <div class="card shadow-sm">
-        <div class="card-header fw-semibold">
-            Warning Shifts
-        </div>
-        <div class="card-body">
-            @if (!WarningShifts.Any())
-            {
-                <div class="text-muted">No warning shifts this week.</div>
-            }
-            else
-            {
-                <ul class="list-group list-group-flush">
-                    @foreach (var shift in WarningShifts)
-                    {
-                        <li class="list-group-item">
-                            <div class="fw-semibold">@shift.Position</div>
-
-                            <small class="d-block mb-1">
-                                @shift.Date.ToString("ddd M/d")
-                                |
-                                @shift.StartTime.ToString(@"hh\:mm") - @shift.EndTime.ToString(@"hh\:mm")
-                                |
-                                @GetShiftWarningCount(shift) warning(s)
-                            </small>
-
-                            @foreach (var detail in GetShiftWarningDetails(shift))
-                            {
-                                <div>
-                                    <span class="badge bg-warning text-dark me-1">@detail</span>
-                                </div>
-                            }
-                        </li>
-                    }
-                </ul>
-            }
         </div>
     </div>
 
