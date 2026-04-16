@@ -907,8 +907,6 @@
 
 	private bool IsBlockedFromAssigning(Employee e, Shift shift)
 	{
-		if (!IsAvailableForShift(e, shift))
-			return true;
 
 		if (!allowOvertime && WouldCauseOvertimeIfAssigned(e, shift))
 			return true;
