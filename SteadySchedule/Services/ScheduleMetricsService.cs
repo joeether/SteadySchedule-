@@ -28,11 +28,7 @@ public class ScheduleMetricsService
 
         var employeeAssignments = assignments
             .Where(a => a.EmployeeId == employee.Id)
-            .Join(
-                shifts,
-                a => a.ShiftId,
-                s => s.Id,
-                (a, s) => s)
+            .Join(shifts, a => a.ShiftId, s => s.Id, (a, s) => s)
             .Where(s => s.Date >= weekStart && s.Date < weekEnd);
 
         return (int)employeeAssignments.Sum(s => GetShiftHours(s));
@@ -50,102 +46,114 @@ public class ScheduleMetricsService
         return currentHours + shiftHours > employee.MaxHoursPerWeek;
     }
 
-    private Dictionary<DateTime, Dictionary<string, List<string>>> GetWeeklyWarnings()
-	{
-		var result = new Dictionary<DateTime, Dictionary<string, List<string>>>();
+    public static bool IsAvailableForShift(Employee e, Shift shift)
+    {
+        bool dayAvailable;
+        bool anyTime;
+        TimeSpan? start;
+        TimeSpan? end;
 
-		var weekShifts = shifts
-			.Where(s => s.Date >= weekStart && s.Date < WeekEnd);
+        switch (shift.Date.DayOfWeek)
+        {
+            case DayOfWeek.Monday:
+                dayAvailable = e.MondayAvailable;
+                anyTime = e.MondayAnyTime;
+                start = e.MondayStart;
+                end = e.MondayEnd;
+                break;
+            case DayOfWeek.Tuesday:
+                dayAvailable = e.TuesdayAvailable;
+                anyTime = e.TuesdayAnyTime;
+                start = e.TuesdayStart;
+                end = e.TuesdayEnd;
+                break;
+            case DayOfWeek.Wednesday:
+                dayAvailable = e.WednesdayAvailable;
+                anyTime = e.WednesdayAnyTime;
+                start = e.WednesdayStart;
+                end = e.WednesdayEnd;
+                break;
+            case DayOfWeek.Thursday:
+                dayAvailable = e.ThursdayAvailable;
+                anyTime = e.ThursdayAnyTime;
+                start = e.ThursdayStart;
+                end = e.ThursdayEnd;
+                break;
+            case DayOfWeek.Friday:
+                dayAvailable = e.FridayAvailable;
+                anyTime = e.FridayAnyTime;
+                start = e.FridayStart;
+                end = e.FridayEnd;
+                break;
+            case DayOfWeek.Saturday:
+                dayAvailable = e.SaturdayAvailable;
+                anyTime = e.SaturdayAnyTime;
+                start = e.SaturdayStart;
+                end = e.SaturdayEnd;
+                break;
+            case DayOfWeek.Sunday:
+                dayAvailable = e.SundayAvailable;
+                anyTime = e.SundayAnyTime;
+                start = e.SundayStart;
+                end = e.SundayEnd;
+                break;
+            default:
+                return true;
+        }
 
-		foreach (var shift in weekShifts)
-		{
-			foreach (var a in assignments.Where(a => a.ShiftId == shift.Id))
-			{
-				var emp = employees.First(x => x.Id == a.EmployeeId);
-				var warnings = GetWarnings(emp, shift, isPreview: false);
+        if (!dayAvailable)
+            return false;
 
-				if (!warnings.Any()) continue;
+        if (anyTime)
+            return true;
 
-				if (!result.ContainsKey(shift.Date))
-					result[shift.Date] = new Dictionary<string, List<string>>();
+        if (!start.HasValue && !end.HasValue)
+            return true;
 
-				if (!result[shift.Date].ContainsKey(emp.Name))
-					result[shift.Date][emp.Name] = new List<string>();
+        if (!start.HasValue || !end.HasValue)
+            return false;
 
-				result[shift.Date][emp.Name].AddRange(warnings);
-			}
-		}
+        return shift.StartTime >= start.Value && shift.EndTime <= end.Value;
+    }
 
-		return result;
-	}
+    public static Dictionary<DateTime, Dictionary<string, List<string>>> GetWeeklyWarnings(
+        List<Shift> shifts,
+        List<Assignment> assignments,
+        List<Employee> employees,
+        DateTime weekStart)
+    {
+        var weekEnd = weekStart.AddDays(7);
+        var result = new Dictionary<DateTime, Dictionary<string, List<string>>>();
 
-private static bool IsAvailableForShift(Employee e, Shift shift)
-	{
-		bool dayAvailable;
-		bool anyTime;
-		TimeSpan? start;
-		TimeSpan? end;
+        var weekShifts = shifts
+            .Where(s => s.Date >= weekStart && s.Date < weekEnd);
 
-		switch (shift.Date.DayOfWeek)
-		{
-			case DayOfWeek.Monday:
-				dayAvailable = e.MondayAvailable;
-				anyTime = e.MondayAnyTime;
-				start = e.MondayStart;
-				end = e.MondayEnd;
-				break;
-			case DayOfWeek.Tuesday:
-				dayAvailable = e.TuesdayAvailable;
-				anyTime = e.TuesdayAnyTime;
-				start = e.TuesdayStart;
-				end = e.TuesdayEnd;
-				break;
-			case DayOfWeek.Wednesday:
-				dayAvailable = e.WednesdayAvailable;
-				anyTime = e.WednesdayAnyTime;
-				start = e.WednesdayStart;
-				end = e.WednesdayEnd;
-				break;
-			case DayOfWeek.Thursday:
-				dayAvailable = e.ThursdayAvailable;
-				anyTime = e.ThursdayAnyTime;
-				start = e.ThursdayStart;
-				end = e.ThursdayEnd;
-				break;
-			case DayOfWeek.Friday:
-				dayAvailable = e.FridayAvailable;
-				anyTime = e.FridayAnyTime;
-				start = e.FridayStart;
-				end = e.FridayEnd;
-				break;
-			case DayOfWeek.Saturday:
-				dayAvailable = e.SaturdayAvailable;
-				anyTime = e.SaturdayAnyTime;
-				start = e.SaturdayStart;
-				end = e.SaturdayEnd;
-				break;
-			case DayOfWeek.Sunday:
-				dayAvailable = e.SundayAvailable;
-				anyTime = e.SundayAnyTime;
-				start = e.SundayStart;
-				end = e.SundayEnd;
-				break;
-			default:
-				return true;
-		}
+        foreach (var shift in weekShifts)
+        {
+            foreach (var a in assignments.Where(a => a.ShiftId == shift.Id))
+            {
+                var emp = employees.First(x => x.Id == a.EmployeeId);
+                var warnings = new List<string>();
 
-		if (!dayAvailable)
-			return false;
+                if (!IsAvailableForShift(emp, shift))
+                    warnings.Add("Availability conflict");
 
-		if (anyTime)
-			return true;
+                if (WouldCauseOvertimeIfAssigned(emp, shift, assignments, shifts, weekStart))
+                    warnings.Add("Overtime risk");
 
-		if (!start.HasValue && !end.HasValue)
-			return true;
+                if (!warnings.Any())
+                    continue;
 
-		if (!start.HasValue || !end.HasValue)
-			return false;
+                if (!result.ContainsKey(shift.Date))
+                    result[shift.Date] = new Dictionary<string, List<string>>();
 
-		return shift.StartTime >= start.Value && shift.EndTime <= end.Value;
-}
+                if (!result[shift.Date].ContainsKey(emp.Name))
+                    result[shift.Date][emp.Name] = new List<string>();
+
+                result[shift.Date][emp.Name].AddRange(warnings);
+            }
+        }
+
+        return result;
+    }
 }
