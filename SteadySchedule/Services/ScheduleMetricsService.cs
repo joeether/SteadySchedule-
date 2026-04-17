@@ -49,4 +49,103 @@ public class ScheduleMetricsService
         var shiftHours = GetShiftHours(shift);
         return currentHours + shiftHours > employee.MaxHoursPerWeek;
     }
+
+    private Dictionary<DateTime, Dictionary<string, List<string>>> GetWeeklyWarnings()
+	{
+		var result = new Dictionary<DateTime, Dictionary<string, List<string>>>();
+
+		var weekShifts = shifts
+			.Where(s => s.Date >= weekStart && s.Date < WeekEnd);
+
+		foreach (var shift in weekShifts)
+		{
+			foreach (var a in assignments.Where(a => a.ShiftId == shift.Id))
+			{
+				var emp = employees.First(x => x.Id == a.EmployeeId);
+				var warnings = GetWarnings(emp, shift, isPreview: false);
+
+				if (!warnings.Any()) continue;
+
+				if (!result.ContainsKey(shift.Date))
+					result[shift.Date] = new Dictionary<string, List<string>>();
+
+				if (!result[shift.Date].ContainsKey(emp.Name))
+					result[shift.Date][emp.Name] = new List<string>();
+
+				result[shift.Date][emp.Name].AddRange(warnings);
+			}
+		}
+
+		return result;
+	}
+
+private static bool IsAvailableForShift(Employee e, Shift shift)
+	{
+		bool dayAvailable;
+		bool anyTime;
+		TimeSpan? start;
+		TimeSpan? end;
+
+		switch (shift.Date.DayOfWeek)
+		{
+			case DayOfWeek.Monday:
+				dayAvailable = e.MondayAvailable;
+				anyTime = e.MondayAnyTime;
+				start = e.MondayStart;
+				end = e.MondayEnd;
+				break;
+			case DayOfWeek.Tuesday:
+				dayAvailable = e.TuesdayAvailable;
+				anyTime = e.TuesdayAnyTime;
+				start = e.TuesdayStart;
+				end = e.TuesdayEnd;
+				break;
+			case DayOfWeek.Wednesday:
+				dayAvailable = e.WednesdayAvailable;
+				anyTime = e.WednesdayAnyTime;
+				start = e.WednesdayStart;
+				end = e.WednesdayEnd;
+				break;
+			case DayOfWeek.Thursday:
+				dayAvailable = e.ThursdayAvailable;
+				anyTime = e.ThursdayAnyTime;
+				start = e.ThursdayStart;
+				end = e.ThursdayEnd;
+				break;
+			case DayOfWeek.Friday:
+				dayAvailable = e.FridayAvailable;
+				anyTime = e.FridayAnyTime;
+				start = e.FridayStart;
+				end = e.FridayEnd;
+				break;
+			case DayOfWeek.Saturday:
+				dayAvailable = e.SaturdayAvailable;
+				anyTime = e.SaturdayAnyTime;
+				start = e.SaturdayStart;
+				end = e.SaturdayEnd;
+				break;
+			case DayOfWeek.Sunday:
+				dayAvailable = e.SundayAvailable;
+				anyTime = e.SundayAnyTime;
+				start = e.SundayStart;
+				end = e.SundayEnd;
+				break;
+			default:
+				return true;
+		}
+
+		if (!dayAvailable)
+			return false;
+
+		if (anyTime)
+			return true;
+
+		if (!start.HasValue && !end.HasValue)
+			return true;
+
+		if (!start.HasValue || !end.HasValue)
+			return false;
+
+		return shift.StartTime >= start.Value && shift.EndTime <= end.Value;
+}
 }
