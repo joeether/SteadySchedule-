@@ -6,6 +6,10 @@ body {
     background-color: #f4f6f9;
 }
 
+body {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+}
+
 .card {
     border-radius: 12px;
 }
@@ -32,11 +36,10 @@ a, .btn-link {
     min-height: 80vh;
 }
 
-.login-page .card {
-    border: none;
-    border-radius: 14px;
-    overflow: hidden;
+.login-page {
+    transform: scale(1.05);
 }
+
 
 .login-page .card-header {
     background: transparent;
@@ -62,10 +65,9 @@ a, .btn-link {
 }
 
 .login-page .btn-dark {
-    border-radius: 10px;
-    padding: 12px;
-    font-weight: 600;
-    transition: all 0.2s ease;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    border: none;
+    font-weight: bold;
 }
 
 .login-page .btn-dark:hover {
