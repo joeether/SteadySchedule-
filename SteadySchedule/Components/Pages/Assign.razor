@@ -928,10 +928,12 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 		return false;
 	}
 
-	private bool WouldCauseOvertimeIfAssigned(Employee e, Shift shift)
-{
-    return ScheduleMetricsService.WouldCauseOvertimeIfAssigned(e, shift, assignments, shifts, weekStart);
-}
+	private bool WouldCauseOvertime(Employee e, Shift shift)
+	{
+		var currentHours = GetWeeklyHours(e);
+		var shiftHours = GetShiftHours(shift);
+		return currentHours + shiftHours > e.MaxHoursPerWeek;
+	}
 
 	private int GetShiftWarningCount(Shift s)
 	{
@@ -1245,11 +1247,9 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 	}
 
 	private bool WouldCauseOvertimeIfAssigned(Employee e, Shift shift)
-	{
-		var currentHours = GetWeeklyHours(e);
-		var shiftHours = GetShiftHours(shift);
-		return currentHours + shiftHours > e.MaxHoursPerWeek;
-	}
+{
+    return ScheduleMetricsService.WouldCauseOvertimeIfAssigned(e, shift, assignments, shifts, weekStart);
+}
 
 	private bool IsOvertimeWarningForAssignedShift(Employee e, Shift targetShift)
 	{
