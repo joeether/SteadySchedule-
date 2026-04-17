@@ -1438,20 +1438,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 	}
 
 	private static double GetShiftHours(Shift shift)
-	{
-		var start = shift.StartTime;
-		var end = shift.EndTime;
-
-		if (end < start)
-		{
-			return (TimeSpan.FromHours(24) - start + end).TotalHours;
-		}
-
-		if (end == start)
-		{
-			return 24;
-		}
-
-		return (end - start).TotalHours;
-	}
+{
+    return ScheduleMetricsService.GetShiftHours(shift);
+}
 }
