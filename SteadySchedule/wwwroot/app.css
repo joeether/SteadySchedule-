@@ -6,9 +6,6 @@ body {
     background-color: #f4f6f9;
 }
 
-body {
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-}
 
 .card {
     border-radius: 12px;
