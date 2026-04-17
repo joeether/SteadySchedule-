@@ -698,17 +698,9 @@
 	}
 
 	private int GetWeeklyHours(Employee employee)
-	{
-		var employeeAssignments = assignments
-			.Where(a => a.EmployeeId == employee.Id)
-			.Join(shifts,
-				  a => a.ShiftId,
-				  s => s.Id,
-				  (a, s) => s)
-			.Where(s => s.Date >= weekStart && s.Date < WeekEnd);
-
-		return (int)employeeAssignments.Sum(s => GetShiftHours(s));
-	}
+{
+    return ScheduleMetricsService.GetWeeklyHours(employee, assignments, shifts, weekStart);
+}
 
 	private static bool IsQualified(Employee e, string position)
 	{
@@ -936,12 +928,10 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 		return false;
 	}
 
-	private bool WouldCauseOvertime(Employee e, Shift shift)
-	{
-		var currentHours = GetWeeklyHours(e);
-		var shiftHours = GetShiftHours(shift);
-		return currentHours + shiftHours > e.MaxHoursPerWeek;
-	}
+	private bool WouldCauseOvertimeIfAssigned(Employee e, Shift shift)
+{
+    return ScheduleMetricsService.WouldCauseOvertimeIfAssigned(e, shift, assignments, shifts, weekStart);
+}
 
 	private int GetShiftWarningCount(Shift s)
 	{
