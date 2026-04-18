@@ -440,7 +440,7 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		positions = await Schedule.GetPositionsAsync();
+		positions = await Schedule.GetPositionsAsync(Schedule.Company.Id);
 		templates = await Schedule.GetWeekTemplatesAsync();
 		templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
 
