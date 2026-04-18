@@ -86,12 +86,15 @@ public class ScheduleService
         "Cook"
     };
 
-    public Company Company { get; } = new()
+    public Company Company { get; private set; } = new();
+
+public void SetCompany(int companyId)
+{
+    Company = new Company
     {
-        Id = 1,
-        Name = "Mama's Burger Joint",
-        AdminEmail = "admin@mamasburgers.com"
+        Id = companyId
     };
+}
 
     public async Task<List<Position>> GetPositionsAsync(int companyId)
 {
