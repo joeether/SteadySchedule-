@@ -1,8 +1,7 @@
-﻿using SteadySchedule.Domain;
+using SteadySchedule.Domain;
 using Microsoft.EntityFrameworkCore;
 using SteadySchedule.Data;
 namespace SteadySchedule.Services;
-
 
 public class ScheduleService
 {
@@ -77,10 +76,10 @@ public class ScheduleService
     }
 
     public List<string> Positions { get; } = new()
-{
-    "Cashier",
-    "Cook"
-};
+    {
+        "Cashier",
+        "Cook"
+    };
 
     public Company Company { get; } = new()
     {
@@ -158,193 +157,12 @@ public class ScheduleService
         return true;
     }
 
-    /*public List<Employee> Employees { get; } = new()
-    {
-        new Employee
-        {
-            Id = 1,
-            CompanyId = 1,
-            Name = "Amy",
-            MaxHoursPerWeek = 40,
-            PositionsQualified = "Cashier",
-            MondayAvailable = true, MondayStart = new TimeSpan(9,0,0), MondayEnd = new TimeSpan(17,0,0),
-            TuesdayAvailable = true, TuesdayStart = new TimeSpan(9,0,0), TuesdayEnd = new TimeSpan(17,0,0),
-            WednesdayAvailable = true, WednesdayStart = new TimeSpan(9,0,0), WednesdayEnd = new TimeSpan(17,0,0),
-            ThursdayAvailable = true, ThursdayStart = new TimeSpan(9,0,0), ThursdayEnd = new TimeSpan(17,0,0),
-            FridayAvailable = true, FridayStart = new TimeSpan(9,0,0), FridayEnd = new TimeSpan(17,0,0)
-        },
-        new Employee
-        {
-            Id = 2,
-            CompanyId = 1,
-            Name = "Brandon",
-            MaxHoursPerWeek = 40,
-            PositionsQualified = "Cook",
-            MondayAvailable = true, MondayStart = new TimeSpan(10,0,0), MondayEnd = new TimeSpan(18,0,0),
-            TuesdayAvailable = true, TuesdayStart = new TimeSpan(10,0,0), TuesdayEnd = new TimeSpan(18,0,0),
-            WednesdayAvailable = true, WednesdayStart = new TimeSpan(10,0,0), WednesdayEnd = new TimeSpan(18,0,0),
-            ThursdayAvailable = true, ThursdayStart = new TimeSpan(10,0,0), ThursdayEnd = new TimeSpan(18,0,0),
-            FridayAvailable = true, FridayStart = new TimeSpan(10,0,0), FridayEnd = new TimeSpan(18,0,0)
-        },
-        new Employee
-        {
-            Id = 3,
-            CompanyId = 1,
-            Name = "Carla",
-            MaxHoursPerWeek = 24,
-            PositionsQualified = "Cashier",
-            SaturdayAvailable = true, SaturdayStart = new TimeSpan(10,0,0), SaturdayEnd = new TimeSpan(16,0,0),
-            SundayAvailable = true, SundayStart = new TimeSpan(10,0,0), SundayEnd = new TimeSpan(16,0,0)
-        },
-        new Employee
-        {
-            Id = 4,
-            CompanyId = 1,
-            Name = "Derek",
-            MaxHoursPerWeek = 32,
-            PositionsQualified = "Cook,Cashier",
-            WednesdayAvailable = true, WednesdayStart = new TimeSpan(10,0,0), WednesdayEnd = new TimeSpan(20,0,0),
-            ThursdayAvailable = true, ThursdayStart = new TimeSpan(10,0,0), ThursdayEnd = new TimeSpan(20,0,0),
-            FridayAvailable = true, FridayStart = new TimeSpan(10,0,0), FridayEnd = new TimeSpan(20,0,0),
-            SaturdayAvailable = true, SaturdayStart = new TimeSpan(10,0,0), SaturdayEnd = new TimeSpan(20,0,0),
-            SundayAvailable = true, SundayStart = new TimeSpan(10,0,0), SundayEnd = new TimeSpan(20,0,0)
-        },
-        new Employee
-        {
-            Id = 5,
-            CompanyId = 1,
-            Name = "Emma",
-            MaxHoursPerWeek = 20,
-            PositionsQualified = "Cashier",
-            MondayAvailable = true, MondayStart = new TimeSpan(9,0,0), MondayEnd = new TimeSpan(13,0,0),
-            WednesdayAvailable = true, WednesdayStart = new TimeSpan(9,0,0), WednesdayEnd = new TimeSpan(13,0,0),
-            FridayAvailable = true, FridayStart = new TimeSpan(9,0,0), FridayEnd = new TimeSpan(13,0,0)
-        }
-    };*/
-
     public static DateTime StartOfWeek(DateTime date)
     {
         // Monday-based
         int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
         return date.Date.AddDays(-diff);
     }
-
-    // TEMP test data for development - remove before release
-    /*public List<WeekTemplate> WeekTemplates { get; set; } = new()
-    {
-        new WeekTemplate
-        {
-            Id = 1,
-            CompanyId = 1,
-            Name = "Week A"
-        }
-    };*/
-    // TEMP test data for development - remove before release
-    /*public List<WeekTemplateShift> WeekTemplateShifts { get; set; } = new()
-    {
-        new WeekTemplateShift
-        {
-            Id = 1,
-            WeekTemplateId = 1,
-            DayOfWeek = DayOfWeek.Monday,
-            Position = "Cashier",
-            StartTime = new TimeSpan(9, 0, 0),
-            EndTime = new TimeSpan(17, 0, 0),
-            Count = 3
-        },
-        new WeekTemplateShift
-        {
-            Id = 2,
-            WeekTemplateId = 1,
-            DayOfWeek = DayOfWeek.Monday,
-            Position = "Cook",
-            StartTime = new TimeSpan(10, 0, 0),
-            EndTime = new TimeSpan(18, 0, 0),
-            Count = 1
-        },
-        new WeekTemplateShift
-        {
-            Id = 3,
-            WeekTemplateId = 1,
-            DayOfWeek = DayOfWeek.Tuesday,
-            Position = "Cashier",
-            StartTime = new TimeSpan(9, 0, 0),
-            EndTime = new TimeSpan(17, 0, 0),
-            Count = 2
-        },
-        new WeekTemplateShift
-        {
-            Id = 4,
-            WeekTemplateId = 1,
-            DayOfWeek = DayOfWeek.Wednesday,
-            Position = "Cook",
-            StartTime = new TimeSpan(10, 0, 0),
-            EndTime = new TimeSpan(18, 0, 0),
-            Count = 2
-        }
-    };*/
-    // TEMP test data for development - remove before release
-    /*public List<Shift> Shifts { get; } = new()
-    {
-        // Monday
-        new Shift { Id = 1, CompanyId = 1, Date = SeedWeekStart.AddDays(0), Position = "Cashier", StartTime = new TimeSpan(9,0,0), EndTime = new TimeSpan(13,0,0) },
-        new Shift { Id = 2, CompanyId = 1, Date = SeedWeekStart.AddDays(0), Position = "Cashier", StartTime = new TimeSpan(9,0,0), EndTime = new TimeSpan(13,0,0) },
-        new Shift { Id = 3, CompanyId = 1, Date = SeedWeekStart.AddDays(0), Position = "Cook",    StartTime = new TimeSpan(10,0,0), EndTime = new TimeSpan(18,0,0) },
-
-        // Tuesday
-        new Shift { Id = 4, CompanyId = 1, Date = SeedWeekStart.AddDays(1), Position = "Cashier", StartTime = new TimeSpan(9,0,0), EndTime = new TimeSpan(13,0,0) },
-        new Shift { Id = 5, CompanyId = 1, Date = SeedWeekStart.AddDays(1), Position = "Cashier", StartTime = new TimeSpan(9,0,0), EndTime = new TimeSpan(13,0,0) },
-        new Shift { Id = 6, CompanyId = 1, Date = SeedWeekStart.AddDays(1), Position = "Cook",    StartTime = new TimeSpan(10,0,0), EndTime = new TimeSpan(18,0,0) },
-
-        // Wednesday
-        new Shift { Id = 7, CompanyId = 1, Date = SeedWeekStart.AddDays(2), Position = "Cashier", StartTime = new TimeSpan(9,0,0), EndTime = new TimeSpan(13,0,0) },
-        new Shift { Id = 8, CompanyId = 1, Date = SeedWeekStart.AddDays(2), Position = "Cashier", StartTime = new TimeSpan(9,0,0), EndTime = new TimeSpan(13,0,0) },
-        new Shift { Id = 9, CompanyId = 1, Date = SeedWeekStart.AddDays(2), Position = "Cook",    StartTime = new TimeSpan(10,0,0), EndTime = new TimeSpan(18,0,0) },
-
-        // Thursday
-        new Shift { Id = 10, CompanyId = 1, Date = SeedWeekStart.AddDays(3), Position = "Cashier", StartTime = new TimeSpan(9,0,0), EndTime = new TimeSpan(13,0,0) },
-        new Shift { Id = 11, CompanyId = 1, Date = SeedWeekStart.AddDays(3), Position = "Cashier", StartTime = new TimeSpan(9,0,0), EndTime = new TimeSpan(13,0,0) },
-        new Shift { Id = 12, CompanyId = 1, Date = SeedWeekStart.AddDays(3), Position = "Cook",    StartTime = new TimeSpan(10,0,0), EndTime = new TimeSpan(18,0,0) },
-
-        // Friday
-        new Shift { Id = 13, CompanyId = 1, Date = SeedWeekStart.AddDays(4), Position = "Cashier", StartTime = new TimeSpan(9,0,0), EndTime = new TimeSpan(13,0,0) },
-        new Shift { Id = 14, CompanyId = 1, Date = SeedWeekStart.AddDays(4), Position = "Cashier", StartTime = new TimeSpan(9,0,0), EndTime = new TimeSpan(13,0,0) },
-        new Shift { Id = 15, CompanyId = 1, Date = SeedWeekStart.AddDays(4), Position = "Cook",    StartTime = new TimeSpan(10,0,0), EndTime = new TimeSpan(18,0,0) },
-
-        // Saturday
-        new Shift { Id = 16, CompanyId = 1, Date = SeedWeekStart.AddDays(5), Position = "Cashier", StartTime = new TimeSpan(10,0,0), EndTime = new TimeSpan(14,0,0) },
-        new Shift { Id = 17, CompanyId = 1, Date = SeedWeekStart.AddDays(5), Position = "Cashier", StartTime = new TimeSpan(10,0,0), EndTime = new TimeSpan(14,0,0) },
-        new Shift { Id = 18, CompanyId = 1, Date = SeedWeekStart.AddDays(5), Position = "Cook",    StartTime = new TimeSpan(11,0,0), EndTime = new TimeSpan(19,0,0) },
-
-        // Sunday
-        new Shift { Id = 19, CompanyId = 1, Date = SeedWeekStart.AddDays(6), Position = "Cashier", StartTime = new TimeSpan(10,0,0), EndTime = new TimeSpan(14,0,0) },
-        new Shift { Id = 20, CompanyId = 1, Date = SeedWeekStart.AddDays(6), Position = "Cashier", StartTime = new TimeSpan(10,0,0), EndTime = new TimeSpan(14,0,0) },
-        new Shift { Id = 21, CompanyId = 1, Date = SeedWeekStart.AddDays(6), Position = "Cook",    StartTime = new TimeSpan(11,0,0), EndTime = new TimeSpan(19,0,0) }
-    };*/
-    // TEMP test data for development - remove before release
-    /*public List<Assignment> Assignments { get; } = new()
-    {
-        new Assignment { Id = 1, ShiftId = 1,  EmployeeId = 1, ApprovedOvertime = false },
-        new Assignment { Id = 2, ShiftId = 3,  EmployeeId = 2, ApprovedOvertime = false },
-
-        new Assignment { Id = 3, ShiftId = 4,  EmployeeId = 1, ApprovedOvertime = false },
-        new Assignment { Id = 4, ShiftId = 6,  EmployeeId = 2, ApprovedOvertime = false },
-
-        new Assignment { Id = 5, ShiftId = 7,  EmployeeId = 5, ApprovedOvertime = false },
-        new Assignment { Id = 6, ShiftId = 9,  EmployeeId = 4, ApprovedOvertime = false },
-
-        new Assignment { Id = 7, ShiftId = 10, EmployeeId = 1, ApprovedOvertime = false },
-        new Assignment { Id = 8, ShiftId = 12, EmployeeId = 4, ApprovedOvertime = false },
-
-        new Assignment { Id = 9, ShiftId = 13, EmployeeId = 5, ApprovedOvertime = false },
-        new Assignment { Id = 10, ShiftId = 15, EmployeeId = 2, ApprovedOvertime = false },
-
-        new Assignment { Id = 11, ShiftId = 16, EmployeeId = 3, ApprovedOvertime = false },
-        new Assignment { Id = 12, ShiftId = 18, EmployeeId = 4, ApprovedOvertime = false },
-
-        new Assignment { Id = 13, ShiftId = 19, EmployeeId = 3, ApprovedOvertime = false },
-        new Assignment { Id = 14, ShiftId = 21, EmployeeId = 4, ApprovedOvertime = false }
-    };*/
 
     public async Task<bool> CopyLastPublishedWeekAsync(DateTime targetWeekStart)
     {
