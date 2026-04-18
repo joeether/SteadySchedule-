@@ -98,7 +98,7 @@
 
     private async Task LoadPositionsAsync()
     {
-        positions = await GetPositionsAsync(Schedule.Company.Id);
+        positions = await Schedule.GetPositionsAsync();
     }
 
     private async Task AddPosition()
