@@ -644,7 +644,7 @@
 	private async Task LoadWeekDataAsync()
 	{
 		employees = await Schedule.GetEmployeesAsync();
-		positions = await Schedule.GetPositionsAsync();
+		positions = await Schedule.GetPositionsAsync(Schedule.Company.Id);
 		shifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
 		assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
 		templates = await Schedule.GetWeekTemplatesAsync();
