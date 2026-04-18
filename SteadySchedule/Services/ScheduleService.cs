@@ -97,7 +97,7 @@ public class ScheduleService
     {
 
 return await _db.Positions
-    .Where(p => p.CompanyId == companyId)
+    .Where(p => p.CompanyId == Company.Id)
     .OrderBy(p => p.Name)
     .ToListAsync();
     }
