@@ -38,23 +38,34 @@ using (var scope = app.Services.CreateScope())
 
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
-    var existingUser = await userManager.FindByEmailAsync("test@test.com");
-
-    if (existingUser == null)
+    var testUsers = new List<(string Email, int CompanyId)>
     {
-        var user = new ApplicationUser
-        {
-            UserName = "test@test.com",
-            Email = "test@test.com",
-            CompanyId = 1
-        };
+        ("test@test.com", 1),
+        ("user2@test.com", 2)
+    };
 
-        var result = await userManager.CreateAsync(user, "Password123!");
+    foreach (var (email, companyId) in testUsers)
+    {
+        var normalizedEmail = email.ToLower();
 
-        if (!result.Succeeded)
+        var existingUser = await userManager.FindByEmailAsync(normalizedEmail);
+
+        if (existingUser == null)
         {
-            var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-            throw new Exception($"Failed to create test user: {errors}");
+            var user = new ApplicationUser
+            {
+                UserName = normalizedEmail,
+                Email = normalizedEmail,
+                CompanyId = companyId
+            };
+
+            var result = await userManager.CreateAsync(user, "Password123!");
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                throw new Exception($"Failed to create user {email}: {errors}");
+            }
         }
     }
 }
