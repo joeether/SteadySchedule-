@@ -93,7 +93,7 @@ public class ScheduleService
         AdminEmail = "admin@mamasburgers.com"
     };
 
-    public async Task AddPositionAsync(string name, int companyId)
+    public async Task<List<Position>> GetPositionsAsync(int companyId)
 {
     return await _db.Positions
         .Where(p => p.CompanyId == companyId)
@@ -116,28 +116,28 @@ public class ScheduleService
         await _db.SaveChangesAsync();
     }
 
-    public async Task AddPositionAsync(string name)
+    public async Task AddPositionAsync(string name, int companyId)
+{
+    if (string.IsNullOrWhiteSpace(name))
+        return;
+
+    var trimmed = name.Trim();
+
+    var exists = await _db.Positions.AnyAsync(p =>
+        p.CompanyId == companyId &&
+        p.Name == trimmed);
+
+    if (exists)
+        return;
+
+    _db.Positions.Add(new Position
     {
-        if (string.IsNullOrWhiteSpace(name))
-            return;
+        CompanyId = companyId,
+        Name = trimmed
+    });
 
-        var trimmed = name.Trim();
-
-        var exists = await _db.Positions.AnyAsync(p =>
-            p.CompanyId == Company.Id &&
-            p.Name == trimmed);
-
-        if (exists)
-            return;
-
-        _db.Positions.Add(new Position
-        {
-            CompanyId = Company.Id,
-            Name = trimmed
-        });
-
-        await _db.SaveChangesAsync();
-    }
+    await _db.SaveChangesAsync();
+}
 
     public async Task<bool> DeletePositionAsync(string name, int companyId)
     {
