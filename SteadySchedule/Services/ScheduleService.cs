@@ -93,14 +93,13 @@ public class ScheduleService
         AdminEmail = "admin@mamasburgers.com"
     };
 
-    public async Task<List<Position>> GetPositionsAsync()
-    {
-
-return await _db.Positions
-    .Where(p => p.CompanyId == Company.Id)
-    .OrderBy(p => p.Name)
-    .ToListAsync();
-    }
+    public async Task AddPositionAsync(string name, int companyId)
+{
+    return await _db.Positions
+        .Where(p => p.CompanyId == companyId)
+        .OrderBy(p => p.Name)
+        .ToListAsync();
+}
 
     public async Task SeedPositionsIfEmptyAsync()
     {
@@ -140,19 +139,19 @@ return await _db.Positions
         await _db.SaveChangesAsync();
     }
 
-    public async Task<bool> DeletePositionAsync(string name)
+    public async Task<bool> DeletePositionAsync(string name, int companyId)
     {
         var trimmed = name.Trim();
 
         var usedInShift = await _db.Shifts.AnyAsync(s =>
-            s.CompanyId == Company.Id &&
+            s.CompanyId == companyId &&
             s.Position == trimmed);
 
         if (usedInShift)
             return false;
 
         var position = await _db.Positions.FirstOrDefaultAsync(p =>
-            p.CompanyId == Company.Id &&
+            p.CompanyId == companyId &&
             p.Name == trimmed);
 
         if (position == null)
