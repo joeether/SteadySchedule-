@@ -362,7 +362,7 @@
     protected override async Task OnInitializedAsync()
     {
         employees = await Schedule.GetEmployeesAsync();
-        positions = await Schedule.GetPositionsAsync();
+        positions = await Schedule.GetPositionsAsync(Schedule.Company.Id);
     }
 
     private async Task AddEmployee()
