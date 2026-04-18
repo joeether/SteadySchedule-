@@ -702,6 +702,12 @@
     return ScheduleMetricsService.GetWeeklyHours(employee, assignments, shifts, weekStart);
 }
 
+private decimal GetTotalWeeklyCost()
+{
+    return ScheduleMetricsService.GetTotalWeeklyCost(
+        employees, assignments, shifts, weekStart);
+}
+
 	private static bool IsQualified(Employee e, string position)
 	{
 		return (e.PositionsQualified ?? "")
