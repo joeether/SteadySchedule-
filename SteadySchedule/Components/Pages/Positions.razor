@@ -84,7 +84,7 @@
 
     private async Task LoadPositionsAsync()
     {
-        positions = await Schedule.GetPositionsAsync();
+        positions = await Schedule.GetPositionsAsync(Schedule.Company.Id);
     }
 
     private async Task AddPosition()
@@ -107,7 +107,7 @@
                 return;
             }
 
-            await Schedule.AddPositionAsync(trimmed);
+            await Schedule.AddPositionAsync(trimmed, Schedule.Company.Id);
             newPosition = string.Empty;
             message = null;
 
@@ -133,7 +133,7 @@
 
         try
         {
-            var deleted = await Schedule.DeletePositionAsync(position);
+            var deleted = await Schedule.DeletePositionAsync(position, Schedule.Company.Id);
 
             if (!deleted)
             {
