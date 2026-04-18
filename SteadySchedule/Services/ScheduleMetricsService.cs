@@ -4,6 +4,29 @@ namespace SteadySchedule.Services;
 
 public class ScheduleMetricsService
 {
+    public static decimal GetWeeklyCost(
+    Employee employee,
+    List<Assignment> assignments,
+    List<Shift> shifts,
+    DateTime weekStart)
+{
+    if (employee.IsSalary)
+        return employee.WeeklySalary ?? 0;
+
+    var hours = GetWeeklyHours(employee, assignments, shifts, weekStart);
+
+    return (decimal)hours * (employee.HourlyRate ?? 0);
+}
+
+public static decimal GetTotalWeeklyCost(
+    List<Employee> employees,
+    List<Assignment> assignments,
+    List<Shift> shifts,
+    DateTime weekStart)
+{
+    return employees.Sum(e =>
+        GetWeeklyCost(e, assignments, shifts, weekStart));
+}
     public static double GetShiftHours(Shift shift)
     {
         var start = shift.StartTime;
