@@ -14,14 +14,7 @@ public class ScheduleService
         _db = db;
     }
 
-private readonly UserManager<ApplicationUser> _userManager;
-private readonly IHttpContextAccessor _httpContextAccessor;
 
-private async Task<int> GetCompanyIdAsync()
-{
-    var user = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
-    return user?.CompanyId ?? 1;
-}
     public async Task PublishWeekAsync(DateTime weekStart)
     {
         var existing = await _db.Schedules
@@ -102,7 +95,6 @@ private async Task<int> GetCompanyIdAsync()
 
     public async Task<List<Position>> GetPositionsAsync()
     {
-            var companyId = await GetCompanyIdAsync();
 
 return await _db.Positions
     .Where(p => p.CompanyId == companyId)
