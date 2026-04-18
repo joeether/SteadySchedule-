@@ -99,7 +99,6 @@ private async Task<int> GetCompanyIdAsync()
 
     public async Task<List<Position>> GetPositionsAsync()
     {
-        return await _db.Positions
             var companyId = await GetCompanyIdAsync();
 
 return await _db.Positions
