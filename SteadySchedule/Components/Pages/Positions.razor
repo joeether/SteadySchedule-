@@ -3,6 +3,7 @@
 @using SteadySchedule.Domain
 @inject ScheduleService Schedule
 @inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthStateProvider
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Authorization
 
@@ -78,9 +79,21 @@
     private bool isDeleting = false;
 
     protected override async Task OnInitializedAsync()
+{
+    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+    var username = authState.User.Identity?.Name;
+
+    if (username == "user2@test.com")
     {
-        await LoadPositionsAsync();
+        Schedule.SetCompany(2);
     }
+    else
+    {
+        Schedule.SetCompany(1);
+    }
+
+    await LoadPositionsAsync();
+}
 
     private async Task LoadPositionsAsync()
     {
