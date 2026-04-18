@@ -10,6 +10,15 @@ public class ScheduleService
     {
         _db = db;
     }
+
+private readonly UserManager<ApplicationUser> _userManager;
+private readonly IHttpContextAccessor _httpContextAccessor;
+
+private async Task<int> GetCompanyIdAsync()
+{
+    var user = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+    return user?.CompanyId ?? 1;
+}
     public async Task PublishWeekAsync(DateTime weekStart)
     {
         var existing = await _db.Schedules
@@ -91,9 +100,12 @@ public class ScheduleService
     public async Task<List<Position>> GetPositionsAsync()
     {
         return await _db.Positions
-            .Where(p => p.CompanyId == Company.Id)
-            .OrderBy(p => p.Name)
-            .ToListAsync();
+            var companyId = await GetCompanyIdAsync();
+
+return await _db.Positions
+    .Where(p => p.CompanyId == companyId)
+    .OrderBy(p => p.Name)
+    .ToListAsync();
     }
 
     public async Task SeedPositionsIfEmptyAsync()
