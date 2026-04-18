@@ -1,6 +1,9 @@
 using SteadySchedule.Domain;
 using Microsoft.EntityFrameworkCore;
 using SteadySchedule.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
+
 namespace SteadySchedule.Services;
 
 public class ScheduleService
