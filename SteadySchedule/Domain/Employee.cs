@@ -7,9 +7,9 @@ public class Employee
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public int MaxHoursPerWeek { get; set; }
-public decimal? HourlyRate { get; set; }
+/*public decimal? HourlyRate { get; set; }
 public decimal? WeeklySalary { get; set; }
-public bool IsSalary { get; set; }
+public bool IsSalary { get; set; }*/
     public string PositionsQualified { get; set; } = string.Empty; // v1 simple
 
     public bool MondayAvailable { get; set; }
