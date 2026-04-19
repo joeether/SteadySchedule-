@@ -4,7 +4,7 @@ namespace SteadySchedule.Services;
 
 public class ScheduleMetricsService
 {
-    public static decimal GetWeeklyCost(
+    /*public static decimal GetWeeklyCost(
     Employee employee,
     List<Assignment> assignments,
     List<Shift> shifts,
@@ -26,7 +26,7 @@ public static decimal GetTotalWeeklyCost(
 {
     return employees.Sum(e =>
         GetWeeklyCost(e, assignments, shifts, weekStart));
-}
+}*/
     public static double GetShiftHours(Shift shift)
     {
         var start = shift.StartTime;
