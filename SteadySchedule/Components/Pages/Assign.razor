@@ -643,17 +643,17 @@
 
 	private async Task LoadWeekDataAsync()
 	{
-		employees = await Schedule.GetEmployeesAsync();
+		employees = await Schedule.GetEmployeesAsync(Schedule.Company.Id);
 		positions = await Schedule.GetPositionsAsync(Schedule.Company.Id);
 		shifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
 		assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
-		templates = await Schedule.GetWeekTemplatesAsync();
-		templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+		templates = await Schedule.GetWeekTemplatesAsync(Schedule.Company.Id);
+		templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
 	}
 
 	private async Task RefreshWeekStatusAsync()
 	{
-		currentWeekStatus = await Schedule.GetWeekStatusAsync(weekStart);
+		currentWeekStatus = await Schedule.GetWeekStatusAsync(Schedule.Company.Id, weekStart);
 	}
 
 	protected override async Task OnInitializedAsync()
@@ -702,11 +702,11 @@
     return ScheduleMetricsService.GetWeeklyHours(employee, assignments, shifts, weekStart);
 }
 
-/*private decimal GetTotalWeeklyCost()
+private decimal GetTotalWeeklyCost()
 {
     return ScheduleMetricsService.GetTotalWeeklyCost(
         employees, assignments, shifts, weekStart);
-}*/
+}
 
 	private static bool IsQualified(Employee e, string position)
 	{
@@ -763,7 +763,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
     return;
 }
 
-        await Schedule.AddAssignmentAsync(new Assignment
+        await Schedule.AddAssignmentAsync(Schedule.Company.Id, new Assignment
         {
             ShiftId = shift.Id,
             EmployeeId = employee.Id,
@@ -780,7 +780,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 		{
 			if (IsPublished) return;
 
-			await Schedule.DeleteAssignmentAsync(assignment.Id);
+			await Schedule.DeleteAssignmentAsync(Schedule.Company.Id, assignment.Id);
 			assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
 		});
 	}
@@ -811,7 +811,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 
 		await RunBusy(async () =>
 		{
-			var copied = await Schedule.CopyLastPublishedWeekAsync(weekStart);
+			var copied = await Schedule.CopyLastPublishedWeekAsync(Schedule.Company.Id, weekStart);
 
 			await RefreshWeekStatusAsync();
 			await LoadWeekDataAsync();
@@ -1059,7 +1059,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 
 				for (int i = 0; i < neededCount; i++)
 				{
-					await Schedule.AddShiftAsync(new Shift
+				await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
 					{
 						CompanyId = Schedule.Company.Id,
 						Date = shiftDate,
@@ -1122,7 +1122,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 				return;
 			}
 
-			await Schedule.ClearWeekAsync(weekStart);
+			await Schedule.ClearWeekAsync(Schedule.Company.Id, weekStart);
 
 			shifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
 			assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
@@ -1181,7 +1181,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 
 			for (int i = 0; i < newShiftCount; i++)
 			{
-				await Schedule.AddShiftAsync(new Shift
+			await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
 				{
 					CompanyId = Schedule.Company.Id,
 					Date = shiftDate,
@@ -1231,7 +1231,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 			if (IsPublished || shiftToDelete is null)
 				return;
 
-			await Schedule.DeleteShiftAsync(shiftToDelete.Id);
+			await Schedule.DeleteShiftAsync(Schedule.Company.Id, shiftToDelete.Id);
 
 			shifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
 			assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
@@ -1408,7 +1408,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 	{
 		await RunBusy(async () =>
 		{
-			await Schedule.PublishWeekAsync(weekStart);
+			await Schedule.PublishWeekAsync(Schedule.Company.Id, weekStart);
 			await RefreshWeekStatusAsync();
 		});
 	}
@@ -1417,7 +1417,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 	{
 		await RunBusy(async () =>
 		{
-			await Schedule.UnpublishWeekAsync(weekStart);
+			await Schedule.UnpublishWeekAsync(Schedule.Company.Id, weekStart);
 			await RefreshWeekStatusAsync();
 		});
 	}

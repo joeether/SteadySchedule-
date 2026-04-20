@@ -152,7 +152,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        publishedWeeks = (await Schedule.GetPublishedSchedulesAsync())
+        publishedWeeks = (await Schedule.GetPublishedSchedulesAsync(Schedule.Company.Id))
             .Select(s => s.WeekStart.Date)
             .Distinct()
             .OrderByDescending(d => d)
@@ -178,17 +178,17 @@
 
     private async Task LoadSelectedWeekDataAsync()
     {
-        employees = await Schedule.GetEmployeesAsync();
+        employees = await Schedule.GetEmployeesAsync(Schedule.Company.Id);
         selectedWeekShifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, selectedWeek);
         selectedWeekAssignments = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, selectedWeek);
-        currentStatus = await Schedule.GetWeekStatusAsync(selectedWeek);
+        currentStatus = await Schedule.GetWeekStatusAsync(Schedule.Company.Id, selectedWeek);
     }
 
     private async Task UnpublishWeek()
     {
         await RunBusy(async () =>
         {
-            await Schedule.UnpublishWeekAsync(selectedWeek);
+            await Schedule.UnpublishWeekAsync(Schedule.Company.Id, selectedWeek);
 
             var week = selectedWeek.ToString("yyyy-MM-dd");
             Nav.NavigateTo($"/assign?week={week}");

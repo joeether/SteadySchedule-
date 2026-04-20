@@ -26,6 +26,10 @@ builder.Services.AddRazorPages();
 
 builder.Services.AddScoped<ScheduleService>();
 
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, AppUserClaimsPrincipalFactory>();
+
+builder.Services.AddScoped<UserContextService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -33,8 +37,8 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
 
     var scheduleService = services.GetRequiredService<ScheduleService>();
-    await scheduleService.SeedPositionsIfEmptyAsync();
-    await scheduleService.SeedEmployeesIfEmptyAsync();
+    await scheduleService.SeedPositionsIfEmptyAsync(1);
+    await scheduleService.SeedEmployeesIfEmptyAsync(1);
 
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 

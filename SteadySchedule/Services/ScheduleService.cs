@@ -15,18 +15,18 @@ public class ScheduleService
     }
 
 
-    public async Task PublishWeekAsync(DateTime weekStart)
+    public async Task PublishWeekAsync(int companyId, DateTime weekStart)
     {
         var existing = await _db.Schedules
             .FirstOrDefaultAsync(s =>
-                s.CompanyId == Company.Id &&
+                s.CompanyId == companyId &&
                 s.WeekStart == weekStart);
 
         if (existing == null)
         {
             _db.Schedules.Add(new SteadySchedule.Data.Schedule
             {
-                CompanyId = Company.Id,
+                CompanyId = companyId,
                 WeekStart = weekStart,
                 IsPublished = true
             });
@@ -39,11 +39,11 @@ public class ScheduleService
         await _db.SaveChangesAsync();
     }
 
-    public async Task UnpublishWeekAsync(DateTime weekStart)
+    public async Task UnpublishWeekAsync(int companyId, DateTime weekStart)
     {
         var existing = await _db.Schedules
             .FirstOrDefaultAsync(s =>
-                s.CompanyId == Company.Id &&
+                s.CompanyId == companyId &&
                 s.WeekStart == weekStart);
 
         if (existing != null)
@@ -53,13 +53,13 @@ public class ScheduleService
         }
     }
 
-    public async Task<WeekStatus> GetWeekStatusAsync(DateTime weekStart)
+    public async Task<WeekStatus> GetWeekStatusAsync(int companyId, DateTime weekStart)
     {
         weekStart = StartOfWeek(weekStart);
 
         var existing = await _db.Schedules
             .FirstOrDefaultAsync(s =>
-                s.CompanyId == Company.Id &&
+                s.CompanyId == companyId &&
                 s.WeekStart == weekStart);
 
         if (existing is not null)
@@ -72,10 +72,10 @@ public class ScheduleService
         return WeekStatus.Draft;
     }
 
-    public async Task<List<SteadySchedule.Data.Schedule>> GetPublishedSchedulesAsync()
+    public async Task<List<SteadySchedule.Data.Schedule>> GetPublishedSchedulesAsync(int companyId)
     {
         return await _db.Schedules
-            .Where(s => s.CompanyId == Company.Id && s.IsPublished)
+            .Where(s => s.CompanyId == companyId && s.IsPublished)
             .OrderByDescending(s => s.WeekStart)
             .ToListAsync();
     }
@@ -104,15 +104,15 @@ public void SetCompany(int companyId)
         .ToListAsync();
 }
 
-    public async Task SeedPositionsIfEmptyAsync()
+    public async Task SeedPositionsIfEmptyAsync(int companyId)
     {
-        if (await _db.Positions.AnyAsync(p => p.CompanyId == Company.Id))
+        if (await _db.Positions.AnyAsync(p => p.CompanyId == companyId))
             return;
 
         var positions = new List<Position>
     {
-        new Position { CompanyId = Company.Id, Name = "Cashier" },
-        new Position { CompanyId = Company.Id, Name = "Cook" }
+        new Position { CompanyId = companyId, Name = "Cashier" },
+        new Position { CompanyId = companyId, Name = "Cook" }
     };
 
         _db.Positions.AddRange(positions);
@@ -172,12 +172,12 @@ public void SetCompany(int companyId)
         return date.Date.AddDays(-diff);
     }
 
-    public async Task<bool> CopyLastPublishedWeekAsync(DateTime targetWeekStart)
+    public async Task<bool> CopyLastPublishedWeekAsync(int companyId, DateTime targetWeekStart)
     {
         targetWeekStart = StartOfWeek(targetWeekStart);
 
         var sourceWeekStart = await _db.Schedules
-            .Where(s => s.CompanyId == Company.Id &&
+            .Where(s => s.CompanyId == companyId &&
                         s.IsPublished &&
                         s.WeekStart < targetWeekStart)
             .OrderByDescending(s => s.WeekStart)
@@ -191,7 +191,7 @@ public void SetCompany(int companyId)
         var targetWeekEnd = targetWeekStart.AddDays(7);
 
         var sourceShifts = await _db.Shifts
-            .Where(s => s.CompanyId == Company.Id &&
+            .Where(s => s.CompanyId == companyId &&
                         s.Date >= sourceWeekStart &&
                         s.Date < sourceWeekEnd)
             .OrderBy(s => s.Date)
@@ -202,7 +202,7 @@ public void SetCompany(int companyId)
             return false;
 
         var targetShifts = await _db.Shifts
-            .Where(s => s.CompanyId == Company.Id &&
+            .Where(s => s.CompanyId == companyId &&
                         s.Date >= targetWeekStart &&
                         s.Date < targetWeekEnd)
             .ToListAsync();
@@ -212,7 +212,7 @@ public void SetCompany(int companyId)
             .ToHashSet();
 
         var targetAssignments = await _db.Assignments
-            .Where(a => a.CompanyId == Company.Id &&
+            .Where(a => a.CompanyId == companyId &&
                         targetShiftIds.Contains(a.ShiftId))
             .ToListAsync();
 
@@ -233,7 +233,7 @@ public void SetCompany(int companyId)
 
             var newShift = new Shift
             {
-                CompanyId = Company.Id,
+                CompanyId = companyId,
                 Date = targetWeekStart.AddDays(dayOffset),
                 Position = sourceShift.Position,
                 StartTime = sourceShift.StartTime,
@@ -258,7 +258,7 @@ public void SetCompany(int companyId)
             .ToHashSet();
 
         var sourceAssignments = await _db.Assignments
-            .Where(a => a.CompanyId == Company.Id &&
+            .Where(a => a.CompanyId == companyId &&
                         sourceShiftIds.Contains(a.ShiftId))
             .ToListAsync();
 
@@ -271,7 +271,7 @@ public void SetCompany(int companyId)
 
             newAssignments.Add(new Assignment
             {
-                CompanyId = Company.Id,
+                CompanyId = companyId,
                 ShiftId = newShiftId,
                 EmployeeId = sourceAssignment.EmployeeId,
                 ApprovedOvertime = sourceAssignment.ApprovedOvertime
@@ -287,24 +287,24 @@ public void SetCompany(int companyId)
         return true;
     }
 
-    public async Task<List<Employee>> GetEmployeesAsync()
+    public async Task<List<Employee>> GetEmployeesAsync(int companyId)
     {
         return await _db.Employees
-            .Where(e => e.CompanyId == Company.Id)
+            .Where(e => e.CompanyId == companyId)
             .OrderBy(e => e.Name)
             .ToListAsync();
     }
 
-    public async Task SeedEmployeesIfEmptyAsync()
+    public async Task SeedEmployeesIfEmptyAsync(int companyId)
     {
-        if (await _db.Employees.AnyAsync(e => e.CompanyId == Company.Id))
+        if (await _db.Employees.AnyAsync(e => e.CompanyId == companyId))
             return;
 
         var employees = new List<Employee>
     {
         new Employee
         {
-            CompanyId = 1,
+            CompanyId = companyId,
             Name = "Amy",
             MaxHoursPerWeek = 40,
             PositionsQualified = "Cashier",
@@ -316,7 +316,7 @@ public void SetCompany(int companyId)
         },
         new Employee
         {
-            CompanyId = 1,
+            CompanyId = companyId,
             Name = "Brandon",
             MaxHoursPerWeek = 40,
             PositionsQualified = "Cook",
@@ -328,7 +328,7 @@ public void SetCompany(int companyId)
         },
         new Employee
         {
-            CompanyId = 1,
+            CompanyId = companyId,
             Name = "Carla",
             MaxHoursPerWeek = 24,
             PositionsQualified = "Cashier",
@@ -337,7 +337,7 @@ public void SetCompany(int companyId)
         },
         new Employee
         {
-            CompanyId = 1,
+            CompanyId = companyId,
             Name = "Derek",
             MaxHoursPerWeek = 32,
             PositionsQualified = "Cook,Cashier",
@@ -349,7 +349,7 @@ public void SetCompany(int companyId)
         },
         new Employee
         {
-            CompanyId = 1,
+            CompanyId = companyId,
             Name = "Emma",
             MaxHoursPerWeek = 20,
             PositionsQualified = "Cashier",
@@ -363,17 +363,17 @@ public void SetCompany(int companyId)
         await _db.SaveChangesAsync();
     }
 
-    public async Task AddEmployeeAsync(Employee employee)
+    public async Task AddEmployeeAsync(int companyId, Employee employee)
     {
-        employee.CompanyId = Company.Id;
+        employee.CompanyId = companyId;
         _db.Employees.Add(employee);
         await _db.SaveChangesAsync();
     }
 
-    public async Task UpdateEmployeeAsync(Employee updatedEmployee)
+    public async Task UpdateEmployeeAsync(int companyId, Employee updatedEmployee)
     {
         var existing = await _db.Employees
-            .FirstOrDefaultAsync(e => e.Id == updatedEmployee.Id && e.CompanyId == Company.Id);
+            .FirstOrDefaultAsync(e => e.Id == updatedEmployee.Id && e.CompanyId == companyId);
 
         if (existing == null)
             return;
@@ -421,16 +421,16 @@ public void SetCompany(int companyId)
         await _db.SaveChangesAsync();
     }
 
-    public async Task<bool> DeleteEmployeeAsync(int employeeId)
+    public async Task<bool> DeleteEmployeeAsync(int companyId, int employeeId)
     {
         var hasAssignments = await _db.Assignments
-            .AnyAsync(a => a.EmployeeId == employeeId && a.CompanyId == Company.Id);
+            .AnyAsync(a => a.EmployeeId == employeeId && a.CompanyId == companyId);
 
         if (hasAssignments)
             return false;
 
         var employee = await _db.Employees
-            .FirstOrDefaultAsync(e => e.Id == employeeId && e.CompanyId == Company.Id);
+            .FirstOrDefaultAsync(e => e.Id == employeeId && e.CompanyId == companyId);
 
         if (employee == null)
             return false;
@@ -440,26 +440,26 @@ public void SetCompany(int companyId)
         return true;
     }
 
-    public async Task<List<Shift>> GetShiftsAsync()
+    public async Task<List<Shift>> GetShiftsAsync(int companyId)
     {
         return await _db.Shifts
-            .Where(s => s.CompanyId == Company.Id)
+            .Where(s => s.CompanyId == companyId)
             .OrderBy(s => s.Date)
             .ThenBy(s => s.StartTime)
             .ToListAsync();
     }
 
-    public async Task AddShiftAsync(Shift shift)
+    public async Task AddShiftAsync(int companyId, Shift shift)
     {
-        shift.CompanyId = Company.Id;
+        shift.CompanyId = companyId;
         _db.Shifts.Add(shift);
         await _db.SaveChangesAsync();
     }
 
-    public async Task UpdateShiftAsync(Shift updatedShift)
+    public async Task UpdateShiftAsync(int companyId, Shift updatedShift)
     {
         var existing = await _db.Shifts
-            .FirstOrDefaultAsync(s => s.Id == updatedShift.Id && s.CompanyId == Company.Id);
+            .FirstOrDefaultAsync(s => s.Id == updatedShift.Id && s.CompanyId == companyId);
 
         if (existing == null)
             return;
@@ -473,16 +473,16 @@ public void SetCompany(int companyId)
         await _db.SaveChangesAsync();
     }
 
-    public async Task DeleteShiftAsync(int shiftId)
+    public async Task DeleteShiftAsync(int companyId, int shiftId)
     {
         var shift = await _db.Shifts
-            .FirstOrDefaultAsync(s => s.Id == shiftId && s.CompanyId == Company.Id);
+            .FirstOrDefaultAsync(s => s.Id == shiftId && s.CompanyId == companyId);
 
         if (shift == null)
             return;
 
         var assignments = await _db.Assignments
-            .Where(a => a.ShiftId == shiftId && a.CompanyId == Company.Id)
+            .Where(a => a.ShiftId == shiftId && a.CompanyId == companyId)
             .ToListAsync();
 
         if (assignments.Any())
@@ -492,26 +492,26 @@ public void SetCompany(int companyId)
         await _db.SaveChangesAsync();
     }
 
-    public async Task<List<Assignment>> GetAssignmentsAsync()
+    public async Task<List<Assignment>> GetAssignmentsAsync(int companyId)
     {
         return await _db.Assignments
-            .Where(a => a.CompanyId == Company.Id)
+            .Where(a => a.CompanyId == companyId)
             .Include(a => a.Employee)
             .Include(a => a.Shift)
             .ToListAsync();
     }
 
-    public async Task AddAssignmentAsync(Assignment assignment)
+    public async Task AddAssignmentAsync(int companyId, Assignment assignment)
     {
-        assignment.CompanyId = Company.Id;
+        assignment.CompanyId = companyId;
         _db.Assignments.Add(assignment);
         await _db.SaveChangesAsync();
     }
 
-    public async Task DeleteAssignmentAsync(int assignmentId)
+    public async Task DeleteAssignmentAsync(int companyId, int assignmentId)
     {
         var assignment = await _db.Assignments
-            .FirstOrDefaultAsync(a => a.Id == assignmentId && a.CompanyId == Company.Id);
+            .FirstOrDefaultAsync(a => a.Id == assignmentId && a.CompanyId == companyId);
 
         if (assignment == null)
             return;
@@ -551,26 +551,26 @@ public void SetCompany(int companyId)
             .ToListAsync();
     }
 
-    public async Task<bool> ShiftHasAssignmentsAsync(int shiftId)
+    public async Task<bool> ShiftHasAssignmentsAsync(int companyId, int shiftId)
     {
         return await _db.Assignments
-            .AnyAsync(a => a.CompanyId == Company.Id && a.ShiftId == shiftId);
+            .AnyAsync(a => a.CompanyId == companyId && a.ShiftId == shiftId);
     }
 
-    public async Task<bool> PositionIsUsedInShiftsAsync(string position)
+    public async Task<bool> PositionIsUsedInShiftsAsync(int companyId, string position)
     {
         return await _db.Shifts.AnyAsync(s =>
-            s.CompanyId == Company.Id &&
+            s.CompanyId == companyId &&
             s.Position == position);
     }
 
-    public async Task ClearWeekAsync(DateTime weekStart)
+    public async Task ClearWeekAsync(int companyId, DateTime weekStart)
     {
         weekStart = StartOfWeek(weekStart);
         var weekEnd = weekStart.AddDays(7);
 
         var weekShifts = await _db.Shifts
-            .Where(s => s.CompanyId == Company.Id &&
+            .Where(s => s.CompanyId == companyId &&
                         s.Date >= weekStart &&
                         s.Date < weekEnd)
             .ToListAsync();
@@ -578,7 +578,7 @@ public void SetCompany(int companyId)
         var weekShiftIds = weekShifts.Select(s => s.Id).ToHashSet();
 
         var weekAssignments = await _db.Assignments
-            .Where(a => a.CompanyId == Company.Id &&
+            .Where(a => a.CompanyId == companyId &&
                         weekShiftIds.Contains(a.ShiftId))
             .ToListAsync();
 
@@ -591,27 +591,31 @@ public void SetCompany(int companyId)
         await _db.SaveChangesAsync();
     }
 
-    public async Task<List<WeekTemplate>> GetWeekTemplatesAsync()
+    public async Task<List<WeekTemplate>> GetWeekTemplatesAsync(int companyId)
     {
         return await _db.WeekTemplates
-            .Where(t => t.CompanyId == Company.Id)
+            .Where(t => t.CompanyId == companyId)
             .OrderBy(t => t.Name)
             .ToListAsync();
     }
 
-    public async Task<List<WeekTemplateShift>> GetWeekTemplateShiftsAsync()
+    public async Task<List<WeekTemplateShift>> GetWeekTemplateShiftsAsync(int companyId)
     {
-        return await _db.WeekTemplateShifts
-            .OrderBy(s => s.DayOfWeek)
-            .ThenBy(s => s.StartTime)
-            .ToListAsync();
+        return await (
+            from shift in _db.WeekTemplateShifts
+            join template in _db.WeekTemplates
+                on shift.WeekTemplateId equals template.Id
+            where template.CompanyId == companyId
+            orderby shift.DayOfWeek, shift.StartTime
+            select shift
+        ).ToListAsync();
     }
 
-    public async Task<WeekTemplate> AddWeekTemplateAsync(string name)
+    public async Task<WeekTemplate> AddWeekTemplateAsync(int companyId, string name)
     {
         var template = new WeekTemplate
         {
-            CompanyId = Company.Id,
+            CompanyId = companyId,
             Name = name.Trim()
         };
 
@@ -620,13 +624,13 @@ public void SetCompany(int companyId)
         return template;
     }
 
-    public async Task AddWeekTemplateShiftAsync(WeekTemplateShift shift)
+    public async Task AddWeekTemplateShiftAsync(int companyId, WeekTemplateShift shift)
     {
         _db.WeekTemplateShifts.Add(shift);
         await _db.SaveChangesAsync();
     }
 
-    public async Task UpdateWeekTemplateShiftAsync(WeekTemplateShift updatedShift)
+    public async Task UpdateWeekTemplateShiftAsync(int companyId, WeekTemplateShift updatedShift)
     {
         var existing = await _db.WeekTemplateShifts.FirstOrDefaultAsync(s => s.Id == updatedShift.Id);
         if (existing == null) return;
@@ -640,7 +644,7 @@ public void SetCompany(int companyId)
         await _db.SaveChangesAsync();
     }
 
-    public async Task DeleteWeekTemplateShiftAsync(int id)
+    public async Task DeleteWeekTemplateShiftAsync(int companyId, int id)
     {
         var shift = await _db.WeekTemplateShifts.FirstOrDefaultAsync(s => s.Id == id);
         if (shift == null) return;
@@ -649,18 +653,18 @@ public void SetCompany(int companyId)
         await _db.SaveChangesAsync();
     }
 
-    public async Task RenameWeekTemplateAsync(int id, string newName)
+    public async Task RenameWeekTemplateAsync(int companyId, int id, string newName)
     {
-        var template = await _db.WeekTemplates.FirstOrDefaultAsync(t => t.Id == id && t.CompanyId == Company.Id);
+        var template = await _db.WeekTemplates.FirstOrDefaultAsync(t => t.Id == id && t.CompanyId == companyId);
         if (template == null) return;
 
         template.Name = newName.Trim();
         await _db.SaveChangesAsync();
     }
 
-    public async Task DeleteWeekTemplateAsync(int id)
+    public async Task DeleteWeekTemplateAsync(int companyId, int id)
     {
-        var template = await _db.WeekTemplates.FirstOrDefaultAsync(t => t.Id == id && t.CompanyId == Company.Id);
+        var template = await _db.WeekTemplates.FirstOrDefaultAsync(t => t.Id == id && t.CompanyId == companyId);
         if (template == null) return;
 
         var shifts = await _db.WeekTemplateShifts.Where(s => s.WeekTemplateId == id).ToListAsync();

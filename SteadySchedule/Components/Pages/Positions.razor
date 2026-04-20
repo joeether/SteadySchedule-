@@ -4,9 +4,10 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ScheduleService Schedule
 @inject IJSRuntime JS
-@inject AuthenticationStateProvider AuthStateProvider
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserContextService UserContext
 
 <PageTitle>Positions</PageTitle>
 
@@ -80,21 +81,18 @@
     private bool isDeleting = false;
 
     protected override async Task OnInitializedAsync()
-{
-    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-    var username = authState.User.Identity?.Name;
-
-    if (username == "user2@test.com")
     {
-        Schedule.SetCompany(2);
-    }
-    else
-    {
-        Schedule.SetCompany(1);
-    }
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
 
-    await LoadPositionsAsync();
-}
+        if (user.Identity?.IsAuthenticated != true)
+            return;
+
+        if (!UserContext.TryInitializeCompany(user, Schedule))
+            return;
+
+        await LoadPositionsAsync();
+    }
 
     private async Task LoadPositionsAsync()
     {

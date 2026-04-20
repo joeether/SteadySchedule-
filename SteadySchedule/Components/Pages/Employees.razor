@@ -361,7 +361,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        employees = await Schedule.GetEmployeesAsync();
+        employees = await Schedule.GetEmployeesAsync(Schedule.Company.Id);
         positions = await Schedule.GetPositionsAsync(Schedule.Company.Id);
     }
 
@@ -374,9 +374,9 @@
             newEmployee.CompanyId = Schedule.Company.Id;
             newEmployee.PositionsQualified = string.Join(", ", selectedPositions);
 
-            await Schedule.AddEmployeeAsync(newEmployee);
+            await Schedule.AddEmployeeAsync(Schedule.Company.Id, newEmployee);
 
-            employees = await Schedule.GetEmployeesAsync();
+            employees = await Schedule.GetEmployeesAsync(Schedule.Company.Id);
             ClearForm();
         });
     }
@@ -393,7 +393,7 @@
 
         await RunBusy(async () =>
         {
-            var deleted = await Schedule.DeleteEmployeeAsync(employee.Id);
+            var deleted = await Schedule.DeleteEmployeeAsync(Schedule.Company.Id, employee.Id);
 
             if (!deleted)
             {
@@ -401,7 +401,7 @@
                 return;
             }
 
-            employees = await Schedule.GetEmployeesAsync();
+            employees = await Schedule.GetEmployeesAsync(Schedule.Company.Id);
             deleteMessage = null;
         });
     }
@@ -492,9 +492,9 @@
             NormalizeAvailability(newEmployee);
             newEmployee.PositionsQualified = string.Join(", ", selectedPositions);
 
-            await Schedule.UpdateEmployeeAsync(newEmployee);
+            await Schedule.UpdateEmployeeAsync(Schedule.Company.Id, newEmployee);
 
-            employees = await Schedule.GetEmployeesAsync();
+            employees = await Schedule.GetEmployeesAsync(Schedule.Company.Id);
 
             editingEmployee = null;
             ClearForm();

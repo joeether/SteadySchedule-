@@ -1,9 +1,13 @@
 ﻿@page "/dashboard"
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using SteadySchedule.Domain
 @using SteadySchedule.Services
 @inject ScheduleService Schedule
+@inject NavigationManager Navigation
+@inject UserContextService UserContext
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -187,22 +191,32 @@ private void CloseWarningsModal()
 }
 
     protected override async Task OnInitializedAsync()
-{
-    await LoadDashboardData();
-}
+    {
+        await InitializeDashboardAsync();
+    }
+
+    private async Task InitializeDashboardAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+            return;
+
+        if (UserContext.TryInitializeCompany(user, Schedule))
+        {
+            await LoadDashboardData();
+            StateHasChanged();
+        }
+    }
 
 private async Task LoadDashboardData()
 {
-    employees = await Schedule.GetEmployeesAsync();
+        employees = await Schedule.GetEmployeesAsync(Schedule.Company.Id);
     shiftsThisWeek = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
     assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
-    currentWeekStatus = await Schedule.GetWeekStatusAsync(weekStart);
-    publishedWeekCount = (await Schedule.GetPublishedSchedulesAsync()).Count;
-}
-
-protected override async Task OnParametersSetAsync()
-{
-    await LoadDashboardData();
+        currentWeekStatus = await Schedule.GetWeekStatusAsync(Schedule.Company.Id, weekStart);
+        publishedWeekCount = (await Schedule.GetPublishedSchedulesAsync(Schedule.Company.Id)).Count;
 }
 
     private int AssignedShiftCount =>

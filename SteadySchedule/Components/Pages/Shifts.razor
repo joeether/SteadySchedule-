@@ -441,10 +441,10 @@
 	protected override async Task OnInitializedAsync()
 	{
 		positions = await Schedule.GetPositionsAsync(Schedule.Company.Id);
-		templates = await Schedule.GetWeekTemplatesAsync();
-		templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+		templates = await Schedule.GetWeekTemplatesAsync(Schedule.Company.Id);
+		templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
 
-		shifts = await Schedule.GetShiftsAsync();
+		shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
 
 		if (templates.Any())
 			selectedTemplate = templates.First();
@@ -457,8 +457,8 @@
 			if (string.IsNullOrWhiteSpace(newTemplateName))
 				return;
 
-			var template = await Schedule.AddWeekTemplateAsync(newTemplateName);
-			templates = await Schedule.GetWeekTemplatesAsync();
+			var template = await Schedule.AddWeekTemplateAsync(Schedule.Company.Id, newTemplateName);
+			templates = await Schedule.GetWeekTemplatesAsync(Schedule.Company.Id);
 			selectedTemplate = template;
 			newTemplateName = string.Empty;
 		});
@@ -487,7 +487,7 @@
 			if (newTemplateCount < 1)
 				newTemplateCount = 1;
 
-			await Schedule.AddWeekTemplateShiftAsync(new WeekTemplateShift
+		await Schedule.AddWeekTemplateShiftAsync(Schedule.Company.Id, new WeekTemplateShift
 			{
 				WeekTemplateId = selectedTemplate.Id,
 				DayOfWeek = newTemplateDay,
@@ -497,7 +497,7 @@
 				Count = newTemplateCount
 			});
 
-			templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+			templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
 
 			newTemplatePosition = string.Empty;
 			newTemplateDay = DayOfWeek.Monday;
@@ -546,8 +546,8 @@
 
 		await RunBusy(async () =>
 		{
-			await Schedule.DeleteWeekTemplateShiftAsync(shift.Id);
-			templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+			await Schedule.DeleteWeekTemplateShiftAsync(Schedule.Company.Id, shift.Id);
+			templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
 		});
 	}
 
@@ -570,7 +570,7 @@
 
 			for (int i = 0; i < newTemplateCount; i++)
 			{
-				await Schedule.AddShiftAsync(new Shift
+				await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
 				{
 					CompanyId = Schedule.Company.Id,
 					Date = newShiftDate.Date,
@@ -580,7 +580,7 @@
 				});
 			}
 
-			shifts = await Schedule.GetShiftsAsync();
+			shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
 
 			newShift = new Shift
 			{
@@ -608,7 +608,7 @@
 				return;
 			}
 
-			shifts = await Schedule.GetShiftsAsync();
+			shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
 
 			var sourceShifts = shifts
 				.Where(s => s.Date >= fromWeekStart && s.Date < fromWeekStart.AddDays(7))
@@ -639,7 +639,7 @@
 				if (alreadyExists)
 					continue;
 
-				await Schedule.AddShiftAsync(new Shift
+			await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
 				{
 					CompanyId = Schedule.Company.Id,
 					Date = newDate,
@@ -655,7 +655,7 @@
 				? $"Copied {addedCount} shift(s) from {fromWeekStart:MM/dd/yyyy} to {toWeekStart:MM/dd/yyyy}."
 				: "No shifts were copied because matching shifts already exist in the target week.";
 
-			shifts = await Schedule.GetShiftsAsync();
+			shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
 		});
 	}
 
@@ -671,7 +671,7 @@
 
 		await RunBusy(async () =>
 		{
-			var hasAssignments = await Schedule.ShiftHasAssignmentsAsync(shift.Id);
+			var hasAssignments = await Schedule.ShiftHasAssignmentsAsync(Schedule.Company.Id, shift.Id);
 
 			if (hasAssignments)
 			{
@@ -679,9 +679,9 @@
 				return;
 			}
 
-			await Schedule.DeleteShiftAsync(shift.Id);
+			await Schedule.DeleteShiftAsync(Schedule.Company.Id, shift.Id);
 
-			shifts = await Schedule.GetShiftsAsync();
+			shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
 
 			shiftDeleteMessage = null;
 		});
@@ -727,7 +727,7 @@
 				return;
 			}
 
-			await Schedule.UpdateWeekTemplateShiftAsync(new WeekTemplateShift
+		await Schedule.UpdateWeekTemplateShiftAsync(Schedule.Company.Id, new WeekTemplateShift
 			{
 				Id = templateShiftToEdit.Id,
 				WeekTemplateId = templateShiftToEdit.WeekTemplateId,
@@ -738,7 +738,7 @@
 				Count = editTemplateCount
 			});
 
-			templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+			templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
 
 			showEditTemplateShiftModal = false;
 			templateShiftToEdit = null;
@@ -770,9 +770,9 @@
 			if (string.IsNullOrWhiteSpace(editTemplateName))
 				return;
 
-			await Schedule.RenameWeekTemplateAsync(selectedTemplate.Id, editTemplateName);
+			await Schedule.RenameWeekTemplateAsync(Schedule.Company.Id, selectedTemplate.Id, editTemplateName);
 
-			templates = await Schedule.GetWeekTemplatesAsync();
+			templates = await Schedule.GetWeekTemplatesAsync(Schedule.Company.Id);
 			selectedTemplate = templates.FirstOrDefault(t => t.Id == selectedTemplate.Id);
 
 			showRenameTemplateModal = false;
@@ -809,10 +809,10 @@
 		{
 			var templateId = selectedTemplate.Id;
 
-			await Schedule.DeleteWeekTemplateAsync(templateId);
+			await Schedule.DeleteWeekTemplateAsync(Schedule.Company.Id, templateId);
 
-			templates = await Schedule.GetWeekTemplatesAsync();
-			templateShifts = await Schedule.GetWeekTemplateShiftsAsync();
+			templates = await Schedule.GetWeekTemplatesAsync(Schedule.Company.Id);
+			templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
 
 			selectedTemplate = templates.Any() ? templates.First() : null;
 
