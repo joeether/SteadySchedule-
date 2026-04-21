@@ -970,7 +970,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 
     // 🚨 HARD BLOCK: already assigned anywhere in this group
     if (selectedGroup.Shifts.Any(s =>
-        assignments.Any(a =>
+        assignmentsThisWeek.Any(a =>
             a.ShiftId == s.Id &&
             a.EmployeeId == employee.Id)))
     {
@@ -978,14 +978,22 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
     }
 
     var openShift = selectedGroup.Shifts
-        .FirstOrDefault(s => !assignments.Any(a => a.ShiftId == s.Id));
+        .FirstOrDefault(s => !assignmentsThisWeek.Any(a => a.ShiftId == s.Id));
 
     if (openShift is null) return;
 
     await AssignEmployeeAsync(openShift, employee);
 
     selectedShift = openShift;
-    showAssignModal = false;
+
+    // 👇 Only close when group is fully assigned
+    var assignedCount = selectedGroup.Shifts.Count(s =>
+        assignmentsThisWeek.Any(a => a.ShiftId == s.Id));
+
+    if (assignedCount >= selectedGroup.Shifts.Count)
+    {
+        showAssignModal = false;
+    }
 }
 
 	private void ToggleWarnings(int shiftId)
