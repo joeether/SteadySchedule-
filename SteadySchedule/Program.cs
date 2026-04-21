@@ -36,13 +36,13 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
 
-    var scheduleService = services.GetRequiredService<ScheduleService>();
-    await scheduleService.SeedPositionsIfEmptyAsync(1);
-    await scheduleService.SeedEmployeesIfEmptyAsync(1);
+    //var scheduleService = services.GetRequiredService<ScheduleService>();
+    //await scheduleService.SeedPositionsIfEmptyAsync(1);
+    //await scheduleService.SeedEmployeesIfEmptyAsync(1);
 
-    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+    //var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
-    var testUsers = new List<(string Email, int CompanyId)>
+    /*var testUsers = new List<(string Email, int CompanyId)>
     {
         ("test@test.com", 1),
         ("user2@test.com", 2)
@@ -71,7 +71,7 @@ using (var scope = app.Services.CreateScope())
                 throw new Exception($"Failed to create user {email}: {errors}");
             }
         }
-    }
+    }*/
 }
 
 // Configure the HTTP request pipeline.

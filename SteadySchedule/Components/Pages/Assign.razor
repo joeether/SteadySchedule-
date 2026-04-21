@@ -76,10 +76,10 @@
 			</button>
 		}
 
-<button class="btn btn-outline-dark"
-        @onclick="ShowHoursModal">
-    Weekly Hours
-</button>
+		<button class="btn btn-outline-dark"
+				@onclick="ShowHoursModal">
+			Weekly Hours
+		</button>
 
 		@if (openedFromPublished)
 		{
@@ -159,8 +159,8 @@
 										var filledCount = GetFilledCount(group);
 
 										<div class="border rounded p-2 mb-2
-			                                            @(filledCount < group.Total ? "border-danger border-2" : "")
-			                                            @(selectedShift?.Id == selectedGroupShift.Id ? "bg-dark text-white border-primary border-3 shadow-lg" : "")">
+									                                            @(filledCount < group.Total ? "border-danger border-2" : "")
+									                                            @(selectedShift?.Id == selectedGroupShift.Id ? "bg-dark text-white border-primary border-3 shadow-lg" : "")">
 
 											<div class="d-flex justify-content-between align-items-start gap-2">
 												<button type="button"
@@ -466,18 +466,18 @@
 
 						<h6 class="fw-bold">Eligible Employees</h6>
 
-    @{
-    var eligible = EligibleEmployees(selectedShift)
-        .Where(e => !IsAlreadyAssignedToGroup(e, selectedGroup!));
-}
+						@{
+							var eligible = EligibleEmployees(selectedShift)
+							.Where(e => !IsAlreadyAssignedToGroup(e, selectedGroup!));
+						}
 						@if (!eligible.Any())
-{
-    <p class="text-muted">No eligible employees found for this shift.</p>
-}
+						{
+							<p class="text-muted">No eligible employees found for this shift.</p>
+						}
 						else
-{
-    <ul class="list-group mb-3">
-        @foreach (var e in eligible)
+						{
+							<ul class="list-group mb-3">
+								@foreach (var e in eligible)
 								{
 									var warnings = GetWarnings(e, selectedShift, isPreview: true);
 									var weeklyHours = GetWeeklyHours(e);
@@ -509,14 +509,14 @@
 										<button class="btn btn-sm @(warnings.Any() ? "btn-warning" : "btn-dark")"
 												disabled="@(IsPublished || isBusy || IsBlockedFromAssigning(e, selectedShift))"
 												title="@(IsPublished
-																				 ? "Week is Official. Unpublish to edit."
-																				 : !IsAvailableForShift(e, selectedShift)
-																					 ? "Availability conflict"
-																					 : (!allowOvertime && WouldCauseOvertimeIfAssigned(e, selectedShift))
-																						 ? "Enable overtime to assign"
-																						 : warnings.Any()
-																							 ? "Assignment has warnings"
-																							 : "")"
+																												  		 ? "Week is Official. Unpublish to edit."
+																												 		 : !IsAvailableForShift(e, selectedShift)
+																													 		 ? "Availability conflict"
+																													 		 : (!allowOvertime && WouldCauseOvertimeIfAssigned(e, selectedShift))
+																														 		 ? "Enable overtime to assign"
+																														 		 : warnings.Any()
+																															 		 ? "Assignment has warnings"
+																															 		 : "")"
 									@onclick="() => AssignEmployeeFromModal(e)">
 								@(isBusy ? "Working..." : "Assign")
 							</button>
@@ -557,52 +557,70 @@
 			</div>
 		</div>
 	}
-@if (showHoursModal)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
+	@if (showHoursModal)
+	{
+		<div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+			<div class="modal-dialog modal-lg modal-dialog-scrollable">
+				<div class="modal-content">
 
-                <div class="modal-header">
-                    <h5 class="modal-title">Weekly Employee Hours</h5>
-                    <button class="btn-close" @onclick="CloseHoursModal"></button>
-                </div>
+					<div class="modal-header">
+						<h5 class="modal-title">Weekly Employee Hours</h5>
+						<button class="btn-close" @onclick="CloseHoursModal"></button>
+					</div>
 
-                <div class="modal-body">
+					<div class="modal-body">
 
-                    <ul class="list-group">
-                        @foreach (var e in employees)
-                        {
-                            var hours = GetWeeklyHours(e);
+						<ul class="list-group">
+							@foreach (var e in employees)
+							{
+								var hours = GetWeeklyHours(e);
 
-                            var hourClass =
-                                hours >= e.MaxHoursPerWeek
-                                ? "text-danger fw-semibold"
-                                : hours >= (e.MaxHoursPerWeek * 0.8)
-                                ? "text-warning fw-semibold"
-                                : "text-success fw-semibold";
+								var hourClass =
+								hours >= e.MaxHoursPerWeek
+								? "text-danger fw-semibold"
+								: hours >= (e.MaxHoursPerWeek * 0.8)
+								? "text-warning fw-semibold"
+								: "text-success fw-semibold";
 
-                            <li class="list-group-item d-flex justify-content-between">
-                                <span>@e.Name</span>
-                                <span class="@hourClass">
-                                    @($"{hours:0.#}h / {e.MaxHoursPerWeek}h")
-                                </span>
-                            </li>
-                        }
-                    </ul>
+								<li class="list-group-item d-flex justify-content-between align-items-center">
+									<div>
+										<div>@e.Name</div>
+										<small class="text-muted">
+											@(e.IsSalary
+																				? $"Salary: {e.WeeklySalary:C}/week"
+																				: $"Hourly: {e.HourlyRate:C}/hr")
+								</small>
+							</div>
 
-                </div>
+									<div class="text-end">
+										<div class="@hourClass">
+											@($"{hours:0.#}h / {e.MaxHoursPerWeek}h")
+										</div>
+										<small class="text-muted fw-semibold">
+											@GetEstimatedPay(e).ToString("C")
+										</small>
+									</div>
+								</li>
+												}
+						</ul>
+						<div class="mt-3 text-end">
+							<div class="fw-bold">
+								Total Scheduled Labor: @GetTotalScheduledLabor().ToString("C")
+							</div>
+						</div>
 
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseHoursModal">
-                        Close
-                    </button>
-                </div>
+					</div>
 
-            </div>
-        </div>
-    </div>
-}
+					<div class="modal-footer">
+						<button class="btn btn-secondary" @onclick="CloseHoursModal">
+							Close
+						</button>
+					</div>
+
+				</div>
+			</div>
+		</div>
+	}
 </div>
 
 @code {
@@ -676,17 +694,52 @@
 	}
 	private bool isBusy;
 
-private bool showHoursModal = false;
+	private bool showHoursModal = false;
 
-private void ShowHoursModal()
-{
-    showHoursModal = true;
-}
+	private void ShowHoursModal()
+	{
+		showHoursModal = true;
+	}
 
-private void CloseHoursModal()
-{
-    showHoursModal = false;
-}
+	private void CloseHoursModal()
+	{
+		showHoursModal = false;
+	}
+
+	private decimal GetScheduledHours(Employee employee)
+	{
+		var employeeAssignments = assignments
+			.Where(a => a.EmployeeId == employee.Id && a.Shift is not null);
+
+		decimal totalHours = 0;
+
+		foreach (var assignment in employeeAssignments)
+		{
+			var shift = assignment.Shift!;
+			var hours = (decimal)(shift.EndTime - shift.StartTime).TotalHours;
+			totalHours += hours;
+		}
+
+		return totalHours;
+	}
+
+	private decimal GetEstimatedPay(Employee employee)
+	{
+		if (employee.IsSalary && employee.WeeklySalary.HasValue)
+			return employee.WeeklySalary.Value;
+
+		var hours = (decimal)GetWeeklyHours(employee);
+
+		if (employee.HourlyRate.HasValue)
+			return hours * employee.HourlyRate.Value;
+
+		return 0m;
+	}
+
+	private decimal GetTotalScheduledLabor()
+	{
+		return employees.Sum(e => GetEstimatedPay(e));
+	}
 
 	private async Task RunBusy(Func<Task> action)
 	{
@@ -764,15 +817,15 @@ private void CloseHoursModal()
 	}
 
 	private int GetWeeklyHours(Employee employee)
-{
-    return ScheduleMetricsService.GetWeeklyHours(employee, assignments, shifts, weekStart);
-}
+	{
+		return ScheduleMetricsService.GetWeeklyHours(employee, assignments, shifts, weekStart);
+	}
 
-private decimal GetTotalWeeklyCost()
-{
-    return ScheduleMetricsService.GetTotalWeeklyCost(
-        employees, assignments, shifts, weekStart);
-}
+	private decimal GetTotalWeeklyCost()
+	{
+		return ScheduleMetricsService.GetTotalWeeklyCost(
+			employees, assignments, shifts, weekStart);
+	}
 
 	private static bool IsQualified(Employee e, string position)
 	{
@@ -781,13 +834,13 @@ private decimal GetTotalWeeklyCost()
 			.Any(p => string.Equals(p, position, StringComparison.OrdinalIgnoreCase));
 	}
 
-private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
-{
-    return group.Shifts.Any(s =>
-        assignments.Any(a =>
-            a.ShiftId == s.Id &&
-            a.EmployeeId == e.Id));
-}
+	private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
+	{
+		return group.Shifts.Any(s =>
+			assignments.Any(a =>
+				a.ShiftId == s.Id &&
+				a.EmployeeId == e.Id));
+	}
 
 	private IEnumerable<Employee> EligibleEmployees(Shift shift)
 	{
@@ -814,31 +867,31 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 	}
 
 	private async Task AssignEmployeeAsync(Shift shift, Employee employee)
-{
-    await RunBusy(async () =>
-    {
-        if (IsPublished) return;
+	{
+		await RunBusy(async () =>
+		{
+			if (IsPublished) return;
 
-        // 🚨 HARD BLOCK: prevent duplicate assignment
-        if (shifts
-    .Where(s => s.SlotGroupId == shift.SlotGroupId)
-    .Any(s => assignmentsThisWeek.Any(a =>
-        a.ShiftId == s.Id &&
-        a.EmployeeId == employee.Id)))
-{
-    return;
-}
+			// 🚨 HARD BLOCK: prevent duplicate assignment
+			if (shifts
+		.Where(s => s.SlotGroupId == shift.SlotGroupId)
+		.Any(s => assignmentsThisWeek.Any(a =>
+			a.ShiftId == s.Id &&
+			a.EmployeeId == employee.Id)))
+			{
+				return;
+			}
 
-        await Schedule.AddAssignmentAsync(Schedule.Company.Id, new Assignment
-        {
-            ShiftId = shift.Id,
-            EmployeeId = employee.Id,
-            ApprovedOvertime = false
-        });
+			await Schedule.AddAssignmentAsync(Schedule.Company.Id, new Assignment
+			{
+				ShiftId = shift.Id,
+				EmployeeId = employee.Id,
+				ApprovedOvertime = false
+			});
 
-        assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
-    });
-}
+			assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
+		});
+	}
 
 	private async Task UnassignAsync(Assignment assignment)
 	{
@@ -1031,36 +1084,36 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 	}
 
 	private async Task AssignEmployeeFromModal(Employee employee)
-{
-    if (selectedGroup is null) return;
+	{
+		if (selectedGroup is null) return;
 
-    // 🚨 HARD BLOCK: already assigned anywhere in this group
-    if (selectedGroup.Shifts.Any(s =>
-        assignmentsThisWeek.Any(a =>
-            a.ShiftId == s.Id &&
-            a.EmployeeId == employee.Id)))
-    {
-        return;
-    }
+		// 🚨 HARD BLOCK: already assigned anywhere in this group
+		if (selectedGroup.Shifts.Any(s =>
+			assignmentsThisWeek.Any(a =>
+				a.ShiftId == s.Id &&
+				a.EmployeeId == employee.Id)))
+		{
+			return;
+		}
 
-    var openShift = selectedGroup.Shifts
-        .FirstOrDefault(s => !assignmentsThisWeek.Any(a => a.ShiftId == s.Id));
+		var openShift = selectedGroup.Shifts
+			.FirstOrDefault(s => !assignmentsThisWeek.Any(a => a.ShiftId == s.Id));
 
-    if (openShift is null) return;
+		if (openShift is null) return;
 
-    await AssignEmployeeAsync(openShift, employee);
+		await AssignEmployeeAsync(openShift, employee);
 
-    selectedShift = openShift;
+		selectedShift = openShift;
 
-    // 👇 Only close when group is fully assigned
-    var assignedCount = selectedGroup.Shifts.Count(s =>
-        assignmentsThisWeek.Any(a => a.ShiftId == s.Id));
+		// 👇 Only close when group is fully assigned
+		var assignedCount = selectedGroup.Shifts.Count(s =>
+			assignmentsThisWeek.Any(a => a.ShiftId == s.Id));
 
-    if (assignedCount >= selectedGroup.Shifts.Count)
-    {
-        showAssignModal = false;
-    }
-}
+		if (assignedCount >= selectedGroup.Shifts.Count)
+		{
+			showAssignModal = false;
+		}
+	}
 
 	private void ToggleWarnings(int shiftId)
 	{
@@ -1133,7 +1186,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 
 				for (int i = 0; i < neededCount; i++)
 				{
-				await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
+					await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
 					{
 						CompanyId = Schedule.Company.Id,
 						Date = shiftDate,
@@ -1255,7 +1308,7 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 
 			for (int i = 0; i < newShiftCount; i++)
 			{
-			await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
+				await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
 				{
 					CompanyId = Schedule.Company.Id,
 					Date = shiftDate,
@@ -1327,9 +1380,9 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 	}
 
 	private bool WouldCauseOvertimeIfAssigned(Employee e, Shift shift)
-{
-    return ScheduleMetricsService.WouldCauseOvertimeIfAssigned(e, shift, assignments, shifts, weekStart);
-}
+	{
+		return ScheduleMetricsService.WouldCauseOvertimeIfAssigned(e, shift, assignments, shifts, weekStart);
+	}
 
 	private bool IsOvertimeWarningForAssignedShift(Employee e, Shift targetShift)
 	{
@@ -1518,8 +1571,8 @@ private bool IsAlreadyAssignedToGroup(Employee e, ShiftGroup group)
 	}
 
 	private static double GetShiftHours(Shift shift)
-{
-    return ScheduleMetricsService.GetShiftHours(shift);
-}
+	{
+		return ScheduleMetricsService.GetShiftHours(shift);
+	}
 
 }

@@ -373,10 +373,7 @@
 
 @code {
 
-	private Shift newShift = new()
-	{
-		CompanyId = 1
-	};
+	private Shift newShift = new();
 
 	private List<Position> positions = new();
 
@@ -457,8 +454,12 @@
 		positions = await Schedule.GetPositionsAsync(Schedule.Company.Id);
 		templates = await Schedule.GetWeekTemplatesAsync(Schedule.Company.Id);
 		templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
-
 		shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
+
+		newShift = new Shift
+		{
+			CompanyId = Schedule.Company.Id
+		};
 
 		if (templates.Any())
 			selectedTemplate = templates.First();

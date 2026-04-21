@@ -88,13 +88,11 @@ public class ScheduleService
 
     public Company Company { get; private set; } = new();
 
-public void SetCompany(int companyId)
-{
-    Company = new Company
+    public void SetCompany(int companyId)
     {
-        Id = companyId
-    };
-}
+        Company = _db.Companies.FirstOrDefault(c => c.Id == companyId)
+            ?? throw new Exception($"Company with ID {companyId} was not found.");
+    }
 
     public async Task<List<Position>> GetPositionsAsync(int companyId)
 {
@@ -381,6 +379,9 @@ public void SetCompany(int companyId)
         existing.Name = updatedEmployee.Name;
         existing.Email = updatedEmployee.Email;
         existing.MaxHoursPerWeek = updatedEmployee.MaxHoursPerWeek;
+        existing.HourlyRate = updatedEmployee.HourlyRate;
+        existing.WeeklySalary = updatedEmployee.WeeklySalary;
+        existing.IsSalary = updatedEmployee.IsSalary;
         existing.PositionsQualified = updatedEmployee.PositionsQualified;
 
         existing.MondayAvailable = updatedEmployee.MondayAvailable;

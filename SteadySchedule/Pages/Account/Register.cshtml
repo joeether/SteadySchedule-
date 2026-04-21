@@ -1,7 +1,7 @@
 ﻿@page
-@model SteadySchedule.Pages.Account.LoginModel
+@model SteadySchedule.Pages.Account.RegisterModel
 @{
-    ViewData["Title"] = "Log in";
+    ViewData["Title"] = "Register";
 }
 
 <style>
@@ -69,16 +69,6 @@
 .login-page .btn-dark:hover {
     transform: translateY(-1px);
 }
-
-.login-page a {
-    color: #0056b3;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.login-page a:hover {
-     text-decoration: underline;
-}
 </style>
 
 <div class="login-page">
@@ -86,26 +76,35 @@
     <div class="card shadow-sm">
         <div class="card-header fw-semibold">
     <div>SteadySchedule</div>
-    <small class="text-muted">Welcome back</small>
+                <small class="text-muted">Welcome back → Create your account</small>
 </div>
         <div class="card-body">
             <form method="post">
-                <div class="mb-3">
-                    <label asp-for="Input.Email" class="form-label"></label>
-                    <input asp-for="Input.Email" class="form-control" />
-                    <span asp-validation-for="Input.Email" class="text-danger"></span>
-                </div>
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-                <div class="mb-3">
-                    <label asp-for="Input.Password" class="form-label"></label>
-                    <input asp-for="Input.Password" class="form-control" />
-                    <span asp-validation-for="Input.Password" class="text-danger"></span>
-                </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.CompanyName" class="form-label"></label>
+                        <input asp-for="Input.CompanyName" class="form-control" />
+                        <span asp-validation-for="Input.CompanyName" class="text-danger"></span>
+                    </div>
 
-                <div class="form-check mb-3">
-                    <input asp-for="Input.RememberMe" class="form-check-input" />
-                    <label asp-for="Input.RememberMe" class="form-check-label"></label>
-                </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Email" class="form-label"></label>
+                        <input asp-for="Input.Email" class="form-control" />
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Password" class="form-label"></label>
+                        <input asp-for="Input.Password" class="form-control" />
+                        <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+                        <input asp-for="Input.ConfirmPassword" class="form-control" />
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                    </div>
 
                 @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
                 {
@@ -115,11 +114,11 @@
                 }
 
                 <button type="submit" class="btn btn-dark w-100">
-                    Log In
+                        Create Account
                 </button>
                     <div class="text-center mt-3">
-                        <span class="text-muted">Need an account?</span>
-                        <a href="/Account/Register">Register</a>
+                        <span class="text-muted">Already have an account?</span>
+                        <a href="/Account/Login">Log in</a>
                     </div>
             </form>
         </div>

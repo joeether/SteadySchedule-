@@ -13,6 +13,7 @@ namespace SteadySchedule.Data
 
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Employee> Employees { get; set; }
+        public DbSet<Company> Companies { get; set; }
         public DbSet<Shift> Shifts { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
         public DbSet<WeekTemplate> WeekTemplates { get; set; }
@@ -40,6 +41,14 @@ namespace SteadySchedule.Data
                 .WithMany()
                 .HasForeignKey(wts => wts.WeekTemplateId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Employee>()
+                .Property(e => e.HourlyRate)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Employee>()
+                .Property(e => e.WeeklySalary)
+                .HasPrecision(18, 2);
         }
     }
 }
