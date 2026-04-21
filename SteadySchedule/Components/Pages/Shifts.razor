@@ -86,18 +86,23 @@
 
 				<div class="row g-3">
 
-					<div class="col-md-2">
-						<label class="form-label">Day</label>
-						<select class="form-select" @bind="newTemplateDay">
-							<option value="@DayOfWeek.Monday">Monday</option>
-							<option value="@DayOfWeek.Tuesday">Tuesday</option>
-							<option value="@DayOfWeek.Wednesday">Wednesday</option>
-							<option value="@DayOfWeek.Thursday">Thursday</option>
-							<option value="@DayOfWeek.Friday">Friday</option>
-							<option value="@DayOfWeek.Saturday">Saturday</option>
-							<option value="@DayOfWeek.Sunday">Sunday</option>
-						</select>
-					</div>
+					<div class="col-md-4">
+    <label class="form-label">Days</label>
+
+    <div class="d-flex flex-wrap gap-2">
+        @foreach (var day in Enum.GetValues<DayOfWeek>())
+        {
+            <div class="form-check">
+                <input type="checkbox"
+                       class="form-check-input"
+                       @bind="selectedDays[day]" />
+                <label class="form-check-label">
+                    @day
+                </label>
+            </div>
+        }
+    </div>
+</div>
 
 					<div class="col-md-3">
 						<label class="form-label">Position</label>
@@ -224,7 +229,10 @@
 								<option value="@DayOfWeek.Saturday">Saturday</option>
 								<option value="@DayOfWeek.Sunday">Sunday</option>
 							</select>
-						</div>
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="SelectWeekdays">Mon–Fri</button>
+<button class="btn btn-sm btn-outline-secondary" @onclick="SelectAllDays">All</button>
+<button class="btn btn-sm btn-outline-secondary" @onclick="ClearDays">Clear</button>
+						</div>  
 
 						<div class="mb-2">
 							<label class="form-label">Position</label>
@@ -418,6 +426,9 @@
 	}
 
 	private bool isBusy;
+    private Dictionary<DayOfWeek, bool> selectedDays =
+    Enum.GetValues<DayOfWeek>()
+        .ToDictionary(d => d, d => false);
 
 	private async Task RunBusy(Func<Task> action)
 	{
@@ -465,47 +476,82 @@
 	}
 
 	private async Task AddTemplateShift()
-	{
-		await RunBusy(async () =>
-		{
-			templateShiftMessage = null;
+{
+    await RunBusy(async () =>
+    {
+        templateShiftMessage = null;
 
-			if (selectedTemplate is null || string.IsNullOrWhiteSpace(newTemplatePosition))
-				return;
+        if (selectedTemplate is null || string.IsNullOrWhiteSpace(newTemplatePosition))
+            return;
 
-			if (newTemplateEnd == newTemplateStart)
-			{
-				// do nothing for now i might add something
-			}
+        if (newTemplateCount < 1)
+            newTemplateCount = 1;
 
-			if (IsInvalidSundayShift(newTemplateDay, newTemplateStart, newTemplateEnd))
-			{
-				templateShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
-				return;
-			}
+        var selectedDayList = selectedDays
+            .Where(d => d.Value)
+            .Select(d => d.Key)
+            .ToList();
 
-			if (newTemplateCount < 1)
-				newTemplateCount = 1;
+        if (!selectedDayList.Any())
+        {
+            templateShiftMessage = "Please select at least one day.";
+            return;
+        }
 
-		await Schedule.AddWeekTemplateShiftAsync(Schedule.Company.Id, new WeekTemplateShift
-			{
-				WeekTemplateId = selectedTemplate.Id,
-				DayOfWeek = newTemplateDay,
-				Position = newTemplatePosition.Trim(),
-				StartTime = newTemplateStart,
-				EndTime = newTemplateEnd,
-				Count = newTemplateCount
-			});
+        foreach (var day in selectedDayList)
+        {
+            if (IsInvalidSundayShift(day, newTemplateStart, newTemplateEnd))
+            {
+                templateShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover overnight, split into Sunday + Monday.";
+                return;
+            }
 
-			templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
+            await Schedule.AddWeekTemplateShiftAsync(
+                Schedule.Company.Id,
+                new WeekTemplateShift
+                {
+                    WeekTemplateId = selectedTemplate.Id,
+                    DayOfWeek = day,
+                    Position = newTemplatePosition.Trim(),
+                    StartTime = newTemplateStart,
+                    EndTime = newTemplateEnd,
+                    Count = newTemplateCount
+                });
+        }
 
-			newTemplatePosition = string.Empty;
-			newTemplateDay = DayOfWeek.Monday;
-			newTemplateStart = new TimeSpan(9, 0, 0);
-			newTemplateEnd = new TimeSpan(17, 0, 0);
-			newTemplateCount = 1;
-		});
-	}
+        templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
+
+        // Reset inputs
+        newTemplatePosition = string.Empty;
+        newTemplateStart = new TimeSpan(9, 0, 0);
+        newTemplateEnd = new TimeSpan(17, 0, 0);
+        newTemplateCount = 1;
+
+        // Clear checkboxes
+        foreach (var key in selectedDays.Keys.ToList())
+        {
+            selectedDays[key] = false;
+        }
+    });
+}
+
+    private void SelectWeekdays()
+{
+    foreach (var d in selectedDays.Keys.ToList())
+        selectedDays[d] = d >= DayOfWeek.Monday && d <= DayOfWeek.Friday;
+}
+
+private void SelectAllDays()
+{
+    foreach (var d in selectedDays.Keys.ToList())
+        selectedDays[d] = true;
+}
+
+private void ClearDays()
+{
+    foreach (var d in selectedDays.Keys.ToList())
+        selectedDays[d] = false;
+}
 
 	private void OnTemplateChanged(ChangeEventArgs e)
 	{
