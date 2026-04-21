@@ -76,6 +76,11 @@
 			</button>
 		}
 
+<button class="btn btn-outline-dark"
+        @onclick="ShowHoursModal">
+    Weekly Hours
+</button>
+
 		@if (openedFromPublished)
 		{
 			<div class="alert alert-info mb-0 py-1 px-2">
@@ -447,6 +452,54 @@
 						<button type="button" class="btn-close" @onclick="CloseAssignModal"></button>
 					</div>
 
+@if (showHoursModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Weekly Employee Hours</h5>
+                    <button class="btn-close" @onclick="CloseHoursModal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <ul class="list-group">
+                        @foreach (var e in employees)
+                        {
+                            var hours = GetWeeklyHours(e);
+
+                            var hourClass =
+                                hours >= e.MaxHoursPerWeek
+                                ? "text-danger fw-semibold"
+                                : hours >= (e.MaxHoursPerWeek * 0.8)
+                                ? "text-warning fw-semibold"
+                                : "text-success fw-semibold";
+
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>@e.Name</span>
+                                <span class="@hourClass">
+                                    @($"{hours:0.#}h / {e.MaxHoursPerWeek}h")
+                                </span>
+                            </li>
+                        }
+                    </ul>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseHoursModal">
+                        Close
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+
 					<div class="modal-body">
 
 						@if (IsPublished)
@@ -621,6 +674,18 @@
 			&& end != TimeSpan.Zero;
 	}
 	private bool isBusy;
+
+private bool showHoursModal = false;
+
+private void ShowHoursModal()
+{
+    showHoursModal = true;
+}
+
+private void CloseHoursModal()
+{
+    showHoursModal = false;
+}
 
 	private async Task RunBusy(Func<Task> action)
 	{
