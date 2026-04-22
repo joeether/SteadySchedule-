@@ -1,7 +1,7 @@
 @page
 @model SteadySchedule.Pages.Account.JoinModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Join";
 }
 
 <style>
@@ -76,16 +76,16 @@
     <div class="card shadow-sm">
         <div class="card-header fw-semibold">
     <div>SteadySchedule</div>
-                <small class="text-muted">Welcome back → Create your account</small>
+                <small class="text-muted">Join your team</small>
 </div>
         <div class="card-body">
             <form method="post">
                     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                     <div class="mb-3">
-                        <label asp-for="Input.CompanyName" class="form-label"></label>
-                        <input asp-for="Input.CompanyName" class="form-control" />
-                        <span asp-validation-for="Input.CompanyName" class="text-danger"></span>
+                        <label asp-for="Input.InviteCode" class="form-label">Invite Code</label>
+<input asp-for="Input.InviteCode" class="form-control" />
+<span asp-validation-for="Input.InviteCode" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
@@ -114,10 +114,10 @@
                 }
 
                 <button type="submit" class="btn btn-dark w-100">
-                        Create Account
+                        Join Company
                 </button>
                     <div class="text-center mt-3">
-                        <span class="text-muted">Already have an account?</span>
+                        <span class="text-muted">Already part of a team?</span>
                         <a href="/Account/Login">Log in</a>
                     </div>
             </form>
