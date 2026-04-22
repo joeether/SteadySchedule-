@@ -8,10 +8,7 @@
 <h3>My Schedule</h3>
 <p class="text-muted">Here are your upcoming shifts</p>
 
-@foreach (var a in allAssignments)
-{
-    <p>Assignment → EmployeeId: @a.EmployeeId</p>
-}
+
 @if (assignments == null)
 {
     <p>Loading...</p>
