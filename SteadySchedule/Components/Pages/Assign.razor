@@ -17,33 +17,53 @@
 
 <div class="container mt-4">
 
-	<div class="d-flex justify-content-between align-items-center mb-4">
-		<div class="d-flex align-items-center gap-2">
-			<h2 class="fw-bold mb-0">Assign</h2>
-			@if (!string.IsNullOrWhiteSpace(copyMessage))
-			{
-				<div class="alert @(copyWasSuccess ? "alert-success" : "alert-warning") mb-0 py-1 px-2">
-					@copyMessage
-				</div>
-			}
-			@if (!string.IsNullOrWhiteSpace(templateMessage))
-			{
-				<div class="alert @(templateWasSuccess ? "alert-success" : "alert-warning") mb-0 py-1 px-2">
-					@templateMessage
-				</div>
-			}
-			@if (!string.IsNullOrWhiteSpace(clearWeekMessage))
-			{
-				<div class="alert @(clearWeekWasSuccess ? "alert-success" : "alert-warning") mb-0 py-1 px-2">
-					@clearWeekMessage
-				</div>
-			}
-			<span class="badge @StatusBadgeClass ms-2">
+	<div class="mb-4">
+
+		<!-- HEADER -->
+		<div class="d-flex justify-content-between align-items-end mb-2">
+			<div>
+				<h2 class="fw-bold mb-0">Assign</h2>
+				<small class="text-muted">
+					@Schedule.Company.Name
+				</small>
+			</div>
+
+			<span class="badge @StatusBadgeClass">
 				@StatusLabel
 			</span>
 		</div>
 
-		<span class="badge bg-dark">Company: @company.Name</span>
+		<!-- MESSAGES -->
+		@if (!string.IsNullOrWhiteSpace(copyMessage)
+				|| !string.IsNullOrWhiteSpace(templateMessage)
+				|| !string.IsNullOrWhiteSpace(clearWeekMessage))
+		{
+			<div class="d-flex flex-wrap gap-2">
+
+				@if (!string.IsNullOrWhiteSpace(copyMessage))
+				{
+					<div class="alert @(copyWasSuccess ? "alert-success" : "alert-warning") py-1 px-2 mb-0">
+						@copyMessage
+					</div>
+				}
+
+				@if (!string.IsNullOrWhiteSpace(templateMessage))
+				{
+					<div class="alert @(templateWasSuccess ? "alert-success" : "alert-warning") py-1 px-2 mb-0">
+						@templateMessage
+					</div>
+				}
+
+				@if (!string.IsNullOrWhiteSpace(clearWeekMessage))
+				{
+					<div class="alert @(clearWeekWasSuccess ? "alert-success" : "alert-warning") py-1 px-2 mb-0">
+						@clearWeekMessage
+					</div>
+				}
+
+			</div>
+		}
+
 	</div>
 
 	<div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
@@ -62,6 +82,9 @@
 		<button class="btn btn-warning btn-sm" @onclick="() => showWarningsModal = true">
 			Warnings (@GetWeeklyWarningCount())
 		</button>
+		<button class="btn btn-sm btn-success" @onclick="ShowHoursModal">
+			Weekly Hours
+		</button>
 
 		@if (!IsPublished)
 		{
@@ -75,11 +98,6 @@
 				@(isBusy ? "Working..." : "Edit Schedule")
 			</button>
 		}
-
-		<button class="btn btn-outline-dark"
-				@onclick="ShowHoursModal">
-			Weekly Hours
-		</button>
 
 		@if (openedFromPublished)
 		{
@@ -686,6 +704,7 @@
 	private List<WeekTemplateShift> templateShifts = new();
 
 	private string? addShiftMessage;
+
 	private bool IsInvalidSundayShift(DateTime shiftDate, TimeSpan start, TimeSpan end)
 	{
 		return shiftDate.DayOfWeek == DayOfWeek.Sunday
@@ -695,6 +714,21 @@
 	private bool isBusy;
 
 	private bool showHoursModal = false;
+
+	private int? lastCompanyId;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		var currentCompanyId = Schedule.Company?.Id;
+
+		if (currentCompanyId != lastCompanyId)
+		{
+			lastCompanyId = currentCompanyId;
+
+			await LoadWeekDataAsync();
+			await RefreshWeekStatusAsync();
+		}
+	}
 
 	private void ShowHoursModal()
 	{

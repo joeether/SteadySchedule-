@@ -5,5 +5,6 @@ namespace SteadySchedule.Data
     public class ApplicationUser : IdentityUser
     {
         public int? CompanyId { get; set; }
+        public int? EmployeeId { get; set; }
     }
 }

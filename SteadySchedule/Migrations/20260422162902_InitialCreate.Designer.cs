@@ -12,8 +12,8 @@ using SteadySchedule.Data;
 namespace SteadySchedule.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260420132815_AddEmployeePayFields")]
-    partial class AddEmployeePayFields
+    [Migration("20260422162902_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -184,6 +184,9 @@ namespace SteadySchedule.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("EmployeeId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -281,6 +284,27 @@ namespace SteadySchedule.Migrations
                     b.ToTable("Assignments");
                 });
 
+            modelBuilder.Entity("SteadySchedule.Domain.Company", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AdminEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Companies");
+                });
+
             modelBuilder.Entity("SteadySchedule.Domain.Employee", b =>
                 {
                     b.Property<int>("Id")
@@ -309,6 +333,7 @@ namespace SteadySchedule.Migrations
                         .HasColumnType("time");
 
                     b.Property<decimal?>("HourlyRate")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("IsSalary")
@@ -398,6 +423,7 @@ namespace SteadySchedule.Migrations
                         .HasColumnType("time");
 
                     b.Property<decimal?>("WeeklySalary")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");

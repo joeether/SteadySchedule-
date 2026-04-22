@@ -1,0 +1,66 @@
+﻿@page "/myschedule"
+@using Microsoft.AspNetCore.Components.Authorization
+@using SteadySchedule.Domain
+@using SteadySchedule.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ScheduleService Schedule
+
+<h3>My Schedule</h3>
+<p>DEBUG Assignments Count: @debugAssignmentCount</p>
+<p>DEBUG CompanyId: @companyId</p>
+<p>DEBUG EmployeeId: @employeeId</p>
+
+@foreach (var a in allAssignments)
+{
+    <p>Assignment → EmployeeId: @a.EmployeeId</p>
+}
+@if (assignments == null)
+{
+    <p>Loading...</p>
+}
+else if (!assignments.Any())
+{
+    <p>No shifts scheduled.</p>
+}
+else
+{
+    <ul>
+        @foreach (var a in assignments)
+        {
+            <li>
+                @a.Shift.Date.ToShortDateString()
+                - @a.Shift.Position
+                ((@a.Shift.StartTime.ToString(@"hh\:mm") - @a.Shift.EndTime.ToString(@"hh\:mm")))
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<Assignment> assignments = new();
+    private int debugAssignmentCount;
+    private int companyId;
+    private int employeeId;
+    private List<Assignment> allAssignments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        companyId = int.Parse(user.FindFirst("CompanyId")!.Value);
+        employeeId = int.Parse(user.FindFirst("EmployeeId")!.Value);
+
+        var today = DateTime.Today;
+        var diff = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
+        var weekStart = today.AddDays(-diff);
+
+        allAssignments = await Schedule.GetWeekAssignmentsAsync(companyId, weekStart);
+
+        debugAssignmentCount = allAssignments.Count;
+
+        assignments = allAssignments
+            .Where(a => a.EmployeeId == employeeId)
+            .ToList();
+    }
+}

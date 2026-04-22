@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using SteadySchedule.Data;
 using SteadySchedule.Domain;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace SteadySchedule.Pages.Account
 {
@@ -55,19 +57,10 @@ namespace SteadySchedule.Pages.Account
             if (!ModelState.IsValid)
                 return Page();
 
-            var company = new Company
-            {
-                Name = Input.CompanyName
-            };
-
-            _context.Companies.Add(company);
-            await _context.SaveChangesAsync();
-
             var user = new ApplicationUser
             {
                 UserName = Input.Email,
-                Email = Input.Email,
-                CompanyId = company.Id
+                Email = Input.Email
             };
 
             var result = await _userManager.CreateAsync(user, Input.Password);
@@ -80,13 +73,31 @@ namespace SteadySchedule.Pages.Account
                 return Page();
             }
 
+            // get EXISTING company (no insert!)
+            /*var company = new Company
+            {
+                Name = Input.CompanyName
+            };*/
+            // get EXISTING company (no insert!)
+            var company = await _context.Companies
+                .FirstAsync(c => c.Id == 1);
+
+            // link user
+            user.CompanyId = company.Id;
+            await _userManager.UpdateAsync(user);
+
+            // claims
             await _userManager.AddClaimAsync(
                 user,
-                new System.Security.Claims.Claim("CompanyId", company.Id.ToString()));
+                new Claim("CompanyId", company.Id.ToString()));
+
+            await _userManager.AddClaimAsync(
+                user,
+                new Claim("EmployeeId", "2")); // Alfred2
 
             await _signInManager.SignInAsync(user, isPersistent: false);
 
-            return LocalRedirect("/dashboard");
+            return LocalRedirect(ReturnUrl ?? "/dashboard");
         }
     }
 }
