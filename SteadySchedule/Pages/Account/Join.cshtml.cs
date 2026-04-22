@@ -62,7 +62,7 @@ namespace SteadySchedule.Pages.Account
 
     if (!string.Equals(Input.InviteCode?.Trim(), DEV_INVITE, StringComparison.OrdinalIgnoreCase))
     {
-        ModelState.AddModelError(nameof(Input.InviteCode), "Invalid invite code.");
+        ModelState.AddModelError(nameof(Input.InviteCode), "That invite code doesn’t look right.");
         return Page();
     }
 
@@ -95,7 +95,7 @@ namespace SteadySchedule.Pages.Account
 
     if (employee == null)
     {
-        ModelState.AddModelError("", "No employee found for this email.");
+        ModelState.AddModelError("", "We couldn’t find you in the system. Please contact your manager.");
         return Page();
     }
 
