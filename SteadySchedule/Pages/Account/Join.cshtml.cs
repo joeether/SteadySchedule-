@@ -34,70 +34,83 @@ namespace SteadySchedule.Pages.Account
         public string? ReturnUrl { get; set; }
 
         public class InputModel
-        {
-            [Required]
-            public string CompanyName { get; set; } = "";
+{
+    [Required]
+    public string InviteCode { get; set; } = "";
 
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; } = "";
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = "";
 
-            [Required]
-            [DataType(DataType.Password)]
-            public string Password { get; set; } = "";
+    [Required]
+    [DataType(DataType.Password)]
+    public string Password { get; set; } = "";
 
-            [Required]
-            [DataType(DataType.Password)]
-            [Compare("Password")]
-            public string ConfirmPassword { get; set; } = "";
-        }
+    [Required]
+    [DataType(DataType.Password)]
+    [Compare("Password")]
+    public string ConfirmPassword { get; set; } = "";
+}
 
         public async Task<IActionResult> OnPostAsync()
-        {
-            if (!ModelState.IsValid)
-                return Page();
+{
+    if (!ModelState.IsValid)
+        return Page();
 
-            var user = new ApplicationUser
-            {
-                UserName = Input.Email,
-                Email = Input.Email
-            };
+    // 🔥 TEMP DEV invite code (no DB needed)
+    const string DEV_INVITE = "ABC123";
 
-            var result = await _userManager.CreateAsync(user, Input.Password);
+    if (!string.Equals(Input.InviteCode?.Trim(), DEV_INVITE, StringComparison.OrdinalIgnoreCase))
+    {
+        ModelState.AddModelError(nameof(Input.InviteCode), "Invalid invite code.");
+        return Page();
+    }
 
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
-                    ModelState.AddModelError(string.Empty, error.Description);
+    var user = new ApplicationUser
+    {
+        UserName = Input.Email,
+        Email = Input.Email
+    };
 
-                return Page();
-            }
+    var result = await _userManager.CreateAsync(user, Input.Password);
 
-            // get EXISTING company (no insert!)
-            /*var company = new Company
-            {
-                Name = Input.CompanyName
-            };*/
-            // get EXISTING company (no insert!)
-            var company = await _context.Companies
-                .FirstAsync(c => c.Id == 1);
+    if (!result.Succeeded)
+    {
+        foreach (var error in result.Errors)
+            ModelState.AddModelError(string.Empty, error.Description);
 
-            // link user
-            user.CompanyId = company.Id;
-            await _userManager.UpdateAsync(user);
+        return Page();
+    }
 
-            // claims
-            await _userManager.AddClaimAsync(
-                user,
-                new Claim("CompanyId", company.Id.ToString()));
+    // 🔥 TEMP: always use Company 1 (clean test environment)
+    var company = await _context.Companies.FirstAsync(c => c.Id == 1);
 
-            await _userManager.AddClaimAsync(
-                user,
-                new Claim("EmployeeId", "2")); // Alfred2
+    // 🔥 link user to company
+    user.CompanyId = company.Id;
+    await _userManager.UpdateAsync(user);
 
-            await _signInManager.SignInAsync(user, isPersistent: false);
+    // 🔥 find employee (must already exist)
+    var employee = await _context.Employees
+        .FirstOrDefaultAsync(e => e.Email == Input.Email && e.CompanyId == company.Id);
 
-            return LocalRedirect(ReturnUrl ?? "/dashboard");
-        }
+    if (employee == null)
+    {
+        ModelState.AddModelError("", "No employee found for this email.");
+        return Page();
+    }
+
+    // 🔥 claims
+    await _userManager.AddClaimAsync(
+        user,
+        new Claim("CompanyId", company.Id.ToString()));
+
+    await _userManager.AddClaimAsync(
+        user,
+        new Claim("EmployeeId", employee.Id.ToString()));
+
+    await _signInManager.SignInAsync(user, isPersistent: false);
+
+    return LocalRedirect(ReturnUrl ?? "/dashboard");
+}
     }
 }
