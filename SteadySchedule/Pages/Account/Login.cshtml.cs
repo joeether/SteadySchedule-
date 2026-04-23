@@ -39,42 +39,46 @@ namespace SteadySchedule.Pages.Account
         }
 
         public async Task<IActionResult> OnPostAsync()
-        {
-            if (!ModelState.IsValid)
-                return Page();
-
-            var result = await _signInManager.PasswordSignInAsync(
-                Input.Email,
-                Input.Password,
-                Input.RememberMe,
-                lockoutOnFailure: false);
-
-            if (result.Succeeded)
 {
-    var user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
-
-    if (user == null)
-    {
-        ErrorMessage = "User not found.";
+    if (!ModelState.IsValid)
         return Page();
+
+    var result = await _signInManager.PasswordSignInAsync(
+        Input.Email,
+        Input.Password,
+        Input.RememberMe,
+        lockoutOnFailure: false);
+
+    if (result.Succeeded)
+    {
+        var user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
+
+        if (user == null)
+        {
+            ErrorMessage = "User not found.";
+            return Page();
+        }
+
+        var claims = await _signInManager.UserManager.GetClaimsAsync(user);
+
+        var isEmployee = claims.Any(c => c.Type == "Role" && c.Value == "Employee");
+        var isAdmin = claims.Any(c => c.Type == "Role" && c.Value == "Admin");
+
+        if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+            return LocalRedirect(ReturnUrl);
+
+        if (isAdmin)
+            return LocalRedirect("/dashboard");
+
+        if (isEmployee)
+            return LocalRedirect("/myschedule");
+
+        return LocalRedirect("/dashboard");
     }
 
-    var claims = await _signInManager.UserManager.GetClaimsAsync(user);
-
-    var isEmployee = claims.Any(c => c.Type == "Role" && c.Value == "Employee");
-    var isAdmin = claims.Any(c => c.Type == "Role" && c.Value == "Admin");
-
-    if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
-        return LocalRedirect(ReturnUrl);
-
-    if (isAdmin)
-        return LocalRedirect("/dashboard");
-
-    if (isEmployee)
-        return LocalRedirect("/myschedule");
-
-    // fallback (just in case)
-    return LocalRedirect("/dashboard");
+    // 🔥 THIS WAS MISSING
+    ErrorMessage = "Invalid login attempt.";
+    return Page();
 }
 }
     }
