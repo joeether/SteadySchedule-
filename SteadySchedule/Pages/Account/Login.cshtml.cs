@@ -53,21 +53,28 @@ namespace SteadySchedule.Pages.Account
 {
     var user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
 
+    if (user == null)
+    {
+        ErrorMessage = "User not found.";
+        return Page();
+    }
+
     var claims = await _signInManager.UserManager.GetClaimsAsync(user);
 
-    var isEmployee = claims.Any(c => c.Type == "EmployeeId");
+    var isEmployee = claims.Any(c => c.Type == "Role" && c.Value == "Employee");
+    var isAdmin = claims.Any(c => c.Type == "Role" && c.Value == "Admin");
 
     if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
         return LocalRedirect(ReturnUrl);
 
+    if (isAdmin)
+        return LocalRedirect("/dashboard");
+
     if (isEmployee)
         return LocalRedirect("/myschedule");
 
+    // fallback (just in case)
     return LocalRedirect("/dashboard");
 }
-
-            ErrorMessage = "Invalid login attempt.";
-            return Page();
-        }
     }
 }
