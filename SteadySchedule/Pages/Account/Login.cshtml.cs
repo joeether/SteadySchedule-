@@ -80,6 +80,5 @@ namespace SteadySchedule.Pages.Account
     ErrorMessage = "Invalid login attempt.";
     return Page();
 }
-}
     }
 }
