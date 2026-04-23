@@ -48,7 +48,7 @@
     font-size: 15px;
 }
 
-.login-page button {
+.login-page button[type="submit"] {
     width: 100%;
     margin-top: 10px;
     border-radius: 8px;
@@ -97,10 +97,22 @@
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Input.Password" class="form-label"></label>
-                    <input asp-for="Input.Password" class="form-control" />
-                    <span asp-validation-for="Input.Password" class="text-danger"></span>
-                </div>
+    <label asp-for="Input.Password" class="form-label"></label>
+
+    <div class="input-group">
+        <input asp-for="Input.Password"
+               type="password"
+               class="form-control" />
+
+        <button type="button"
+                class="btn btn-outline-secondary"
+                onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'">
+            👁
+        </button>
+    </div>
+
+    <span asp-validation-for="Input.Password" class="text-danger"></span>
+</div>
 
                 <div class="form-check mb-3">
                     <input asp-for="Input.RememberMe" class="form-check-input" />
