@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SteadySchedule.Data;
+using System.Security.Claims;
 
 namespace SteadySchedule.Pages.Account
 {
@@ -49,12 +50,21 @@ namespace SteadySchedule.Pages.Account
                 lockoutOnFailure: false);
 
             if (result.Succeeded)
-            {
-                if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
-                    return LocalRedirect(ReturnUrl);
+{
+    var user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
 
-                return LocalRedirect("/dashboard");
-            }
+    var claims = await _signInManager.UserManager.GetClaimsAsync(user);
+
+    var isEmployee = claims.Any(c => c.Type == "EmployeeId");
+
+    if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+        return LocalRedirect(ReturnUrl);
+
+    if (isEmployee)
+        return LocalRedirect("/myschedule");
+
+    return LocalRedirect("/dashboard");
+}
 
             ErrorMessage = "Invalid login attempt.";
             return Page();
