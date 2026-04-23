@@ -57,7 +57,7 @@ namespace SteadySchedule.Pages.Account
     if (!ModelState.IsValid)
         return Page();
 
-    // 🔥 TEMP DEV invite code (no DB needed)
+    // 🔥 TEMP DEV invite code (still fine for now)
     const string DEV_INVITE = "ABC123";
 
     if (!string.Equals(Input.InviteCode?.Trim(), DEV_INVITE, StringComparison.OrdinalIgnoreCase))
@@ -65,6 +65,19 @@ namespace SteadySchedule.Pages.Account
         ModelState.AddModelError(nameof(Input.InviteCode), "That invite code doesn’t look right.");
         return Page();
     }
+
+    // 🔥 FIND employee FIRST (before creating user)
+    var employee = await _context.Employees
+        .FirstOrDefaultAsync(e => e.Email == Input.Email);
+
+    if (employee == null)
+    {
+        ModelState.AddModelError("", "We couldn’t find you in the system. Please contact your manager.");
+        return Page();
+    }
+
+    var company = await _context.Companies
+        .FirstAsync(c => c.Id == employee.CompanyId);
 
     var user = new ApplicationUser
     {
@@ -82,24 +95,11 @@ namespace SteadySchedule.Pages.Account
         return Page();
     }
 
-    // 🔥 TEMP: always use Company 1 (clean test environment)
-    var company = await _context.Companies.FirstAsync(c => c.Id == 1);
-
-    // 🔥 link user to company
+    // 🔥 link user to correct company
     user.CompanyId = company.Id;
     await _userManager.UpdateAsync(user);
 
-    // 🔥 find employee (must already exist)
-    var employee = await _context.Employees
-        .FirstOrDefaultAsync(e => e.Email == Input.Email && e.CompanyId == company.Id);
-
-    if (employee == null)
-    {
-        ModelState.AddModelError("", "We couldn’t find you in the system. Please contact your manager.");
-        return Page();
-    }
-
-    // 🔥 claims
+    // 🔥 claims (clean separation)
     await _userManager.AddClaimAsync(
         user,
         new Claim("CompanyId", company.Id.ToString()));
@@ -107,6 +107,10 @@ namespace SteadySchedule.Pages.Account
     await _userManager.AddClaimAsync(
         user,
         new Claim("EmployeeId", employee.Id.ToString()));
+
+    await _userManager.AddClaimAsync(
+        user,
+        new Claim("Role", "Employee"));
 
     await _signInManager.SignInAsync(user, isPersistent: false);
 
