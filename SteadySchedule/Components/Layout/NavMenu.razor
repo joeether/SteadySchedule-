@@ -1,5 +1,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthStateProvider
+@using System.Security.Claims
+@inject
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -14,6 +16,18 @@
 <div class="nav-scrollable">
     <nav class="flex-column">
 
+    @if (isEmployee)
+    {
+        <!-- 👷 EMPLOYEE VIEW -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/myschedule" @onclick="CloseMenu">
+                My Schedule
+            </NavLink>
+        </div>
+    }
+    else
+    {
+        <!-- 👑 MANAGER VIEW -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="/dashboard" @onclick="CloseMenu">
                 Dashboard
@@ -24,7 +38,7 @@
             <NavLink class="nav-link" href="positions" @onclick="CloseMenu">
                 Positions
             </NavLink>
-        </div>cd SteadySchedukle
+        </div>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="shifts" @onclick="CloseMenu">
@@ -49,43 +63,40 @@
                 Published Schedule
             </NavLink>
         </div>
+    }
 
-        <div class="nav-item px-3">
-            @if (isAuthenticated)
-            {
-                <div class="nav-item px-3">
-                    <form method="post" action="/Account/Logout">
-                        <AntiforgeryToken />
-                        <button type="submit"
-                                class="nav-link btn btn-link p-0 border-0 text-start w-100"
-                                @onclick="CloseMenu">
-                            Log Out
-                        </button>
-                    </form>
-                </div>
+    <!-- 🔐 AUTH SECTION (same for both) -->
+    <div class="nav-item px-3">
+        @if (isAuthenticated)
+        {
+            <form method="post" action="/Account/Logout">
+                <AntiforgeryToken />
+                <button type="submit"
+                        class="nav-link btn btn-link p-0 border-0 text-start w-100"
+                        @onclick="CloseMenu">
+                    Log Out
+                </button>
+            </form>
 
-                <div class="nav-item px-3">
-                    <div class="nav-link text-muted small">
-                        @userEmail
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="/Account/Login" @onclick="CloseMenu">
-                        Log In
-                    </NavLink>
-                </div>
-            }
-        </div>
+            <div class="nav-link text-muted small">
+                @userEmail
+            </div>
+        }
+        else
+        {
+            <NavLink class="nav-link" href="/Account/Login" @onclick="CloseMenu">
+                Log In
+            </NavLink>
+        }
+    </div>
 
-    </nav>
+</nav>
 </div>
 
 @code {
     private bool isAuthenticated;
     private string? userEmail;
+    private bool isEmployee;
 
     private bool navOpen;
 
@@ -101,5 +112,7 @@
 
         isAuthenticated = user.Identity?.IsAuthenticated ?? false;
         userEmail = user.Identity?.Name;
+        // 🔥 ADD THIS
+    isEmployee = user.Claims.Any(c => c.Type == "EmployeeId");
     }
 }
