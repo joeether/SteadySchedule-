@@ -53,51 +53,56 @@ namespace SteadySchedule.Pages.Account
         }
 
         public async Task<IActionResult> OnPostAsync()
-        {
-            if (!ModelState.IsValid)
-                return Page();
+{
+    if (!ModelState.IsValid)
+        return Page();
 
-            var user = new ApplicationUser
-            {
-                UserName = Input.Email,
-                Email = Input.Email
-            };
+    var user = new ApplicationUser
+    {
+        UserName = Input.Email,
+        Email = Input.Email
+    };
 
-            var result = await _userManager.CreateAsync(user, Input.Password);
+    var result = await _userManager.CreateAsync(user, Input.Password);
 
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
-                    ModelState.AddModelError(string.Empty, error.Description);
+    if (!result.Succeeded)
+    {
+        foreach (var error in result.Errors)
+            ModelState.AddModelError(string.Empty, error.Description);
 
-                return Page();
-            }
+        return Page();
+    }
 
-            // get EXISTING company (no insert!)
-            /*var company = new Company
-            {
-                Name = Input.CompanyName
-            };*/
-            // get EXISTING company (no insert!)
-            var company = await _context.Companies
-                .FirstAsync(c => c.Id == 1);
+    var company = new Company
+    {
+        Name = Input.CompanyName.Trim()
+    };
 
-            // link user
-            user.CompanyId = company.Id;
-            await _userManager.UpdateAsync(user);
+    _context.Companies.Add(company);
+    await _context.SaveChangesAsync();
 
-            // claims
-            await _userManager.AddClaimAsync(
-                user,
-                new Claim("CompanyId", company.Id.ToString()));
+    // link user to THEIR company
+    user.CompanyId = company.Id;
+    await _userManager.UpdateAsync(user);
 
-            await _userManager.AddClaimAsync(
-                user,
-                new Claim("EmployeeId", "2")); // Alfred2
+    // claims
+    var companyClaimResult = await _userManager.AddClaimAsync(
+        user,
+        new Claim("CompanyId", company.Id.ToString()));
 
-            await _signInManager.SignInAsync(user, isPersistent: false);
+    var roleClaimResult = await _userManager.AddClaimAsync(
+        user,
+        new Claim("Role", "Admin"));
 
-            return LocalRedirect(ReturnUrl ?? "/dashboard");
-        }
+    if (!companyClaimResult.Succeeded || !roleClaimResult.Succeeded)
+    {
+        ModelState.AddModelError("", "Error setting up user account.");
+        return Page();
+    }
+
+    await _signInManager.SignInAsync(user, isPersistent: false);
+
+    return LocalRedirect(ReturnUrl ?? "/dashboard");
+}
     }
 }
