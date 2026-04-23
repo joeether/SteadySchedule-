@@ -76,5 +76,6 @@ namespace SteadySchedule.Pages.Account
     // fallback (just in case)
     return LocalRedirect("/dashboard");
 }
+}
     }
 }
