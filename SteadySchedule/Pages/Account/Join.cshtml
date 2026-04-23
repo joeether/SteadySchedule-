@@ -104,10 +104,10 @@
        id="Input_Password" />
 
         <button type="button"
-                class="btn btn-outline-secondary"
-                onclick="togglePassword()">
-            👁
-        </button>
+        class="btn btn-outline-secondary"
+        onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'">
+    👁
+</button>
     </div>
 
     <span asp-validation-for="Input.Password" class="text-danger"></span>
@@ -123,10 +123,10 @@
        id="Input_ConfirmPassword" />
 
         <button type="button"
-                class="btn btn-outline-secondary"
-                onclick="toggleConfirmPassword()">
-            👁
-        </button>
+        class="btn btn-outline-secondary"
+        onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'">
+    👁
+</button>
     </div>
 
     <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
@@ -155,15 +155,5 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
-    <script>
-    function togglePassword() {
-        const input = document.getElementById("Input_Password");
-        input.type = input.type === "password" ? "text" : "password";
-    }
-
-    function toggleConfirmPassword() {
-        const input = document.getElementById("Input_ConfirmPassword");
-        input.type = input.type === "password" ? "text" : "password";
-    }
-</script>
+    
 }
