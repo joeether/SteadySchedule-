@@ -7,7 +7,7 @@
 
 <h3>My Schedule</h3>
 <p class="text-muted">Here are your upcoming shifts</p>
-
+<h5 class="mb-3">This Week</h5>
 
 @if (assignments == null)
 {
@@ -19,16 +19,25 @@ else if (!assignments.Any())
 }
 else
 {
-    <ul>
-        @foreach (var a in assignments)
-        {
-            <li>
-                @a.Shift.Date.ToShortDateString()
-                - @a.Shift.Position
-                ((@a.Shift.StartTime.ToString(@"hh\:mm") - @a.Shift.EndTime.ToString(@"hh\:mm")))
-            </li>
-        }
-    </ul>
+    <div class="schedule-container">
+    @foreach (var a in assignments.OrderBy(a => a.Shift.Date))
+    {
+        <div class="shift-card">
+            <div class="shift-date">
+                @a.Shift.Date.ToString("dddd, MMM d")
+            </div>
+
+            <div class="shift-details">
+                <span class="position">@a.Shift.Position</span>
+                <span class="time">
+                    @FormatDisplayTime(a.Shift.StartTime)
+                    -
+                    @FormatDisplayTime(a.Shift.EndTime)
+                </span>
+            </div>
+        </div>
+    }
+</div>
 }
 
 @code {
@@ -37,6 +46,10 @@ else
     private int companyId;
     private int employeeId;
     private List<Assignment> allAssignments = new();
+    private string FormatDisplayTime(TimeSpan time)
+{
+    return DateTime.Today.Add(time).ToString("h:mm tt");
+}
 
     protected override async Task OnInitializedAsync()
     {
