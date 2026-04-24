@@ -281,4 +281,10 @@ main {
 .login-page {
     background: red !important;
 }
+:root {
+    --card-bg: #ffffff;
+    --text-color: #222;
+    --muted-text: #666;
+    --accent: #8B3A2E;
+}
 
