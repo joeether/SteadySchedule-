@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 ﻿namespace SteadySchedule.Domain;
 
 public class Employee
