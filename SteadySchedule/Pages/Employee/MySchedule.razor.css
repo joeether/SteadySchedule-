@@ -13,6 +13,9 @@
 }
 
 .shift-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-weight: 600;
     color: #555;
     margin-bottom: 4px;
