@@ -529,20 +529,13 @@
 		};
 
   newEmployee.IsAnytime =
-    emp.MondayAvailable &&
-    emp.TuesdayAvailable &&
-    emp.WednesdayAvailable &&
-    emp.ThursdayAvailable &&
-    emp.FridayAvailable &&
-    emp.SaturdayAvailable &&
-    emp.SundayAvailable &&
-    !emp.MondayStart.HasValue &&
-    !emp.TuesdayStart.HasValue &&
-    !emp.WednesdayStart.HasValue &&
-    !emp.ThursdayStart.HasValue &&
-    !emp.FridayStart.HasValue &&
-    !emp.SaturdayStart.HasValue &&
-    !emp.SundayStart.HasValue;
+    (!emp.MondayAvailable || (!emp.MondayStart.HasValue && !emp.MondayEnd.HasValue)) &&
+    (!emp.TuesdayAvailable || (!emp.TuesdayStart.HasValue && !emp.TuesdayEnd.HasValue)) &&
+    (!emp.WednesdayAvailable || (!emp.WednesdayStart.HasValue && !emp.WednesdayEnd.HasValue)) &&
+    (!emp.ThursdayAvailable || (!emp.ThursdayStart.HasValue && !emp.ThursdayEnd.HasValue)) &&
+    (!emp.FridayAvailable || (!emp.FridayStart.HasValue && !emp.FridayEnd.HasValue)) &&
+    (!emp.SaturdayAvailable || (!emp.SaturdayStart.HasValue && !emp.SaturdayEnd.HasValue)) &&
+    (!emp.SundayAvailable || (!emp.SundayStart.HasValue && !emp.SundayEnd.HasValue));
 
 		selectedPositions = emp.PositionsQualified
 			.Split(',', StringSplitOptions.RemoveEmptyEntries)
