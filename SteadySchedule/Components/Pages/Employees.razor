@@ -101,7 +101,6 @@
 					<div class="col-12">
 						<label class="form-label fw-semibold">Availability</label>
 
-<div>IsAnytime: @newEmployee.IsAnytime</div>
 
 <div class="form-check mb-2">
     <input type="checkbox"
@@ -619,300 +618,52 @@
 	}
 
 	private void NormalizeAvailability(Employee e)
-	{
-		NormalizeMonday(e);
-		NormalizeTuesday(e);
-		NormalizeWednesday(e);
-		NormalizeThursday(e);
-		NormalizeFriday(e);
-		NormalizeSaturday(e);
-		NormalizeSunday(e);
-	}
+{
+    if (e.IsAnytime)
+    {
+        e.MondayAvailable = true;
+        e.TuesdayAvailable = true;
+        e.WednesdayAvailable = true;
+        e.ThursdayAvailable = true;
+        e.FridayAvailable = true;
+        e.SaturdayAvailable = true;
+        e.SundayAvailable = true;
 
-	private void NormalizeMonday(Employee e)
-	{
-		if (!e.MondayAvailable)
-		{
-			e.MondayAnyTime = false;
-			e.MondayStart = null;
-			e.MondayEnd = null;
-			return;
-		}
+        e.MondayStart = e.TuesdayStart = e.WednesdayStart =
+        e.ThursdayStart = e.FridayStart = e.SaturdayStart =
+        e.SundayStart = null;
 
-		if (e.MondayAnyTime || (!e.MondayStart.HasValue && !e.MondayEnd.HasValue))
-		{
-			e.MondayAnyTime = true;
-			e.MondayStart = null;
-			e.MondayEnd = null;
-			return;
-		}
+        e.MondayEnd = e.TuesdayEnd = e.WednesdayEnd =
+        e.ThursdayEnd = e.FridayEnd = e.SaturdayEnd =
+        e.SundayEnd = null;
 
-		if (e.MondayStart.HasValue && e.MondayEnd.HasValue)
-			return;
+        return;
+    }
 
-		e.MondayAnyTime = true;
-		e.MondayStart = null;
-		e.MondayEnd = null;
-	}
+    NormalizeDay(ref e.MondayAvailable, ref e.MondayStart, ref e.MondayEnd);
+    NormalizeDay(ref e.TuesdayAvailable, ref e.TuesdayStart, ref e.TuesdayEnd);
+    NormalizeDay(ref e.WednesdayAvailable, ref e.WednesdayStart, ref e.WednesdayEnd);
+    NormalizeDay(ref e.ThursdayAvailable, ref e.ThursdayStart, ref e.ThursdayEnd);
+    NormalizeDay(ref e.FridayAvailable, ref e.FridayStart, ref e.FridayEnd);
+    NormalizeDay(ref e.SaturdayAvailable, ref e.SaturdayStart, ref e.SaturdayEnd);
+    NormalizeDay(ref e.SundayAvailable, ref e.SundayStart, ref e.SundayEnd);
+}
 
-	private void NormalizeTuesday(Employee e)
-	{
-		if (!e.TuesdayAvailable)
-		{
-			e.TuesdayAnyTime = false;
-			e.TuesdayStart = null;
-			e.TuesdayEnd = null;
-			return;
-		}
+	
 
-		if (e.TuesdayAnyTime || (!e.TuesdayStart.HasValue && !e.TuesdayEnd.HasValue))
-		{
-			e.TuesdayAnyTime = true;
-			e.TuesdayStart = null;
-			e.TuesdayEnd = null;
-			return;
-		}
+	private void NormalizeDay(ref bool available, ref TimeSpan? start, ref TimeSpan? end)
+{
+    if (!available)
+    {
+        start = null;
+        end = null;
+        return;
+    }
 
-		if (e.TuesdayStart.HasValue && e.TuesdayEnd.HasValue)
-			return;
-
-		e.TuesdayAnyTime = true;
-		e.TuesdayStart = null;
-		e.TuesdayEnd = null;
-	}
-
-	private void NormalizeWednesday(Employee e)
-	{
-		if (!e.WednesdayAvailable)
-		{
-			e.WednesdayAnyTime = false;
-			e.WednesdayStart = null;
-			e.WednesdayEnd = null;
-			return;
-		}
-
-		if (e.WednesdayAnyTime || (!e.WednesdayStart.HasValue && !e.WednesdayEnd.HasValue))
-		{
-			e.WednesdayAnyTime = true;
-			e.WednesdayStart = null;
-			e.WednesdayEnd = null;
-			return;
-		}
-
-		if (e.WednesdayStart.HasValue && e.WednesdayEnd.HasValue)
-			return;
-
-		e.WednesdayAnyTime = true;
-		e.WednesdayStart = null;
-		e.WednesdayEnd = null;
-	}
-
-	private void NormalizeThursday(Employee e)
-	{
-		if (!e.ThursdayAvailable)
-		{
-			e.ThursdayAnyTime = false;
-			e.ThursdayStart = null;
-			e.ThursdayEnd = null;
-			return;
-		}
-
-		if (e.ThursdayAnyTime || (!e.ThursdayStart.HasValue && !e.ThursdayEnd.HasValue))
-		{
-			e.ThursdayAnyTime = true;
-			e.ThursdayStart = null;
-			e.ThursdayEnd = null;
-			return;
-		}
-
-		if (e.ThursdayStart.HasValue && e.ThursdayEnd.HasValue)
-			return;
-
-		e.ThursdayAnyTime = true;
-		e.ThursdayStart = null;
-		e.ThursdayEnd = null;
-	}
-
-	private void NormalizeFriday(Employee e)
-	{
-		if (!e.FridayAvailable)
-		{
-			e.FridayAnyTime = false;
-			e.FridayStart = null;
-			e.FridayEnd = null;
-			return;
-		}
-
-		if (e.FridayAnyTime || (!e.FridayStart.HasValue && !e.FridayEnd.HasValue))
-		{
-			e.FridayAnyTime = true;
-			e.FridayStart = null;
-			e.FridayEnd = null;
-			return;
-		}
-
-		if (e.FridayStart.HasValue && e.FridayEnd.HasValue)
-			return;
-
-		e.FridayAnyTime = true;
-		e.FridayStart = null;
-		e.FridayEnd = null;
-	}
-
-	private void NormalizeSaturday(Employee e)
-	{
-		if (!e.SaturdayAvailable)
-		{
-			e.SaturdayAnyTime = false;
-			e.SaturdayStart = null;
-			e.SaturdayEnd = null;
-			return;
-		}
-
-		if (e.SaturdayAnyTime || (!e.SaturdayStart.HasValue && !e.SaturdayEnd.HasValue))
-		{
-			e.SaturdayAnyTime = true;
-			e.SaturdayStart = null;
-			e.SaturdayEnd = null;
-			return;
-		}
-
-		if (e.SaturdayStart.HasValue && e.SaturdayEnd.HasValue)
-			return;
-
-		e.SaturdayAnyTime = true;
-		e.SaturdayStart = null;
-		e.SaturdayEnd = null;
-	}
-
-	private void NormalizeSunday(Employee e)
-	{
-		if (!e.SundayAvailable)
-		{
-			e.SundayAnyTime = false;
-			e.SundayStart = null;
-			e.SundayEnd = null;
-			return;
-		}
-
-		if (e.SundayAnyTime || (!e.SundayStart.HasValue && !e.SundayEnd.HasValue))
-		{
-			e.SundayAnyTime = true;
-			e.SundayStart = null;
-			e.SundayEnd = null;
-			return;
-		}
-
-		if (e.SundayStart.HasValue && e.SundayEnd.HasValue)
-			return;
-
-		e.SundayAnyTime = true;
-		e.SundayStart = null;
-		e.SundayEnd = null;
-	}
-
-	private void NormalizeDay(ref bool available, ref bool anyTime, ref TimeSpan? start, ref TimeSpan? end)
-	{
-		if (!available)
-		{
-			anyTime = false;
-			start = null;
-			end = null;
-			return;
-		}
-
-		if (anyTime || (!start.HasValue && !end.HasValue))
-		{
-			anyTime = true;
-			start = null;
-			end = null;
-			return;
-		}
-
-		if (start.HasValue && end.HasValue)
-		{
-			return;
-		}
-
-		anyTime = true;
-		start = null;
-		end = null;
-	}
-
-	private void OnMondayAnyTimeChanged(bool value)
-	{
-		newEmployee.MondayAnyTime = value;
-
-		if (value)
-		{
-			newEmployee.MondayStart = null;
-			newEmployee.MondayEnd = null;
-		}
-	}
-
-	private void OnTuesdayAnyTimeChanged(bool value)
-	{
-		newEmployee.TuesdayAnyTime = value;
-
-		if (value)
-		{
-			newEmployee.TuesdayStart = null;
-			newEmployee.TuesdayEnd = null;
-		}
-	}
-
-	private void OnWednesdayAnyTimeChanged(bool value)
-	{
-		newEmployee.WednesdayAnyTime = value;
-
-		if (value)
-		{
-			newEmployee.WednesdayStart = null;
-			newEmployee.WednesdayEnd = null;
-		}
-	}
-
-	private void OnThursdayAnyTimeChanged(bool value)
-	{
-		newEmployee.ThursdayAnyTime = value;
-
-		if (value)
-		{
-			newEmployee.ThursdayStart = null;
-			newEmployee.ThursdayEnd = null;
-		}
-	}
-
-	private void OnFridayAnyTimeChanged(bool value)
-	{
-		newEmployee.FridayAnyTime = value;
-
-		if (value)
-		{
-			newEmployee.FridayStart = null;
-			newEmployee.FridayEnd = null;
-		}
-	}
-
-	private void OnSaturdayAnyTimeChanged(bool value)
-	{
-		newEmployee.SaturdayAnyTime = value;
-
-		if (value)
-		{
-			newEmployee.SaturdayStart = null;
-			newEmployee.SaturdayEnd = null;
-		}
-	}
-
-	private void OnSundayAnyTimeChanged(bool value)
-	{
-		newEmployee.SundayAnyTime = value;
-
-		if (value)
-		{
-			newEmployee.SundayStart = null;
-			newEmployee.SundayEnd = null;
-		}
-	}
+    if (!start.HasValue || !end.HasValue)
+    {
+        start = null;
+        end = null;
+    }
+}
 }
