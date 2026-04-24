@@ -24,8 +24,13 @@ else
     {
         <div class="shift-card">
             <div class="shift-date">
-                @a.Shift.Date.ToString("dddd, MMM d")
-            </div>
+    @a.Shift.Date.ToString("dddd, MMM d")
+
+    @if (a.Shift.Date.Date == DateTime.Today)
+    {
+        <span class="today-badge">Today</span>
+    }
+</div>
 
             <div class="shift-details">
                 <span class="position">@a.Shift.Position</span>
