@@ -836,19 +836,25 @@
 	}
 
 	private async Task TryUnassign(Assignment a)
-	{
-		if (IsPublished) return;
+{
+    if (IsPastWeek(weekStart))
+    {
+        assignMessage = "Cannot modify assignments in a past week.";
+        return;
+    }
 
-		var confirmed = await JS.InvokeAsync<bool>(
-			"confirm",
-			"Remove this employee from the shift?"
-		);
+    if (IsPublished) return;
 
-		if (!confirmed)
-			return;
+    var confirmed = await JS.InvokeAsync<bool>(
+        "confirm",
+        "Remove this employee from the shift?"
+    );
 
-		await UnassignAsync(a);
-	}
+    if (!confirmed)
+        return;
+
+    await UnassignAsync(a);
+}
 
 	private int GetWeeklyHours(Employee employee)
 	{
@@ -901,42 +907,54 @@
 	}
 
 	private async Task AssignEmployeeAsync(Shift shift, Employee employee)
-	{
-		await RunBusy(async () =>
-		{
-			if (IsPublished) return;
+{
+    await RunBusy(async () =>
+    {
+        if (IsPastWeek(weekStart))
+        {
+            assignMessage = "Cannot assign employees to a past week.";
+            return;
+        }
 
-			// 🚨 HARD BLOCK: prevent duplicate assignment
-			if (shifts
-		.Where(s => s.SlotGroupId == shift.SlotGroupId)
-		.Any(s => assignmentsThisWeek.Any(a =>
-			a.ShiftId == s.Id &&
-			a.EmployeeId == employee.Id)))
-			{
-				return;
-			}
+        if (IsPublished) return;
 
-			await Schedule.AddAssignmentAsync(Schedule.Company.Id, new Assignment
-			{
-				ShiftId = shift.Id,
-				EmployeeId = employee.Id,
-				ApprovedOvertime = false
-			});
+        // 🚨 HARD BLOCK: prevent duplicate assignment
+        if (shifts
+            .Where(s => s.SlotGroupId == shift.SlotGroupId)
+            .Any(s => assignmentsThisWeek.Any(a =>
+                a.ShiftId == s.Id &&
+                a.EmployeeId == employee.Id)))
+        {
+            return;
+        }
 
-			assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
-		});
-	}
+        await Schedule.AddAssignmentAsync(Schedule.Company.Id, new Assignment
+        {
+            ShiftId = shift.Id,
+            EmployeeId = employee.Id,
+            ApprovedOvertime = false
+        });
+
+        assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
+    });
+}
 
 	private async Task UnassignAsync(Assignment assignment)
-	{
-		await RunBusy(async () =>
-		{
-			if (IsPublished) return;
+{
+    await RunBusy(async () =>
+    {
+        if (IsPastWeek(weekStart))
+        {
+            assignMessage = "Cannot modify assignments in a past week.";
+            return;
+        }
 
-			await Schedule.DeleteAssignmentAsync(Schedule.Company.Id, assignment.Id);
-			assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
-		});
-	}
+        if (IsPublished) return;
+
+        await Schedule.DeleteAssignmentAsync(Schedule.Company.Id, assignment.Id);
+        assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
+    });
+}
 
 	private string StatusLabel => CurrentWeekStatus switch
 	{
@@ -1193,114 +1211,136 @@
 	}
 
 	private async Task LoadTemplateIntoWeek()
-	{
-		await RunBusy(async () =>
-		{
-			if (IsPublished) return;
+{
+    await RunBusy(async () =>
+    {
+        if (IsPastWeek(weekStart))
+        {
+            templateWasSuccess = false;
+            templateMessage = "Cannot load a template into a past week.";
+            StateHasChanged();
+            await Task.Delay(3000);
+            templateMessage = null;
+            StateHasChanged();
+            return;
+        }
 
-			var selectedTemplateShifts = templateShifts
-				.Where(s => s.WeekTemplateId == selectedTemplateId)
-				.ToList();
+        if (IsPublished) return;
 
-			int addedCount = 0;
+        var selectedTemplateShifts = templateShifts
+            .Where(s => s.WeekTemplateId == selectedTemplateId)
+            .ToList();
 
-			foreach (var ts in selectedTemplateShifts)
-			{
-				var shiftDate = weekStart.AddDays(((int)ts.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7);
+        int addedCount = 0;
 
-				int existingCount = shifts.Count(s =>
-					s.Date == shiftDate &&
-					s.Position == ts.Position &&
-					s.StartTime == ts.StartTime &&
-					s.EndTime == ts.EndTime);
+        foreach (var ts in selectedTemplateShifts)
+        {
+            var shiftDate = weekStart.AddDays(((int)ts.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7);
 
-				int neededCount = ts.Count - existingCount;
+            int existingCount = shifts.Count(s =>
+                s.Date == shiftDate &&
+                s.Position == ts.Position &&
+                s.StartTime == ts.StartTime &&
+                s.EndTime == ts.EndTime);
 
-				var slotGroupId = Guid.NewGuid().ToString();
+            int neededCount = ts.Count - existingCount;
 
-				for (int i = 0; i < neededCount; i++)
-				{
-					await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
-					{
-						CompanyId = Schedule.Company.Id,
-						Date = shiftDate,
-						Position = ts.Position,
-						StartTime = ts.StartTime,
-						EndTime = ts.EndTime,
-						SlotGroupId = slotGroupId
-					});
+            var slotGroupId = Guid.NewGuid().ToString();
 
-					addedCount++;
-				}
-			}
+            for (int i = 0; i < neededCount; i++)
+            {
+                await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
+                {
+                    CompanyId = Schedule.Company.Id,
+                    Date = shiftDate,
+                    Position = ts.Position,
+                    StartTime = ts.StartTime,
+                    EndTime = ts.EndTime,
+                    SlotGroupId = slotGroupId
+                });
 
-			shifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
-			assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
+                addedCount++;
+            }
+        }
 
-			if (addedCount > 0)
-			{
-				templateWasSuccess = true;
-				templateMessage = $"{addedCount} shifts loaded from template.";
-			}
-			else
-			{
-				templateWasSuccess = false;
-				templateMessage = "No new shifts added (they may already exist).";
-			}
+        shifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
+        assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
 
-			showTemplateModal = false;
+        if (addedCount > 0)
+        {
+            templateWasSuccess = true;
+            templateMessage = $"{addedCount} shifts loaded from template.";
+        }
+        else
+        {
+            templateWasSuccess = false;
+            templateMessage = "No new shifts added (they may already exist).";
+        }
 
-			StateHasChanged();
-			await Task.Delay(3000);
-			templateMessage = null;
-			StateHasChanged();
-		});
-	}
+        showTemplateModal = false;
+
+        StateHasChanged();
+        await Task.Delay(3000);
+        templateMessage = null;
+        StateHasChanged();
+    });
+}
 
 	private async Task ClearWeek()
-	{
-		var confirmed = await JS.InvokeAsync<bool>(
-			"confirm",
-			"Clear ALL shifts for this week? This cannot be undone."
-		);
+{
+    var confirmed = await JS.InvokeAsync<bool>(
+        "confirm",
+        "Clear ALL shifts for this week? This cannot be undone."
+    );
 
-		if (!confirmed)
-			return;
+    if (!confirmed)
+        return;
 
-		await RunBusy(async () =>
-		{
-			if (IsPublished)
-				return;
+    await RunBusy(async () =>
+    {
+        if (IsPastWeek(weekStart))
+        {
+            clearWeekWasSuccess = false;
+            clearWeekMessage = "Cannot clear shifts from a past week.";
+            StateHasChanged();
+            await Task.Delay(3000);
+            clearWeekMessage = null;
+            StateHasChanged();
+            return;
+        }
 
-			if (!shifts.Any())
-			{
-				clearWeekWasSuccess = false;
-				clearWeekMessage = "There were no shifts to clear for this week.";
-				StateHasChanged();
-				await Task.Delay(3000);
-				clearWeekMessage = null;
-				StateHasChanged();
-				return;
-			}
+        if (IsPublished)
+            return;
 
-			await Schedule.ClearWeekAsync(Schedule.Company.Id, weekStart);
+        if (!shifts.Any())
+        {
+            clearWeekWasSuccess = false;
+            clearWeekMessage = "There were no shifts to clear for this week.";
+            StateHasChanged();
+            await Task.Delay(3000);
+            clearWeekMessage = null;
+            StateHasChanged();
+            return;
+        }
 
-			shifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
-			assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
+        await Schedule.ClearWeekAsync(Schedule.Company.Id, weekStart);
 
-			selectedShift = null;
-			showAssignModal = false;
-			openWarningShiftId = null;
+        shifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
+        assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
 
-			clearWeekWasSuccess = true;
-			clearWeekMessage = "Week cleared successfully.";
+        selectedShift = null;
+        showAssignModal = false;
+        openWarningShiftId = null;
 
-			StateHasChanged();
-			await Task.Delay(3000);
-			clearWeekMessage = null;
-			StateHasChanged();
-		});
-	}
+        clearWeekWasSuccess = true;
+        clearWeekMessage = "Week cleared successfully.";
+
+        StateHasChanged();
+        await Task.Delay(3000);
+        clearWeekMessage = null;
+        StateHasChanged();
+    });
+}
 
 	private void ShowAddShiftModal()
 	{
@@ -1321,44 +1361,50 @@
 	}
 
 	private async Task AddShiftToWeek()
-	{
-		await RunBusy(async () =>
-		{
-			if (IsPublished) return;
-			if (string.IsNullOrWhiteSpace(newShiftPosition)) return;
+{
+    await RunBusy(async () =>
+    {
+        if (IsPastWeek(weekStart))
+        {
+            addShiftMessage = "Cannot add shifts to a past week.";
+            return;
+        }
 
-			if (newShiftCount < 1)
-				newShiftCount = 1;
+        if (IsPublished) return;
+        if (string.IsNullOrWhiteSpace(newShiftPosition)) return;
 
-			var shiftDate = weekStart.AddDays(newShiftDayOffset);
-			var slotGroupId = Guid.NewGuid().ToString();
-			addShiftMessage = null;
+        if (newShiftCount < 1)
+            newShiftCount = 1;
 
-			if (IsInvalidSundayShift(shiftDate, newShiftStart, newShiftEnd))
-			{
-				addShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
-				return;
-			}
+        var shiftDate = weekStart.AddDays(newShiftDayOffset);
+        var slotGroupId = Guid.NewGuid().ToString();
+        addShiftMessage = null;
 
-			for (int i = 0; i < newShiftCount; i++)
-			{
-				await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
-				{
-					CompanyId = Schedule.Company.Id,
-					Date = shiftDate,
-					Position = newShiftPosition,
-					StartTime = newShiftStart,
-					EndTime = newShiftEnd,
-					SlotGroupId = slotGroupId
-				});
-			}
+        if (IsInvalidSundayShift(shiftDate, newShiftStart, newShiftEnd))
+        {
+            addShiftMessage = "Sunday shifts cannot extend past 12:00 AM. To cover an overnight shift, split it into a Sunday shift and a Monday shift.";
+            return;
+        }
 
-			await LoadWeekDataAsync();
+        for (int i = 0; i < newShiftCount; i++)
+        {
+            await Schedule.AddShiftAsync(Schedule.Company.Id, new Shift
+            {
+                CompanyId = Schedule.Company.Id,
+                Date = shiftDate,
+                Position = newShiftPosition,
+                StartTime = newShiftStart,
+                EndTime = newShiftEnd,
+                SlotGroupId = slotGroupId
+            });
+        }
 
-			newShiftCount = 1;
-			showAddShiftModal = false;
-		});
-	}
+        await LoadWeekDataAsync();
+
+        newShiftCount = 1;
+        showAddShiftModal = false;
+    });
+}
 
 	private string FormatTemplateTime(TimeSpan time)
 	{
@@ -1386,32 +1432,38 @@
 	}
 
 	private async Task DeleteConfirmedShift()
-	{
-		await RunBusy(async () =>
-		{
-			if (IsPublished || shiftToDelete is null)
-				return;
+{
+    await RunBusy(async () =>
+    {
+        if (IsPastWeek(weekStart))
+        {
+            shiftDeleteMessage = "Cannot delete shifts from a past week.";
+            return;
+        }
 
-			await Schedule.DeleteShiftAsync(Schedule.Company.Id, shiftToDelete.Id);
+        if (IsPublished || shiftToDelete is null)
+            return;
 
-			shifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
-			assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
+        await Schedule.DeleteShiftAsync(Schedule.Company.Id, shiftToDelete.Id);
 
-			if (selectedShift?.Id == shiftToDelete.Id)
-			{
-				selectedShift = null;
-				showAssignModal = false;
-			}
+        shifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
+        assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
 
-			if (openWarningShiftId == shiftToDelete.Id)
-			{
-				openWarningShiftId = null;
-			}
+        if (selectedShift?.Id == shiftToDelete.Id)
+        {
+            selectedShift = null;
+            showAssignModal = false;
+        }
 
-			shiftToDelete = null;
-			showDeleteShiftModal = false;
-		});
-	}
+        if (openWarningShiftId == shiftToDelete.Id)
+        {
+            openWarningShiftId = null;
+        }
+
+        shiftToDelete = null;
+        showDeleteShiftModal = false;
+    });
+}
 
 	private bool WouldCauseOvertimeIfAssigned(Employee e, Shift shift)
 	{
