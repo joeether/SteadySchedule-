@@ -100,14 +100,23 @@
 
 					<div class="col-12">
 						<label class="form-label fw-semibold">Availability</label>
+
 <div>IsAnytime: @newEmployee.IsAnytime</div>
+
+<div class="form-check mb-2">
+    <input type="checkbox"
+           class="form-check-input"
+           @bind="newEmployee.IsAnytime" />
+    <label class="form-check-label fw-semibold">
+        Available Anytime (for selected days)
+    </label>
+</div>
 						<div class="table-responsive">
 							<table class="table table-sm align-middle">
 								<thead>
 									<tr>
 										<th>Day</th>
 										<th>Available</th>
-										<th>Any Time</th>
 										<th>Start</th>
 										<th>End</th>
 									</tr>
@@ -122,22 +131,19 @@
 										</td>
 										<td>
 											<input type="checkbox"
-												   class="form-check-input"
-												   checked="@newEmployee.MondayAnyTime"
-												   @onchange="e => OnMondayAnyTimeChanged((bool)e.Value!)"
-												   disabled="@(!newEmployee.MondayAvailable)" />
+												   class="form-check-input/>
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.MondayStart)"
 												   @onchange="e => newEmployee.MondayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.MondayAvailable || newEmployee.MondayAnyTime)" />
+												   disabled="@(!newEmployee.MondayAvailable || newEmployee.IsAnytime)" />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.MondayEnd)"
 												   @onchange="e => newEmployee.MondayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.MondayAvailable || newEmployee.MondayAnyTime)" />
+												   disabled="@(!newEmployee.MondayAvailable || newEmployee.IsAnytime)" />
 										</td>
 									</tr>
 
@@ -147,21 +153,19 @@
 										<td>
 											<input type="checkbox"
 												   class="form-check-input"
-												   checked="@newEmployee.TuesdayAnyTime"
-												   @onchange="e => OnTuesdayAnyTimeChanged((bool)e.Value!)"
-												   disabled="@(!newEmployee.TuesdayAvailable)" />
+												    />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.TuesdayStart)"
 												   @onchange="e => newEmployee.TuesdayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.TuesdayAvailable || newEmployee.TuesdayAnyTime)" />
+												   disabled="@(!newEmployee.TuesdayAvailable || newEmployee.IsAnytime)" />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.TuesdayEnd)"
 												   @onchange="e => newEmployee.TuesdayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.TuesdayAvailable || newEmployee.TuesdayAnyTime)" />
+												   disabled="@(!newEmployee.TuesdayAvailable || newEmployee.IsAnytime)" />
 										</td>
 									</tr>
 
@@ -171,21 +175,19 @@
 										<td>
 											<input type="checkbox"
 												   class="form-check-input"
-												   checked="@newEmployee.WednesdayAnyTime"
-												   @onchange="e => OnWednesdayAnyTimeChanged((bool)e.Value!)"
-												   disabled="@(!newEmployee.WednesdayAvailable)" />
+												    />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.WednesdayStart)"
 												   @onchange="e => newEmployee.WednesdayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.WednesdayAvailable || newEmployee.WednesdayAnyTime)" />
+												   disabled="@(!newEmployee.WednesdayAvailable || newEmployee.IsAnytime)" />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.WednesdayEnd)"
 												   @onchange="e => newEmployee.WednesdayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.WednesdayAvailable || newEmployee.WednesdayAnyTime)" />
+												   disabled="@(!newEmployee.WednesdayAvailable || newEmployee.IsAnytime)" />
 										</td>
 									</tr>
 
@@ -195,21 +197,19 @@
 										<td>
 											<input type="checkbox"
 												   class="form-check-input"
-												   checked="@newEmployee.ThursdayAnyTime"
-												   @onchange="e => OnThursdayAnyTimeChanged((bool)e.Value!)"
-												   disabled="@(!newEmployee.ThursdayAvailable)" />
+												    />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.ThursdayStart)"
 												   @onchange="e => newEmployee.ThursdayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.ThursdayAvailable || newEmployee.ThursdayAnyTime)" />
+												   disabled="@(!newEmployee.ThursdayAvailable || newEmployee.IsAnytime)" />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.ThursdayEnd)"
 												   @onchange="e => newEmployee.ThursdayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.ThursdayAvailable || newEmployee.ThursdayAnyTime)" />
+												   disabled="@(!newEmployee.ThursdayAvailable || newEmployee.IsAnytime)" />
 										</td>
 									</tr>
 
@@ -219,21 +219,19 @@
 										<td>
 											<input type="checkbox"
 												   class="form-check-input"
-												   checked="@newEmployee.FridayAnyTime"
-												   @onchange="e => OnFridayAnyTimeChanged((bool)e.Value!)"
-												   disabled="@(!newEmployee.FridayAvailable)" />
+												    />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.FridayStart)"
 												   @onchange="e => newEmployee.FridayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.FridayAvailable || newEmployee.FridayAnyTime)" />
+												   disabled="@(!newEmployee.FridayAvailable || newEmployee.IsAnytime)" />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.FridayEnd)"
 												   @onchange="e => newEmployee.FridayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.FridayAvailable || newEmployee.FridayAnyTime)" />
+												   disabled="@(!newEmployee.FridayAvailable || newEmployee.IsAnytime)" />
 										</td>
 									</tr>
 
@@ -243,21 +241,19 @@
 										<td>
 											<input type="checkbox"
 												   class="form-check-input"
-												   checked="@newEmployee.SaturdayAnyTime"
-												   @onchange="e => OnSaturdayAnyTimeChanged((bool)e.Value!)"
-												   disabled="@(!newEmployee.SaturdayAvailable)" />
+												    />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.SaturdayStart)"
 												   @onchange="e => newEmployee.SaturdayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.SaturdayAvailable || newEmployee.SaturdayAnyTime)" />
+												   disabled="@(!newEmployee.SaturdayAvailable || newEmployee.IsAnytime)" />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.SaturdayEnd)"
 												   @onchange="e => newEmployee.SaturdayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.SaturdayAvailable || newEmployee.SaturdayAnyTime)" />
+												   disabled="@(!newEmployee.SaturdayAvailable || newEmployee.IsAnytime)" />
 										</td>
 									</tr>
 
@@ -267,21 +263,19 @@
 										<td>
 											<input type="checkbox"
 												   class="form-check-input"
-												   checked="@newEmployee.SundayAnyTime"
-												   @onchange="e => OnSundayAnyTimeChanged((bool)e.Value!)"
-												   disabled="@(!newEmployee.SundayAvailable)" />
+												    />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.SundayStart)"
 												   @onchange="e => newEmployee.SundayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.SundayAvailable || newEmployee.SundayAnyTime)" />
+												   disabled="@(!newEmployee.SundayAvailable || newEmployee.IsAnytime)" />
 										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.SundayEnd)"
 												   @onchange="e => newEmployee.SundayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.SundayAvailable || newEmployee.SundayAnyTime)" />
+												   disabled="@(!newEmployee.SundayAvailable || newEmployee.IsAnytime)" />
 										</td>
 									</tr>
 								</tbody>
