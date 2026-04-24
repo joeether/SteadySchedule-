@@ -47,4 +47,6 @@ public class Employee
     public bool FridayAnyTime { get; set; }
     public bool SaturdayAnyTime { get; set; }
     public bool SundayAnyTime { get; set; }
+[NotMapped]
+public bool IsAnytime { get; set; }
 }
