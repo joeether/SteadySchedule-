@@ -384,8 +384,6 @@
 		MaxHoursPerWeek = 40
 	};
 
- bool IsAnytime;
-
 	private bool isBusy;
 
 	private async Task RunBusy(Func<Task> action)
@@ -512,7 +510,7 @@
 			ThursdayAvailable = emp.ThursdayAvailable,
 			ThursdayAnyTime = emp.ThursdayAnyTime,
 			ThursdayStart = emp.ThursdayStart,
-		no	ThursdayEnd = emp.ThursdayEnd,
+			ThursdayEnd = emp.ThursdayEnd,
 
 			FridayAvailable = emp.FridayAvailable,
 			FridayAnyTime = emp.FridayAnyTime,
