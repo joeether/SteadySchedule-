@@ -317,3 +317,7 @@ main {
 .time {
     color: #666;
 }
+
+.shift-card {
+    background: red !important;
+}
