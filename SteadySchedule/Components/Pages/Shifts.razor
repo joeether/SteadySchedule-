@@ -459,8 +459,8 @@
 	{
 		positions = await Schedule.GetPositionsAsync(Schedule.Company.Id);
 		templates = await Schedule.GetWeekTemplatesAsync(Schedule.Company.Id);
-		templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
-		shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
+		await ReloadTemplateShifts();
+		await ReloadShifts();
 
 		newShift = new Shift
 		{
@@ -479,7 +479,7 @@
 				return;
 
 			var template = await Schedule.AddWeekTemplateAsync(Schedule.Company.Id, newTemplateName);
-			templates = await Schedule.GetWeekTemplatesAsync(Schedule.Company.Id);
+			await ReloadTemplateShifts();
 			selectedTemplate = template;
 			newTemplateName = string.Empty;
 		});
@@ -529,13 +529,10 @@
                 });
         }
 
-        templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
+        await ReloadTemplateShifts();
 
         // Reset inputs
-        newTemplatePosition = string.Empty;
-        newTemplateStart = new TimeSpan(9, 0, 0);
-        newTemplateEnd = new TimeSpan(17, 0, 0);
-        newTemplateCount = 1;
+        ResetTemplateInputs();
 
         // Clear checkboxes
         foreach (var key in selectedDays.Keys.ToList())
@@ -545,23 +542,11 @@
     });
 }
 
-    private void SelectWeekdays()
-{
-    foreach (var d in selectedDays.Keys.ToList())
-        selectedDays[d] = d >= DayOfWeek.Monday && d <= DayOfWeek.Friday;
-}
+    private void SelectWeekdays() => SetDays(d => d >= DayOfWeek.Monday && d <= DayOfWeek.Friday);
 
-private void SelectAllDays()
-{
-    foreach (var d in selectedDays.Keys.ToList())
-        selectedDays[d] = true;
-}
+    private void SelectAllDays() => SetDays(d => true);
 
-private void ClearDays()
-{
-    foreach (var d in selectedDays.Keys.ToList())
-        selectedDays[d] = false;
-}
+    private void ClearDays() => SetDays(d => false);
 
 	private void OnTemplateChanged(ChangeEventArgs e)
 	{
@@ -588,22 +573,18 @@ private void ClearDays()
 				.Where(s => s.WeekTemplateId == selectedTemplate.Id)
 				.OrderBy(s => GetMondayBasedDayOrder(s.DayOfWeek))
 				.ThenBy(s => s.StartTime)
+        .ThenBy(s => s.Position)
 				.ToList();
 
 	private async Task DeleteTemplateShift(WeekTemplateShift shift)
 	{
-		var confirmed = await JS.InvokeAsync<bool>(
-			"confirm",
-			$"Delete template shift '{shift.Position}' on {shift.DayOfWeek}?"
-		);
-
-		if (!confirmed)
-			return;
+		if (!await Confirm($"Delete template shift '{shift.Position}' on {shift.DayOfWeek}?"))
+    return;
 
 		await RunBusy(async () =>
 		{
 			await Schedule.DeleteWeekTemplateShiftAsync(Schedule.Company.Id, shift.Id);
-			templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
+			await ReloadTemplateShifts();
 		});
 	}
 
@@ -636,7 +617,7 @@ private void ClearDays()
 				});
 			}
 
-			shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
+			await ReloadShifts();
 
 			newShift = new Shift
 			{
@@ -664,7 +645,7 @@ private void ClearDays()
 				return;
 			}
 
-			shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
+					await ReloadShifts();
 
 			var sourceShifts = shifts
 				.Where(s => s.Date >= fromWeekStart && s.Date < fromWeekStart.AddDays(7))
@@ -711,19 +692,14 @@ private void ClearDays()
 				? $"Copied {addedCount} shift(s) from {fromWeekStart:MM/dd/yyyy} to {toWeekStart:MM/dd/yyyy}."
 				: "No shifts were copied because matching shifts already exist in the target week.";
 
-			shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
+		await ReloadShifts();
 		});
 	}
 
 	private async Task DeleteShift(Shift shift)
 	{
-		var confirmed = await JS.InvokeAsync<bool>(
-			"confirm",
-			$"Delete {shift.Position} on {shift.Date:MM/dd}?"
-		);
-
-		if (!confirmed)
-			return;
+    if (!await Confirm($"Delete '{shift.Position}' on {shift.Date:MM/dd}?"))
+    return;
 
 		await RunBusy(async () =>
 		{
@@ -737,7 +713,7 @@ private void ClearDays()
 
 			await Schedule.DeleteShiftAsync(Schedule.Company.Id, shift.Id);
 
-			shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
+					await ReloadShifts();
 
 			shiftDeleteMessage = null;
 		});
@@ -794,7 +770,7 @@ private void ClearDays()
 				Count = editTemplateCount
 			});
 
-			templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
+			await ReloadTemplateShifts();
 
 			showEditTemplateShiftModal = false;
 			templateShiftToEdit = null;
@@ -853,13 +829,8 @@ private void ClearDays()
 		if (selectedTemplate is null)
 			return;
 
-		var confirmed = await JS.InvokeAsync<bool>(
-			"confirm",
-			$"Delete template '{selectedTemplate.Name}'?"
-		);
-
-		if (!confirmed)
-			return;
+    if (!await Confirm($"Delete template '{selectedTemplate.Name}' ?"))
+      return;
 
 		await RunBusy(async () =>
 		{
@@ -868,7 +839,7 @@ private void ClearDays()
 			await Schedule.DeleteWeekTemplateAsync(Schedule.Company.Id, templateId);
 
 			templates = await Schedule.GetWeekTemplatesAsync(Schedule.Company.Id);
-			templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
+			await ReloadTemplateShifts();
 
 			selectedTemplate = templates.Any() ? templates.First() : null;
 
@@ -882,4 +853,33 @@ private void ClearDays()
 			.Where(p => !string.IsNullOrWhiteSpace(p))
 			.Distinct()
 			.OrderBy(p => p);
+		
+		private async Task ReloadTemplateShifts()
+    {
+        templateShifts = await Schedule.GetWeekTemplateShiftsAsync(Schedule.Company.Id);
+    }
+
+    private async Task ReloadShifts()
+    {
+        shifts = await Schedule.GetShiftsAsync(Schedule.Company.Id);
+    }
+    
+    private async Task<bool> Confirm(string message)
+    {
+        return await JS.InvokeAsync<bool>("confirm", message);
+    }
+    
+    private void SetDays(Func<DayOfWeek, bool> condition)
+    {
+        foreach (var d in selectedDays.Keys.ToList())
+        selectedDays[d] = condition(d);
+    }
+    
+    private void ResetTemplateInputs()
+    {
+        newTemplatePosition = string.Empty;
+        newTemplateStart = new TimeSpan(9, 0, 0);
+        newTemplateEnd = new TimeSpan(17, 0, 0);
+        newTemplateCount = 1;
+    }
 }
