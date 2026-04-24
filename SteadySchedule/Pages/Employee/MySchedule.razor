@@ -22,25 +22,27 @@ else
     <div class="schedule-container">
     @foreach (var a in assignments.OrderBy(a => a.Shift.Date))
     {
-        <div class="shift-card">
-            <div class="shift-date">
-    @a.Shift.Date.ToString("dddd, MMM d")
+        <div class="shift-card @(a.Shift.Date.Date == DateTime.Today ? "today" : "")">
 
-    @if (a.Shift.Date.Date == DateTime.Today)
-    {
-        <span class="today-badge">Today</span>
-    }
+    <div class="shift-date">
+        @a.Shift.Date.ToString("dddd, MMM d")
+
+        @if (a.Shift.Date.Date == DateTime.Today)
+        {
+            <span class="today-badge">Today</span>
+        }
+    </div>
+
+    <div class="shift-details">
+        <span class="position">@a.Shift.Position</span>
+        <span class="time">
+            @FormatDisplayTime(a.Shift.StartTime)
+            -
+            @FormatDisplayTime(a.Shift.EndTime)
+        </span>
+    </div>
+
 </div>
-
-            <div class="shift-details">
-                <span class="position">@a.Shift.Position</span>
-                <span class="time">
-                    @FormatDisplayTime(a.Shift.StartTime)
-                    -
-                    @FormatDisplayTime(a.Shift.EndTime)
-                </span>
-            </div>
-        </div>
     }
 </div>
 }
