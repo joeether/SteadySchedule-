@@ -640,30 +640,98 @@
         return;
     }
 
-    NormalizeDay(ref e.MondayAvailable, ref e.MondayStart, ref e.MondayEnd);
-    NormalizeDay(ref e.TuesdayAvailable, ref e.TuesdayStart, ref e.TuesdayEnd);
-    NormalizeDay(ref e.WednesdayAvailable, ref e.WednesdayStart, ref e.WednesdayEnd);
-    NormalizeDay(ref e.ThursdayAvailable, ref e.ThursdayStart, ref e.ThursdayEnd);
-    NormalizeDay(ref e.FridayAvailable, ref e.FridayStart, ref e.FridayEnd);
-    NormalizeDay(ref e.SaturdayAvailable, ref e.SaturdayStart, ref e.SaturdayEnd);
-    NormalizeDay(ref e.SundayAvailable, ref e.SundayStart, ref e.SundayEnd);
+    NormalizeDay(
+    e.MondayAvailable,
+    e.MondayStart,
+    e.MondayEnd,
+    (available, start, end) =>
+    {
+        e.MondayAvailable = available;
+        e.MondayStart = start;
+        e.MondayEnd = end;
+    });
+    NormalizeDay(
+    e.TuesdayAvailable,
+    e.TuesdayStart,
+    e.TuesdayEnd,
+    (available, start, end) =>
+    {
+        e.TuesdayAvailable = available;
+        e.TuesdayStart = start;
+        e.TuesdayEnd = end;
+    });
+    NormalizeDay(
+    e.WednesdayAvailable,
+    e.WednesdayStart,
+    e.WednesdayEnd,
+    (available, start, end) =>
+    {
+        e.WednesdayAvailable = available;
+        e.WednesdayStart = start;
+        e.WednesdayEnd = end;
+    });
+    NormalizeDay(
+    e.ThursdayAvailable,
+    e.ThursdayStart,
+    e.ThursdayEnd,
+    (available, start, end) =>
+    {
+        e.ThursdayAvailable = available;
+        e.ThursdayStart = start;
+        e.ThursdayEnd = end;
+    });
+    NormalizeDay(
+    e.FridayAvailable,
+    e.FridayStart,
+    e.FridayEnd,
+    (available, start, end) =>
+    {
+        e.FridayAvailable = available;
+        e.FridayStart = start;
+        e.FridayEnd = end;
+    });
+    NormalizeDay(
+    e.SaturdayAvailable,
+    e.SaturdayStart,
+    e.SaturdayEnd,
+    (available, start, end) =>
+    {
+        e.SaturdayAvailable = available;
+        e.SaturdayStart = start;
+        e.SaturdayEnd = end;
+    });
+    NormalizeDay(
+    e.SundayAvailable,
+    e.SundayStart,
+    e.SundayEnd,
+    (available, start, end) =>
+    {
+        e.SundayAvailable = available;
+        e.SundayStart = start;
+        e.SundayEnd = end;
+    });
 }
 
 	
 
-	private void NormalizeDay(ref bool available, ref TimeSpan? start, ref TimeSpan? end)
+	private void NormalizeDay(
+    bool available,
+    TimeSpan? start,
+    TimeSpan? end,
+    Action<bool, TimeSpan?, TimeSpan?> apply)
 {
     if (!available)
     {
-        start = null;
-        end = null;
+        apply(false, null, null);
         return;
     }
 
     if (!start.HasValue || !end.HasValue)
     {
-        start = null;
-        end = null;
+        apply(true, null, null);
+        return;
     }
+
+    apply(true, start, end);
 }
 }
