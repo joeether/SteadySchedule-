@@ -130,10 +130,6 @@
 												   @bind="newEmployee.MondayAvailable" />
 										</td>
 										<td>
-											<input type="checkbox"
-												   class="form-check-input" />
-										</td>
-										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.MondayStart)"
 												   @onchange="e => newEmployee.MondayStart = ParseTime(e.Value?.ToString())"
@@ -150,10 +146,6 @@
 									<tr>
 										<td>Tuesday</td>
 										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.TuesdayAvailable" /></td>
-										<td>
-											<input type="checkbox"
-												   class="form-check-input" />
-										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.TuesdayStart)"
@@ -172,10 +164,6 @@
 										<td>Wednesday</td>
 										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.WednesdayAvailable" /></td>
 										<td>
-											<input type="checkbox"
-												   class="form-check-input" />
-										</td>
-										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.WednesdayStart)"
 												   @onchange="e => newEmployee.WednesdayStart = ParseTime(e.Value?.ToString())"
@@ -192,10 +180,6 @@
 									<tr>
 										<td>Thursday</td>
 										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.ThursdayAvailable" /></td>
-										<td>
-											<input type="checkbox"
-												   class="form-check-input" />
-										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.ThursdayStart)"
@@ -214,10 +198,6 @@
 										<td>Friday</td>
 										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.FridayAvailable" /></td>
 										<td>
-											<input type="checkbox"
-												   class="form-check-input" />
-										</td>
-										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.FridayStart)"
 												   @onchange="e => newEmployee.FridayStart = ParseTime(e.Value?.ToString())"
@@ -235,10 +215,6 @@
 										<td>Saturday</td>
 										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.SaturdayAvailable" /></td>
 										<td>
-											<input type="checkbox"
-												   class="form-check-input" />
-										</td>
-										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.SaturdayStart)"
 												   @onchange="e => newEmployee.SaturdayStart = ParseTime(e.Value?.ToString())"
@@ -255,10 +231,6 @@
 									<tr>
 										<td>Sunday</td>
 										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.SundayAvailable" /></td>
-										<td>
-											<input type="checkbox"
-												   class="form-check-input" />
-										</td>
 										<td>
 											<input type="time" class="form-control"
 												   value="@FormatTime(newEmployee.SundayStart)"
