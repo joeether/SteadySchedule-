@@ -191,6 +191,20 @@ private void ToggleView()
         }
     }
 
+    private int? lastCompanyId;
+
+protected override async Task OnParametersSetAsync()
+{
+    var currentCompanyId = Schedule.Company?.Id;
+
+    if (currentCompanyId != lastCompanyId)
+    {
+        lastCompanyId = currentCompanyId;
+
+        await LoadSelectedWeekDataAsync();
+    }
+}
+
     protected override async Task OnInitializedAsync()
 {
     var authState = await AuthStateProvider.GetAuthenticationStateAsync();
