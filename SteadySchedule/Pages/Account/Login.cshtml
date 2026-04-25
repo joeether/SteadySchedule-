@@ -79,14 +79,29 @@
 .login-page a:hover {
      text-decoration: underline;
 }
+
+img {
+    transition: transform 0.2s ease;
+}
+
+img:hover {
+    transform: scale(1.05);
+}
 </style>
 
 <div class="login-page">
     <div class="login-card-wrapper">
     <div class="card shadow-sm">
         <div class="card-header fw-semibold">
-    <div>SteadySchedule</div>
-    <small class="text-muted">Welcome back</small>
+        <div class="text-center mb-3">
+        <img src="/images/steadyschedule-logo.png"
+             alt="SteadySchedule"
+             style="max-height: 120px;" />
+    </div>
+
+    <h6 class="text-muted text-center mb-3">
+        Tools that don’t make you feel stupid
+    </h6>
 </div>
         <div class="card-body">
             <form method="post">
