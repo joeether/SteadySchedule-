@@ -8,6 +8,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthStateProvider
+@inject UserContext UserContext
 
 <PageTitle>Published Schedule</PageTitle>
 
@@ -220,9 +221,11 @@ private void ToggleView()
 
     if (publishedWeeks.Any())
     {
-        selectedWeek = publishedWeeks
-            .FirstOrDefault(w => w >= currentWeek)
-            ?? publishedWeeks.First();
+        var nextWeek = publishedWeeks.FirstOrDefault(w => w >= currentWeek);
+
+selectedWeek = nextWeek != default
+    ? nextWeek
+    : publishedWeeks.First();
 
         await LoadSelectedWeekDataAsync();
     }
