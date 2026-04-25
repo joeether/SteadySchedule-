@@ -114,7 +114,7 @@ namespace SteadySchedule.Pages.Account
 
     await _signInManager.SignInAsync(user, isPersistent: false);
 
-    return LocalRedirect("/myschedule");
+    return LocalRedirect("/published");
 }
     }
 }
