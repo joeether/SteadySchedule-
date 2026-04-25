@@ -115,19 +115,21 @@ else
     }
 
     private async Task LoadWeek()
-    {
-        isLoading = true;
+{
+    isLoading = true;
+    StateHasChanged(); //add this
 
-        selectedWeekAssignments =
-            await Schedule.GetWeekAssignmentsAsync(companyId, selectedWeek);
+    selectedWeekAssignments =
+        await Schedule.GetWeekAssignmentsAsync(companyId, selectedWeek);
 
-        employees =
-            await Schedule.GetEmployeesAsync(companyId);
+    employees =
+        await Schedule.GetEmployeesAsync(companyId);
 
-        ApplyFilter();
+    ApplyFilter();
 
-        isLoading = false;
-    }
+    isLoading = false;
+    StateHasChanged(); //add this
+}
 
     private void ApplyFilter()
     {
@@ -148,10 +150,22 @@ else
     }
 
     private void ToggleView()
+{
+    showAll = !showAll;
+    ApplyFilter();
+    StateHasChanged(); // add this
+}
+
+private async Task OnWeekChanged(ChangeEventArgs e)
+{
+    Console.WriteLine("Week changed fired");
+
+    if (DateTime.TryParse(e.Value?.ToString(), out var week))
     {
-        showAll = !showAll;
-        ApplyFilter();
+        selectedWeek = week;
+        await LoadWeek();
     }
+}
 
     private static DateTime StartOfWeek(DateTime date)
     {
