@@ -1,0 +1,17 @@
+.employee-item {
+    transition: 0.2s ease;
+}
+
+.employee-item:hover {
+    background-color: #f8f9fa;
+}
+
+.employee-name {
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.employee-meta {
+    font-size: 0.85rem;
+    color: #666;
+}
