@@ -71,7 +71,7 @@ namespace SteadySchedule.Pages.Account
             return LocalRedirect("/dashboard");
 
         if (isEmployee)
-            return LocalRedirect("/myschedule");
+            return LocalRedirect("/published");
 
         return LocalRedirect("/dashboard");
     }
