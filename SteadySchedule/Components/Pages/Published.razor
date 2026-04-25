@@ -212,9 +212,14 @@ protected override async Task OnParametersSetAsync()
     var authState = await AuthStateProvider.GetAuthenticationStateAsync();
     var user = authState.User;
 
-if (!UserContext.TryInitializeCompany(user, Schedule))
+if (Schedule.Company == null || Schedule.Company.Id == 0)
 {
-    throw new Exception("Company context failed to initialize.");
+    var companyClaim = user.FindFirst("CompanyId");
+
+    if (companyClaim != null && int.TryParse(companyClaim.Value, out var companyId))
+    {
+        Schedule.SetCompany(companyId);
+    }
 }
 
     isEmployee = user.Claims.Any(c => c.Type == "Role" && c.Value == "Employee");
