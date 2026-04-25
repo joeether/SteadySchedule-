@@ -140,14 +140,7 @@ else
                 .ToList();
     }
 
-    private async Task OnWeekChanged(ChangeEventArgs e)
-    {
-        if (DateTime.TryParse(e.Value?.ToString(), out var week))
-        {
-            selectedWeek = week;
-            await LoadWeek();
-        }
-    }
+    
 
     private void ToggleView()
 {
