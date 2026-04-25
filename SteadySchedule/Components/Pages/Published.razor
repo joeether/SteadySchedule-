@@ -191,37 +191,42 @@ private void ToggleView()
     }
 
     protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-var user = authState.User;
-
-isEmployee = user.Claims.Any(c => c.Type == "Role" && c.Value == "Employee");
-isAdmin = user.Claims.Any(c => c.Type == "Role" && c.Value == "Admin");
-
-var empClaim = user.FindFirst("EmployeeId");
-
-if (isEmployee && empClaim != null)
 {
-    employeeId = int.Parse(empClaim.Value);
-}
+    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+    var user = authState.User;
 
-        publishedWeeks = (await Schedule.GetPublishedSchedulesAsync(Schedule.Company.Id))
-            .Select(s => s.WeekStart.Date)
-            .Distinct()
-            .OrderByDescending(d => d)
-            .ToList();
-
-        var currentWeek = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
-
-        if (publishedWeeks.Any())
-        {
-            selectedWeek = publishedWeeks.Contains(currentWeek)
-                ? currentWeek
-                : publishedWeeks.First();
-
-            await LoadSelectedWeekDataAsync();
-        }
+    if (!UserContext.TryInitializeCompany(user, Schedule))
+    {
+        throw new Exception("Company context failed to initialize.");
     }
+
+    isEmployee = user.Claims.Any(c => c.Type == "Role" && c.Value == "Employee");
+    isAdmin = user.Claims.Any(c => c.Type == "Role" && c.Value == "Admin");
+
+    var empClaim = user.FindFirst("EmployeeId");
+
+    if (isEmployee && empClaim != null && int.TryParse(empClaim.Value, out var id))
+    {
+        employeeId = id;
+    }
+
+    publishedWeeks = (await Schedule.GetPublishedSchedulesAsync(Schedule.Company.Id))
+        .Select(s => s.WeekStart.Date)
+        .Distinct()
+        .OrderBy(d => d)
+        .ToList();
+
+    var currentWeek = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
+
+    if (publishedWeeks.Any())
+    {
+        selectedWeek = publishedWeeks
+            .FirstOrDefault(w => w >= currentWeek)
+            ?? publishedWeeks.First();
+
+        await LoadSelectedWeekDataAsync();
+    }
+}
 
     private static DateTime StartOfWeek(DateTime date, DayOfWeek startDay)
     {
