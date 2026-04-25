@@ -22,9 +22,6 @@ else
     <div class="schedule-container">
     @foreach (var a in assignments.OrderBy(a => a.Shift.Date))
     {
-        <div style="font-size: 10px;">
-    Shift: @a.Shift.Date | Today: @DateTime.Today
-</div>
 
         <div class="shift-card @(a.Shift.Date.Date == DateTime.Today ? "today" : "")">
 
