@@ -11,7 +11,8 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
 
     <select class="form-select w-auto"
-            value="@selectedWeek.ToString("yyyy-MM-dd")"
+            @bind="selectedWeek"
+@bind:format="yyyy-MM-dd"
             @onchange="OnWeekChanged">
 
         @foreach (var w in publishedWeeks.Where(w => w >= StartOfWeek(DateTime.Today)))
