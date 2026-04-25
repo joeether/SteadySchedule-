@@ -279,18 +279,19 @@
 
 			<ul class="list-group list-group-flush">
                 @if (!employees.Any())
-                {
-                    <div class="p-3 text-muted">
-                        No employees yet. Add one above 👆
-                    </div>
-                }
+{
+    <li class="list-group-item text-muted">
+        No employees yet. Add one above 👆
+    </li>
+}
 				@foreach (var e in employees)
 				{
 					<li class="list-group-item employee-item d-flex align-items-center">
 
 						<div class="flex-grow-1 me-3">
 							<div class="employee-name">@e.Name</div>
-<div class="employee-meta">
+                               <div class="employee-meta">
+                                <small>
 								@e.Email |
 								Max @e.MaxHoursPerWeek hrs |
 								@(e.IsSalary
