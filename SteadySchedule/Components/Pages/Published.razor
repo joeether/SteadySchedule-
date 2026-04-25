@@ -32,6 +32,14 @@
             <option value="@w.ToString("yyyy-MM-dd")">@w.ToString("MMM d, yyyy")</option>
         }
     </select>
+    @if (isEmployee)
+{
+    <button class="btn btn-sm btn-outline-secondary mt-2"
+            @onclick="ToggleView">
+        @(showAll ? "My Schedule" : "All Employees")
+    </button>
+}
+
 </div>
 
 @if (selectedWeek != default)
@@ -52,7 +60,7 @@
 
         </div>
         @* TEMP: manager-only action, may move to admin review page later *@
-        @if (currentStatus == WeekStatus.Published)
+        @if (isAdmin && currentStatus == WeekStatus.Published)
         {
             <button class="btn btn-sm btn-danger"
                     @onclick="UnpublishWeek"
@@ -103,7 +111,9 @@
                                 </div>
 
                                 <div class="mt-1">
-                                    @foreach (var a in selectedWeekAssignments.Where(a => a.ShiftId == s.Id))
+                                    @foreach (var a in selectedWeekAssignments
+    .Where(a => a.ShiftId == s.Id)
+    .Where(a => showAll || a.EmployeeId == employeeId))
                                     {
                                         var emp = employees.FirstOrDefault(x => x.Id == a.EmployeeId);
                                         if (emp is not null)
@@ -137,6 +147,16 @@
 
     private bool isBusy;
 
+    private bool isEmployee;
+private bool isAdmin;
+private int employeeId;
+
+private bool showAll = false;
+private void ToggleView()
+{
+    showAll = !showAll;
+}
+
     private async Task RunBusy(Func<Task> action)
     {
         if (isBusy)
@@ -158,6 +178,14 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+var user = authState.User;
+
+isEmployee = user.Claims.Any(c => c.Type == "Role" && c.Value == "Employee");
+isAdmin = user.Claims.Any(c => c.Type == "Role" && c.Value == "Admin");
+
+employeeId = int.Parse(user.FindFirst("EmployeeId")!.Value);
+
         publishedWeeks = (await Schedule.GetPublishedSchedulesAsync(Schedule.Company.Id))
             .Select(s => s.WeekStart.Date)
             .Distinct()
