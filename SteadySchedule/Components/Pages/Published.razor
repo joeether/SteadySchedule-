@@ -126,16 +126,20 @@
                                 </div>
 
                                 <div class="mt-1">
-                                    @foreach (var a in selectedWeekAssignments
-    .Where(a => a.ShiftId == s.Id)
-    .Where(a => showAll || a.EmployeeId == employeeId))
-                                    {
-                                        var emp = employees.FirstOrDefault(x => x.Id == a.EmployeeId);
-                                        if (emp is not null)
-                                        {
-                                            <span class="badge bg-success me-1">@emp.Name</span>
-                                        }
-                                    }
+
+@foreach (var a in selectedWeekAssignments.Where(a => a.ShiftId == s.Id))
+{
+    <div style="font-size:10px; color:red;">
+        A:@a.EmployeeId |
+        Match:@employees.Any(e => e.Id == a.EmployeeId)
+    </div>
+
+    var emp = employees.FirstOrDefault(x => x.Id == a.EmployeeId);
+    if (emp is not null)
+    {
+        <span class="badge bg-success me-1">@emp.Name</span>
+    }
+}
                                 </div>
 
                             </div>
