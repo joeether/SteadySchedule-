@@ -30,26 +30,29 @@
     }
 
     <div class="card shadow-sm mb-4">
-        <div class="card-header fw-semibold">
+        <div class="card-header fw-semibold text-muted">
             Add Position
         </div>
         <div class="card-body">
 
-            <input class="form-control"
-                   placeholder="Enter new position"
-                   @bind="newPosition" />
+            <div class="d-flex gap-2">
+    <input class="form-control"
+           placeholder="e.g. Cook, Cashier, Manager"
+           @bind="newPosition"
+           @onkeypress="HandleKeyPress" />
 
-            <button class="btn btn-dark mt-3"
-                    @onclick="AddPosition"
-                    disabled="@isAdding">
-                @(isAdding ? "Adding..." : "Add Position")
-            </button>
+    <button class="btn btn-primary"
+            @onclick="AddPosition"
+            disabled="@isAdding">
+        @(isAdding ? "Adding..." : "Add")
+    </button>
+</div>
 
         </div>
     </div>
 
     <div class="card shadow-sm">
-        <div class="card-header fw-semibold">
+        <div class="card-header fw-semibold text-muted">
             Existing Positions
         </div>
 
@@ -57,20 +60,21 @@
             <ul class="list-group list-group-flush">
                 @if (!positions.Any())
                 {
-                    <li class="list-group-item text-muted">No positions yet.</li>
+                    <li class="list-group-item text-muted">No positions yet. Add your first one above 👆</li>
                 }
                 else
                 {
                     @foreach (var p in positions.OrderBy(p => p.Name))
                     {
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            @p.Name
-                            <button class="btn btn-sm btn-outline-danger"
-                                    @onclick="() => DeletePosition(p.Name)"
-                                    disabled="@isDeleting">
-                                Delete
-                            </button>
-                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center position-item">
+    <span class="fw-semibold">@p.Name</span>
+
+    <button class="btn btn-sm btn-outline-danger"
+            @onclick="() => DeletePosition(p.Name)"
+            disabled="@isDeleting">
+        Delete
+    </button>
+</li>
                     }
                 }
             </ul>
@@ -85,6 +89,14 @@
     private string? message;
     private bool isAdding = false;
     private bool isDeleting = false;
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+{
+    if (e.Key == "Enter")
+    {
+        await AddPosition();
+    }
+}
 
     protected override async Task OnInitializedAsync()
     {
