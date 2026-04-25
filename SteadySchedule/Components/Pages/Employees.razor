@@ -20,12 +20,6 @@
 			</div>
 		</div>
 	</div>
-	@foreach (var e in employees)
-	{
-		<div>
-			@e.Name (Id: @e.Id)
-		</div>
-	}
 
 	<div id="employee-form" class="card shadow-sm mb-4">
 		<div class="card-header fw-semibold">
@@ -284,13 +278,19 @@
 		<div class="card-body p-0">
 
 			<ul class="list-group list-group-flush">
+                @if (!employees.Any())
+                {
+                    <div class="p-3 text-muted">
+                        No employees yet. Add one above 👆
+                    </div>
+                }
 				@foreach (var e in employees)
 				{
-					<li class="list-group-item d-flex align-items-center">
+					<li class="list-group-item employee-item d-flex align-items-center">
 
 						<div class="flex-grow-1 me-3">
-							<div class="fw-semibold">@e.Name</div>
-							<small>
+							<div class="employee-name">@e.Name</div>
+<div class="employee-meta">
 								@e.Email |
 								Max @e.MaxHoursPerWeek hrs |
 								@(e.IsSalary
