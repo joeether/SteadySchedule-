@@ -186,7 +186,12 @@ var user = authState.User;
 isEmployee = user.Claims.Any(c => c.Type == "Role" && c.Value == "Employee");
 isAdmin = user.Claims.Any(c => c.Type == "Role" && c.Value == "Admin");
 
-employeeId = int.Parse(user.FindFirst("EmployeeId")!.Value);
+var empClaim = user.FindFirst("EmployeeId");
+
+if (isEmployee && empClaim != null)
+{
+    employeeId = int.Parse(empClaim.Value);
+}
 
         publishedWeeks = (await Schedule.GetPublishedSchedulesAsync(Schedule.Company.Id))
             .Select(s => s.WeekStart.Date)
