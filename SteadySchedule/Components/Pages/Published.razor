@@ -127,7 +127,9 @@
 
                                 <div class="mt-1">
 
-@foreach (var a in selectedWeekAssignments.Where(a => a.ShiftId == s.Id))
+@foreach (var a in selectedWeekAssignments
+    .Where(a => a.ShiftId == s.Id)
+    .Where(a => showAll || a.EmployeeId == employeeId))
 {
     <div style="font-size:10px; color:red;">
         A:@a.EmployeeId |
