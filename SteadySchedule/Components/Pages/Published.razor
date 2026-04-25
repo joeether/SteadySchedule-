@@ -74,6 +74,18 @@
     </div>
 }
 
+<div style="font-size:12px; color:red;">
+    Claim EmployeeId: @employeeId
+</div>
+
+@foreach (var a in selectedWeekAssignments.Take(5))
+{
+    <div style="font-size:12px; color:blue;">
+        Assignment EmployeeId: @a.EmployeeId
+    </div>
+}
+
+
 <div class="row g-3">
 
     @for (int i = 0; i < 7; i++)
