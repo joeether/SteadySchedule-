@@ -1,0 +1,13 @@
+.position-item {
+    transition: 0.2s ease;
+}
+
+.position-item:hover {
+    background-color: #f8f9fa;
+}
+
+.list-group-item::before {
+    content: "• ";
+    color: #8B3A2E;
+    font-weight: bold;
+}
