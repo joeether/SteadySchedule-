@@ -1,4 +1,4 @@
-﻿@page "/myschedule"
+@page "/myschedule"
 @using Microsoft.AspNetCore.Components.Authorization
 @using SteadySchedule.Domain
 @using SteadySchedule.Services
@@ -6,58 +6,90 @@
 @inject ScheduleService Schedule
 
 <h3>My Schedule</h3>
-<p class="text-muted">Here are your upcoming shifts</p>
-<h5 class="mb-3">This Week</h5>
+<p class="text-muted">View your upcoming shifts</p>
 
-@if (assignments == null)
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <select class="form-select w-auto"
+            value="@selectedWeek.ToString("yyyy-MM-dd")"
+            @onchange="OnWeekChanged">
+
+        @foreach (var w in publishedWeeks.Where(w => w >= StartOfWeek(DateTime.Today)))
+        {
+            <option value="@w.ToString("yyyy-MM-dd")">
+                Week of @w.ToString("MMM d")
+            </option>
+        }
+    </select>
+
+    <button class="btn btn-sm btn-outline-secondary"
+            @onclick="ToggleView">
+        @(showAll ? "My Schedule" : "All Employees")
+    </button>
+
+</div>
+
+@if (isLoading)
 {
     <p>Loading...</p>
 }
-else if (!assignments.Any())
+else if (!filteredAssignments.Any())
 {
     <p>No shifts scheduled.</p>
 }
 else
 {
     <div class="schedule-container">
-    @foreach (var a in assignments.OrderBy(a => a.Shift.Date))
-    {
-
-        <div class="shift-card @(a.Shift.Date.Date == DateTime.Today ? "today" : "")">
-
-    <div class="shift-date">
-        @a.Shift.Date.ToString("dddd, MMM d")
-
-        @if (a.Shift.Date.Date == DateTime.Today.Date)
+        @foreach (var a in filteredAssignments.OrderBy(a => a.Shift.Date))
         {
-            <span class="today-badge">Today</span>
+            var emp = employees.FirstOrDefault(e => e.Id == a.EmployeeId);
+
+            <div class="shift-card @(a.Shift.Date.Date == DateTime.Today ? "today" : "")">
+
+                <div class="shift-date">
+                    @a.Shift.Date.ToString("dddd, MMM d")
+
+                    @if (a.Shift.Date.Date == DateTime.Today)
+                    {
+                        <span class="today-badge">Today</span>
+                    }
+                </div>
+
+                @if (showAll && emp is not null)
+                {
+                    <div class="employee-name">
+                        @emp.Name
+                    </div>
+                }
+
+                <div class="shift-details">
+                    <span class="position">@a.Shift.Position</span>
+                    <span class="time">
+                        @FormatDisplayTime(a.Shift.StartTime)
+                        -
+                        @FormatDisplayTime(a.Shift.EndTime)
+                    </span>
+                </div>
+
+            </div>
         }
     </div>
-
-    <div class="shift-details">
-        <span class="position">@a.Shift.Position</span>
-        <span class="time">
-            @FormatDisplayTime(a.Shift.StartTime)
-            -
-            @FormatDisplayTime(a.Shift.EndTime)
-        </span>
-    </div>
-
-</div>
-    }
-</div>
 }
 
 @code {
-    private List<Assignment> assignments = new();
-    private int debugAssignmentCount;
+
     private int companyId;
     private int employeeId;
-    private List<Assignment> allAssignments = new();
-    private string FormatDisplayTime(TimeSpan time)
-{
-    return DateTime.Today.Add(time).ToString("h:mm tt");
-}
+
+    private List<DateTime> publishedWeeks = new();
+    private DateTime selectedWeek;
+
+    private List<Assignment> selectedWeekAssignments = new();
+    private List<Assignment> filteredAssignments = new();
+    private List<Employee> employees = new();
+
+    private bool showAll = false;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -67,16 +99,68 @@ else
         companyId = int.Parse(user.FindFirst("CompanyId")!.Value);
         employeeId = int.Parse(user.FindFirst("EmployeeId")!.Value);
 
-        var today = DateTime.Today;
-        var diff = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
-        var weekStart = today.AddDays(-diff);
-
-        allAssignments = await Schedule.GetWeekAssignmentsAsync(companyId, weekStart);
-
-        debugAssignmentCount = allAssignments.Count;
-
-        assignments = allAssignments
-            .Where(a => a.EmployeeId == employeeId)
+        publishedWeeks = (await Schedule.GetPublishedSchedulesAsync(companyId))
+            .Select(s => s.WeekStart.Date)
+            .Distinct()
+            .OrderBy(d => d)
             .ToList();
+
+        var currentWeek = StartOfWeek(DateTime.Today);
+
+        selectedWeek = publishedWeeks.Contains(currentWeek)
+            ? currentWeek
+            : publishedWeeks.FirstOrDefault();
+
+        await LoadWeek();
+    }
+
+    private async Task LoadWeek()
+    {
+        isLoading = true;
+
+        selectedWeekAssignments =
+            await Schedule.GetWeekAssignmentsAsync(companyId, selectedWeek);
+
+        employees =
+            await Schedule.GetEmployeesAsync(companyId);
+
+        ApplyFilter();
+
+        isLoading = false;
+    }
+
+    private void ApplyFilter()
+    {
+        filteredAssignments = showAll
+            ? selectedWeekAssignments
+            : selectedWeekAssignments
+                .Where(a => a.EmployeeId == employeeId)
+                .ToList();
+    }
+
+    private async Task OnWeekChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var week))
+        {
+            selectedWeek = week;
+            await LoadWeek();
+        }
+    }
+
+    private void ToggleView()
+    {
+        showAll = !showAll;
+        ApplyFilter();
+    }
+
+    private static DateTime StartOfWeek(DateTime date)
+    {
+        int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
+        return date.Date.AddDays(-diff);
+    }
+
+    private string FormatDisplayTime(TimeSpan time)
+    {
+        return DateTime.Today.Add(time).ToString("h:mm tt");
     }
 }
