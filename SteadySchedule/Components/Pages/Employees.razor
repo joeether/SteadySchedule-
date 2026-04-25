@@ -288,38 +288,41 @@
 				{
 					<li class="list-group-item employee-item d-flex align-items-center">
 
-						<div class="flex-grow-1 me-3">
-							<div class="employee-name">@e.Name</div>
-                               <div class="employee-meta">
-                                <small>
-								@e.Email |
-								Max @e.MaxHoursPerWeek hrs |
-								@(e.IsSalary
-															? $"Salary: {e.WeeklySalary:C}/week"
-															: $"Hourly: {e.HourlyRate:C}/hr") |
-							@e.PositionsQualified
-							@if (!string.IsNullOrWhiteSpace(GetAvailabilitySummary(e)))
-								{
-									<span> | @GetAvailabilitySummary(e)</span>
-								}
-							</small>
-						</div>
+    <div class="flex-grow-1 me-3">
+        <div class="employee-name">@e.Name</div>
 
-						<div class="d-flex gap-2 ms-auto">
-							<button class="btn btn-secondary btn-sm"
-									@onclick="() => StartEdit(e)"
-									disabled="@isBusy">
-								Edit
-							</button>
+        <div class="employee-meta">
+            <small>
+                @e.Email |
+                Max @e.MaxHoursPerWeek hrs |
+                @(e.IsSalary
+                    ? $"Salary: {e.WeeklySalary:C}/week"
+                    : $"Hourly: {e.HourlyRate:C}/hr") |
+                @e.PositionsQualified
 
-							<button class="btn btn-danger btn-sm"
-									@onclick="() => DeleteEmployee(e)"
-									disabled="@isBusy">
-								Delete
-							</button>
-						</div>
+                @if (!string.IsNullOrWhiteSpace(GetAvailabilitySummary(e)))
+                {
+                    <span> | @GetAvailabilitySummary(e)</span>
+                }
+            </small>
+        </div>
+    </div>  @* 👈 THIS WAS MISSING *@
 
-					</li>
+    <div class="d-flex gap-2 ms-auto">
+        <button class="btn btn-secondary btn-sm"
+                @onclick="() => StartEdit(e)"
+                disabled="@isBusy">
+            Edit
+        </button>
+
+        <button class="btn btn-danger btn-sm"
+                @onclick="() => DeleteEmployee(e)"
+                disabled="@isBusy">
+            Delete
+        </button>
+    </div>
+
+</li>
 				}
 			</ul>
 		</div>
