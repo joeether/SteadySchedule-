@@ -16,6 +16,12 @@
     <Routes @rendermode="InteractiveServer" />
     <script src="/site.js"></script>
     <script src="_framework/blazor.web.js"></script>
+    <script>
+    window.addEventListener("blazor:connection-down", () => {
+        console.log("Connection lost, reloading...");
+        setTimeout(() => location.reload(), 1500);
+    });
+</script>
 </body>
 
 </html>
