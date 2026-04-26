@@ -99,7 +99,8 @@
 <div class="form-check mb-2">
     <input type="checkbox"
            class="form-check-input"
-           @bind="newEmployee.IsAnytime" />
+           checked="@newEmployee.IsAnytime"
+@onchange="e => ToggleAnytime((bool)e.Value!)" />
     <label class="form-check-label fw-semibold">
         Available Anytime (for selected days)
     </label>
@@ -180,63 +181,160 @@
 												   disabled="@(!newEmployee.ThursdayAvailable || newEmployee.IsAnytime)" />
 										</td>
 										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.ThursdayEnd)"
-												   @onchange="e => newEmployee.ThursdayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.ThursdayAvailable || newEmployee.IsAnytime)" />
-										</td>
-									</tr>
+<tbody>
+									<tr>
+    <td>Monday</td>
+    <td>
+        <input type="checkbox"
+               class="form-check-input"
+               checked="@newEmployee.MondayAvailable"
+               @onchange="e => { newEmployee.MondayAvailable = (bool)e.Value!; RecalculateAnytime(); }" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.MondayStart)"
+               @onchange="e => { newEmployee.MondayStart = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.MondayAvailable || newEmployee.IsAnytime)" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.MondayEnd)"
+               @onchange="e => { newEmployee.MondayEnd = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.MondayAvailable || newEmployee.IsAnytime)" />
+    </td>
+</tr>
 
 									<tr>
-										<td>Friday</td>
-										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.FridayAvailable" /></td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.FridayStart)"
-												   @onchange="e => newEmployee.FridayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.FridayAvailable || newEmployee.IsAnytime)" />
-										</td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.FridayEnd)"
-												   @onchange="e => newEmployee.FridayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.FridayAvailable || newEmployee.IsAnytime)" />
-										</td>
-									</tr>
+    <td>Tuesday</td>
+    <td>
+        <input type="checkbox"
+               class="form-check-input"
+               checked="@newEmployee.TuesdayAvailable"
+               @onchange="e => { newEmployee.TuesdayAvailable = (bool)e.Value!; RecalculateAnytime(); }" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.TuesdayStart)"
+               @onchange="e => { newEmployee.TuesdayStart = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.TuesdayAvailable || newEmployee.IsAnytime)" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.TuesdayEnd)"
+               @onchange="e => { newEmployee.TuesdayEnd = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.TuesdayAvailable || newEmployee.IsAnytime)" />
+    </td>
+</tr>
 
 									<tr>
-										<td>Saturday</td>
-										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.SaturdayAvailable" /></td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.SaturdayStart)"
-												   @onchange="e => newEmployee.SaturdayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.SaturdayAvailable || newEmployee.IsAnytime)" />
-										</td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.SaturdayEnd)"
-												   @onchange="e => newEmployee.SaturdayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.SaturdayAvailable || newEmployee.IsAnytime)" />
-										</td>
-									</tr>
+    <td>Wednesday</td>
+    <td>
+        <input type="checkbox"
+               class="form-check-input"
+               checked="@newEmployee.WednesdayAvailable"
+               @onchange="e => { newEmployee.WednesdayAvailable = (bool)e.Value!; RecalculateAnytime(); }" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.WednesdayStart)"
+               @onchange="e => { newEmployee.WednesdayStart = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.WednesdayAvailable || newEmployee.IsAnytime)" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.WednesdayEnd)"
+               @onchange="e => { newEmployee.WednesdayEnd = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.WednesdayAvailable || newEmployee.IsAnytime)" />
+    </td>
+</tr>
+
+								<tr>
+    <td>Thursday</td>
+    <td>
+        <input type="checkbox"
+               class="form-check-input"
+               checked="@newEmployee.ThursdayAvailable"
+               @onchange="e => { newEmployee.ThursdayAvailable = (bool)e.Value!; RecalculateAnytime(); }" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.ThursdayStart)"
+               @onchange="e => { newEmployee.ThursdayStart = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.ThursdayAvailable || newEmployee.IsAnytime)" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.ThursdayEnd)"
+               @onchange="e => { newEmployee.ThursdayEnd = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.ThursdayAvailable || newEmployee.IsAnytime)" />
+    </td>
+</tr>
 
 									<tr>
-										<td>Sunday</td>
-										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.SundayAvailable" /></td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.SundayStart)"
-												   @onchange="e => newEmployee.SundayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.SundayAvailable || newEmployee.IsAnytime)" />
-										</td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.SundayEnd)"
-												   @onchange="e => newEmployee.SundayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.SundayAvailable || newEmployee.IsAnytime)" />
-										</td>
-									</tr>
+    <td>Friday</td>
+    <td>
+        <input type="checkbox"
+               class="form-check-input"
+               checked="@newEmployee.FridayAvailable"
+               @onchange="e => { newEmployee.FridayAvailable = (bool)e.Value!; RecalculateAnytime(); }" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.FridayStart)"
+               @onchange="e => { newEmployee.FridayStart = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.FridayAvailable || newEmployee.IsAnytime)" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.FridayEnd)"
+               @onchange="e => { newEmployee.FridayEnd = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.FridayAvailable || newEmployee.IsAnytime)" />
+    </td>
+</tr>
+
+									<tr>
+    <td>Saturday</td>
+    <td>
+        <input type="checkbox"
+               class="form-check-input"
+               checked="@newEmployee.SaturdayAvailable"
+               @onchange="e => { newEmployee.SaturdayAvailable = (bool)e.Value!; RecalculateAnytime(); }" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.SaturdayStart)"
+               @onchange="e => { newEmployee.SaturdayStart = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.SaturdayAvailable || newEmployee.IsAnytime)" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.SaturdayEnd)"
+               @onchange="e => { newEmployee.SaturdayEnd = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.SaturdayAvailable || newEmployee.IsAnytime)" />
+    </td>
+</tr>
+
+									<tr>
+    <td>Sunday</td>
+    <td>
+        <input type="checkbox"
+               class="form-check-input"
+               checked="@newEmployee.SundayAvailable"
+               @onchange="e => { newEmployee.SundayAvailable = (bool)e.Value!; RecalculateAnytime(); }" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.SundayStart)"
+               @onchange="e => { newEmployee.SundayStart = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.SundayAvailable || newEmployee.IsAnytime)" />
+    </td>
+    <td>
+        <input type="time" class="form-control"
+               value="@FormatTime(newEmployee.SundayEnd)"
+               @onchange="e => { newEmployee.SundayEnd = ParseTime(e.Value?.ToString()); RecalculateAnytime(); }"
+               disabled="@(!newEmployee.SundayAvailable || newEmployee.IsAnytime)" />
+    </td>
+</tr>
 								</tbody>
 							</table>
 						</div>
@@ -491,14 +589,7 @@
 			SundayEnd = emp.SundayEnd
 		};
 
-  newEmployee.IsAnytime =
-    (!emp.MondayAvailable || (!emp.MondayStart.HasValue && !emp.MondayEnd.HasValue)) &&
-    (!emp.TuesdayAvailable || (!emp.TuesdayStart.HasValue && !emp.TuesdayEnd.HasValue)) &&
-    (!emp.WednesdayAvailable || (!emp.WednesdayStart.HasValue && !emp.WednesdayEnd.HasValue)) &&
-    (!emp.ThursdayAvailable || (!emp.ThursdayStart.HasValue && !emp.ThursdayEnd.HasValue)) &&
-    (!emp.FridayAvailable || (!emp.FridayStart.HasValue && !emp.FridayEnd.HasValue)) &&
-    (!emp.SaturdayAvailable || (!emp.SaturdayStart.HasValue && !emp.SaturdayEnd.HasValue)) &&
-    (!emp.SundayAvailable || (!emp.SundayStart.HasValue && !emp.SundayEnd.HasValue));
+  RecalculateAnytime();
 
 		selectedPositions = emp.PositionsQualified
 			.Split(',', StringSplitOptions.RemoveEmptyEntries)
@@ -738,4 +829,58 @@
 
     apply(true, start, end);
 }
+
+void RecalculateAnytime()
+{
+    newEmployee.IsAnytime =
+        newEmployee.MondayAvailable && !newEmployee.MondayStart.HasValue && !newEmployee.MondayEnd.HasValue &&
+        newEmployee.TuesdayAvailable && !newEmployee.TuesdayStart.HasValue && !newEmployee.TuesdayEnd.HasValue &&
+        newEmployee.WednesdayAvailable && !newEmployee.WednesdayStart.HasValue && !newEmployee.WednesdayEnd.HasValue &&
+        newEmployee.ThursdayAvailable && !newEmployee.ThursdayStart.HasValue && !newEmployee.ThursdayEnd.HasValue &&
+        newEmployee.FridayAvailable && !newEmployee.FridayStart.HasValue && !newEmployee.FridayEnd.HasValue &&
+        newEmployee.SaturdayAvailable && !newEmployee.SaturdayStart.HasValue && !newEmployee.SaturdayEnd.HasValue &&
+        newEmployee.SundayAvailable && !newEmployee.SundayStart.HasValue && !newEmployee.SundayEnd.HasValue;
+}
+
+void ToggleAnytime(bool isOn)
+{
+    if (isOn)
+    {
+        newEmployee.MondayAvailable =
+        newEmployee.TuesdayAvailable =
+        newEmployee.WednesdayAvailable =
+        newEmployee.ThursdayAvailable =
+        newEmployee.FridayAvailable =
+        newEmployee.SaturdayAvailable =
+        newEmployee.SundayAvailable = true;
+
+        newEmployee.MondayStart =
+        newEmployee.TuesdayStart =
+        newEmployee.WednesdayStart =
+        newEmployee.ThursdayStart =
+        newEmployee.FridayStart =
+        newEmployee.SaturdayStart =
+        newEmployee.SundayStart = null;
+
+        newEmployee.MondayEnd =
+        newEmployee.TuesdayEnd =
+        newEmployee.WednesdayEnd =
+        newEmployee.ThursdayEnd =
+        newEmployee.FridayEnd =
+        newEmployee.SaturdayEnd =
+        newEmployee.SundayEnd = null;
+    }
+    else
+    {
+        newEmployee.MondayAvailable =
+        newEmployee.TuesdayAvailable =
+        newEmployee.WednesdayAvailable =
+        newEmployee.ThursdayAvailable =
+        newEmployee.FridayAvailable =
+        newEmployee.SaturdayAvailable =
+        newEmployee.SundayAvailable = false;
+    }
+
+    RecalculateAnytime();
+}   
 }
