@@ -94,42 +94,7 @@
 
 					<div class="col-12">
 						<label class="form-label fw-semibold">Availability</label>
-<div class="mb-4">
-		<div class="d-flex justify-content-between align-items-end">
-			<div>
-				<h2 class="fw-bold mb-0">Employees</h2>
-				<small class="text-muted">
-					@Schedule.Company.Name
-				</small>
-			</div>
-		</div>
-	</div>
 
-	<div id="employee-form" class="card shadow-sm mb-4">
-		<div class="card-header fw-semibold">
-			Add Employee
-		</div>
-		<div class="card-body">
-
-			<div class="row g-3">
-
-				<div class="col-md-4">
-					<label class="form-label">Name</label>
-					<input class="form-control" @bind="newEmployee.Name" />
-				</div>
-
-				<div class="col-md-4">
-					<label class="form-label">Email</label>
-					<input class="form-control" @bind="newEmployee.Email" />
-				</div>
-
-				<div class="col-md-4">
-					<label class="form-label">Max Hours / Week</label>
-					<input type="number" class="form-control" @bind="newEmployee.MaxHoursPerWeek" />
-				</div>
-
-				<div class="col-md-4">
-					<label class="form-label d-block">Pay Type</label>
 					<div class="btn-group" role="group">
 						<button type="button"
 								class="btn @(newEmployee.IsSalary ? "btn-outline-secondary" : "btn-primary")"
