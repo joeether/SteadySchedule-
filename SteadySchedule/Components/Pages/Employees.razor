@@ -94,6 +94,90 @@
 
 					<div class="col-12">
 						<label class="form-label fw-semibold">Availability</label>
+<div class="mb-4">
+		<div class="d-flex justify-content-between align-items-end">
+			<div>
+				<h2 class="fw-bold mb-0">Employees</h2>
+				<small class="text-muted">
+					@Schedule.Company.Name
+				</small>
+			</div>
+		</div>
+	</div>
+
+	<div id="employee-form" class="card shadow-sm mb-4">
+		<div class="card-header fw-semibold">
+			Add Employee
+		</div>
+		<div class="card-body">
+
+			<div class="row g-3">
+
+				<div class="col-md-4">
+					<label class="form-label">Name</label>
+					<input class="form-control" @bind="newEmployee.Name" />
+				</div>
+
+				<div class="col-md-4">
+					<label class="form-label">Email</label>
+					<input class="form-control" @bind="newEmployee.Email" />
+				</div>
+
+				<div class="col-md-4">
+					<label class="form-label">Max Hours / Week</label>
+					<input type="number" class="form-control" @bind="newEmployee.MaxHoursPerWeek" />
+				</div>
+
+				<div class="col-md-4">
+					<label class="form-label d-block">Pay Type</label>
+					<div class="btn-group" role="group">
+						<button type="button"
+								class="btn @(newEmployee.IsSalary ? "btn-outline-secondary" : "btn-primary")"
+								@onclick='() => SetPayType(false)'>
+							Hourly
+						</button>
+						<button type="button"
+								class="btn @(newEmployee.IsSalary ? "btn-primary" : "btn-outline-secondary")"
+								@onclick='() => SetPayType(true)'>
+							Salary / Week
+						</button>
+					</div>
+				</div>
+
+				@if (!newEmployee.IsSalary)
+				{
+					<div class="col-md-4">
+						<label class="form-label">Hourly Rate</label>
+						<InputNumber @bind-Value="newEmployee.HourlyRate" class="form-control" />
+					</div>
+				}
+				else
+				{
+					<div class="col-md-4">
+						<label class="form-label">Weekly Salary</label>
+						<InputNumber @bind-Value="newEmployee.WeeklySalary" class="form-control" />
+					</div>
+				}
+
+				<div class="col-12">
+					<label class="form-label">Jobs They Can Work</label>
+
+					@foreach (var position in ExistingPositions)
+					{
+						<div class="form-check">
+							<input class="form-check-input"
+								   type="checkbox"
+								   checked="@IsPositionSelected(position)"
+								   @onchange="(e) => TogglePosition(position, (bool)e.Value!)" />
+
+							<label class="form-check-label">
+								@position
+							</label>
+						</div>
+					}
+
+					<div class="col-12">
+						<label class="form-label fw-semibold">Availability</label>
 
 
 <div class="form-check mb-2">
@@ -116,72 +200,6 @@
 									</tr>
 								</thead>
 								<tbody>
-									<tr>
-										<td>Monday</td>
-										<td>
-											<input type="checkbox"
-												   class="form-check-input"
-												   @bind="newEmployee.MondayAvailable" />
-										</td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.MondayStart)"
-												   @onchange="e => newEmployee.MondayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.MondayAvailable || newEmployee.IsAnytime)" />
-										</td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.MondayEnd)"
-												   @onchange="e => newEmployee.MondayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.MondayAvailable || newEmployee.IsAnytime)" />
-										</td>
-									</tr>
-
-									<tr>
-										<td>Tuesday</td>
-										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.TuesdayAvailable" /></td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.TuesdayStart)"
-												   @onchange="e => newEmployee.TuesdayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.TuesdayAvailable || newEmployee.IsAnytime)" />
-										</td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.TuesdayEnd)"
-												   @onchange="e => newEmployee.TuesdayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.TuesdayAvailable || newEmployee.IsAnytime)" />
-										</td>
-									</tr>
-
-									<tr>
-										<td>Wednesday</td>
-										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.WednesdayAvailable" /></td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.WednesdayStart)"
-												   @onchange="e => newEmployee.WednesdayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.WednesdayAvailable || newEmployee.IsAnytime)" />
-										</td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.WednesdayEnd)"
-												   @onchange="e => newEmployee.WednesdayEnd = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.WednesdayAvailable || newEmployee.IsAnytime)" />
-										</td>
-									</tr>
-
-									<tr>
-										<td>Thursday</td>
-										<td><input type="checkbox" class="form-check-input" @bind="newEmployee.ThursdayAvailable" /></td>
-										<td>
-											<input type="time" class="form-control"
-												   value="@FormatTime(newEmployee.ThursdayStart)"
-												   @onchange="e => newEmployee.ThursdayStart = ParseTime(e.Value?.ToString())"
-												   disabled="@(!newEmployee.ThursdayAvailable || newEmployee.IsAnytime)" />
-										</td>
-										<td>
-<tbody>
 									<tr>
     <td>Monday</td>
     <td>
