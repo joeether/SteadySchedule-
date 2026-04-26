@@ -15,8 +15,10 @@ else
     <p>Hang tight, we’re getting you back in.</p>
 
     <script>
-        setTimeout(() => location.reload(), 1500);
-    </script>
+    setTimeout(() => {
+        window.location.href = window.location.origin;
+    }, 1500);
+</script>
 }
 
 @code{
