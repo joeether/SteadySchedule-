@@ -34,87 +34,103 @@ namespace SteadySchedule.Pages.Account
         public string? ReturnUrl { get; set; }
 
         public class InputModel
-{
-    [Required]
-    public string InviteCode { get; set; } = "";
+        {
+            [Required]
+            public string InviteCode { get; set; } = "";
 
-    [Required]
-    [EmailAddress]
-    public string Email { get; set; } = "";
+            [Required]
+            [EmailAddress]
+            public string Email { get; set; } = "";
 
-    [Required]
-    [DataType(DataType.Password)]
-    public string Password { get; set; } = "";
+            [Required]
+            [DataType(DataType.Password)]
+            public string Password { get; set; } = "";
 
-    [Required]
-    [DataType(DataType.Password)]
-    [Compare("Password")]
-    public string ConfirmPassword { get; set; } = "";
-}
+            [Required]
+            [DataType(DataType.Password)]
+            [Compare("Password")]
+            public string ConfirmPassword { get; set; } = "";
+        }
 
         public async Task<IActionResult> OnPostAsync()
-{
-    if (!ModelState.IsValid)
-        return Page();
+        {
+            if (!ModelState.IsValid)
+                return Page();
 
-    // 🔥 TEMP DEV invite code (still fine for now)
-    const string DEV_INVITE = "ABC123";
+            // 🔥 TEMP DEV invite code (still fine for now)
+            var invite = await _context.InviteCodes
+            .FirstOrDefaultAsync(i => i.Code == Input.InviteCode);
 
-    if (!string.Equals(Input.InviteCode?.Trim(), DEV_INVITE, StringComparison.OrdinalIgnoreCase))
-    {
-        ModelState.AddModelError(nameof(Input.InviteCode), "That invite code doesn’t look right.");
-        return Page();
-    }
+            if (invite == null)
+            {
+                ModelState.AddModelError(nameof(Input.InviteCode), "Invalid invite code.");
+                return Page();
+            }
 
-    // 🔥 FIND employee FIRST (before creating user)
-    var employee = await _context.Employees
-        .FirstOrDefaultAsync(e => e.Email == Input.Email);
+            if (invite.IsUsed)
+            {
+                ModelState.AddModelError(nameof(Input.InviteCode), "This code has already been used.");
+                return Page();
+            }
 
-    if (employee == null)
-    {
-        ModelState.AddModelError("", "We couldn’t find you in the system. Please contact your manager.");
-        return Page();
-    }
+            if (invite.ExpirationDate < DateTime.UtcNow)
+            {
+                ModelState.AddModelError(nameof(Input.InviteCode), "This code has expired.");
+                return Page();
+            }
 
-    var company = await _context.Companies
-        .FirstAsync(c => c.Id == employee.CompanyId);
+            // 🔥 FIND employee FIRST (before creating user)
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.Email == Input.Email);
 
-    var user = new ApplicationUser
-    {
-        UserName = Input.Email,
-        Email = Input.Email
-    };
+            if (employee == null)
+            {
+                ModelState.AddModelError("", "We couldn’t find you in the system. Please contact your manager.");
+                return Page();
+            }
 
-    var result = await _userManager.CreateAsync(user, Input.Password);
+            var company = await _context.Companies
+                .FirstAsync(c => c.Id == employee.CompanyId);
 
-    if (!result.Succeeded)
-    {
-        foreach (var error in result.Errors)
-            ModelState.AddModelError(string.Empty, error.Description);
+            var user = new ApplicationUser
+            {
+                UserName = Input.Email,
+                Email = Input.Email
+            };
 
-        return Page();
-    }
+            var result = await _userManager.CreateAsync(user, Input.Password);
 
-    // 🔥 link user to correct company
-    user.CompanyId = company.Id;
-    await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError(string.Empty, error.Description);
 
-    // 🔥 claims (clean separation)
-    await _userManager.AddClaimAsync(
-        user,
-        new Claim("CompanyId", company.Id.ToString()));
+                return Page();
+            }
 
-    await _userManager.AddClaimAsync(
-        user,
-        new Claim("EmployeeId", employee.Id.ToString()));
+            invite.IsUsed = true;
+            await _context.SaveChangesAsync();
 
-    await _userManager.AddClaimAsync(
-        user,
-        new Claim("Role", "Employee"));
+            // 🔥 link user to correct company
+            user.CompanyId = company.Id;
+            await _userManager.UpdateAsync(user);
 
-    await _signInManager.SignInAsync(user, isPersistent: false);
+            // 🔥 claims (clean separation)
+            await _userManager.AddClaimAsync(
+                user,
+                new Claim("CompanyId", company.Id.ToString()));
 
-    return LocalRedirect("/published");
-}
+            await _userManager.AddClaimAsync(
+                user,
+                new Claim("EmployeeId", employee.Id.ToString()));
+
+            await _userManager.AddClaimAsync(
+                user,
+                new Claim("Role", "Employee"));
+
+            await _signInManager.SignInAsync(user, isPersistent: false);
+
+            return LocalRedirect("/published");
+        }
     }
 }

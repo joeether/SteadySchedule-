@@ -13,285 +13,290 @@
 <PageTitle>Published Schedule</PageTitle>
 
 <div class="mb-4">
-    <div class="d-flex justify-content-between align-items-end">
-        <div>
-            <h2 class="fw-bold mb-0">Published Schedule</h2>
-            <small class="text-muted">
-                @Schedule.Company.Name
-            </small>
-        </div>
-    </div>
+	<div class="d-flex justify-content-between align-items-end">
+		<div>
+			<h2 class="fw-bold mb-0">Published Schedule</h2>
+			<small class="text-muted">
+				@Schedule.Company.Name
+			</small>
+		</div>
+	</div>
 </div>
 
 <div class="mb-3">
-    <label class="form-label">Select Week</label>
+	<label class="form-label">Select Week</label>
 
-    <select class="form-select"
-            value="@selectedWeek.ToString("yyyy-MM-dd")"
-            @onchange="OnWeekChanged"
-            disabled="@isBusy">
-        @foreach (var w in publishedWeeks)
-        {
-            <option value="@w.ToString("yyyy-MM-dd")">@w.ToString("MMM d, yyyy")</option>
-        }
-    </select>
-    @if (isEmployee)
-{
-    <button class="btn btn-sm btn-outline-secondary mt-2"
-            @onclick="ToggleView">
-        @(showAll ? "My Schedule" : "All Employees")
-    </button>
-}
+	<select class="form-select"
+			value="@selectedWeek.ToString("yyyy-MM-dd")"
+			@onchange="OnWeekChanged"
+			disabled="@isBusy">
+		@foreach (var w in publishedWeeks)
+		{
+			<option value="@w.ToString("yyyy-MM-dd")">@w.ToString("MMM d, yyyy")</option>
+		}
+	</select>
+	@if (isEmployee)
+	{
+		<button class="btn btn-sm btn-outline-secondary mt-2"
+				@onclick="ToggleView">
+			@(showAll ? "My Schedule" : "All Employees")
+		</button>
+	}
 
 </div>
 
 @if (selectedWeek != default)
 {
-    <div class="alert @(currentStatus == WeekStatus.Published ? "alert-success" : "alert-warning") d-flex justify-content-between align-items-center">
+	<div class="alert @(currentStatus == WeekStatus.Published ? "alert-success" : "alert-warning") d-flex justify-content-between align-items-center">
 
-        <div>
-            @if (currentStatus == WeekStatus.Published)
-            {
-                <strong>Official Schedule</strong>
-            }
-            else
-            {
-                <span>
-                    <strong>In Review</strong> — Subject to change
-                </span>
-            }
+		<div>
+			@if (currentStatus == WeekStatus.Published)
+			{
+				<strong>Official Schedule</strong>
+			}
+			else
+			{
+				<span>
+					<strong>In Review</strong> — Subject to change
+				</span>
+			}
 
-        </div>
-        @* TEMP: manager-only action, may move to admin review page later *@
-        @if (isAdmin && currentStatus == WeekStatus.Published)
-        {
-            <button class="btn btn-sm btn-danger"
-                    @onclick="UnpublishWeek"
-                    disabled="@isBusy">
-                @(isBusy ? "Working..." : "Edit Schedule")
-            </button>
-        }
+		</div>
+		@* TEMP: manager-only action, may move to admin review page later *@
+		@if (isAdmin && currentStatus == WeekStatus.Published)
+		{
+			<button class="btn btn-sm btn-danger"
+					@onclick="UnpublishWeek"
+					disabled="@isBusy">
+				@(isBusy ? "Working..." : "Edit Schedule")
+			</button>
+		}
 
-    </div>
+	</div>
 }
 
-<div style="font-size:12px; color:red;">
-    Claim EmployeeId: @employeeId
-</div>
 
-@foreach (var a in selectedWeekAssignments.Take(5))
-{
-    <div style="font-size:12px; color:blue;">
-        Assignment EmployeeId: @a.EmployeeId
-    </div>
-}
 
 
 <div class="row g-3">
 
-    @for (int i = 0; i < 7; i++)
-    {
-        var day = selectedWeek.AddDays(i);
+	@for (int i = 0; i < 7; i++)
+	{
+		var day = selectedWeek.AddDays(i);
 
-        var dayShifts = selectedWeekShifts
-        .Where(s => s.Date.Date == day.Date)
-        .OrderBy(s => s.StartTime)
-        .ToList();
+		var groupedShifts = selectedWeekShifts
+		.Where(s => s.Date.Date == day.Date)
+		.GroupBy(s => new
+		{
+			s.Position,
+			s.StartTime,
+			s.EndTime
+		})
+		.Select(g => new
+		{
+			Position = g.Key.Position,
+			StartTime = g.Key.StartTime,
+			EndTime = g.Key.EndTime,
+			ShiftIds = g.Select(x => x.Id).ToList(),
+			Total = g.Count(),
+			Filled = g.Count(x => selectedWeekAssignments.Any(a => a.ShiftId == x.Id))
+		})
+		.OrderBy(g => g.StartTime)
+		.ToList();
 
-        <div class="col">
-            <div class="card shadow-sm h-100">
+		<div class="col">
+			<div class="card shadow-sm h-100">
 
-                <div class="card-header fw-semibold">
-                    <div>@day.ToString("ddd")</div>
-                    <small class="text-muted">@day.ToString("M/d")</small>
-                </div>
+				<div class="card-header fw-semibold">
+					<div>@day.ToString("ddd")</div>
+					<small class="text-muted">@day.ToString("M/d")</small>
+				</div>
 
-                <div class="card-body">
+				<div class="card-body">
 
-                    @if (!dayShifts.Any())
-                    {
-                        <div class="text-muted small">No shifts</div>
-                    }
-                    else
-                    {
-                        @foreach (var s in dayShifts)
-                        {
-                            <div class="border rounded p-2 mb-2">
+					@if (!groupedShifts.Any())
+					{
+						<div class="text-muted small">No shifts</div>
+					}
+					else
+					{
+						@foreach (var g in groupedShifts)
+						{
+							<div class="border rounded p-2 mb-2">
 
-                                <div class="fw-semibold">@s.Position</div>
+								<div class="fw-semibold">
+									@g.Position (@g.Filled/@g.Total)
+								</div>
 
-                                <div class="small">
-                                    @s.StartTime.ToString(@"hh\:mm") -
-                                    @s.EndTime.ToString(@"hh\:mm")
-                                </div>
+								<div class="small">
+									@g.StartTime.ToString(@"hh\:mm") -
+									@g.EndTime.ToString(@"hh\:mm")
+								</div>
 
-                                <div class="mt-1">
+								<div class="mt-1">
 
-@foreach (var a in selectedWeekAssignments
-    .Where(a => a.ShiftId == s.Id)
-    .Where(a => !isEmployee || showAll || a.EmployeeId == employeeId))
-{
-    <div style="font-size:10px; color:red;">
-        A:@a.EmployeeId |
-        Match:@employees.Any(e => e.Id == a.EmployeeId)
-    </div>
+									@foreach (var a in selectedWeekAssignments
+															.Where(a => g.ShiftIds.Contains(a.ShiftId))
+															.Where(a => !isEmployee || showAll || a.EmployeeId == employeeId))
+									{
 
-    var emp = employees.FirstOrDefault(x => x.Id == a.EmployeeId);
-    if (emp is not null)
-    {
-        <span class="badge bg-success me-1">@emp.Name</span>
-    }
-}
-                                </div>
 
-                            </div>
-                        }
-                    }
+										var emp = employees.FirstOrDefault(x => x.Id == a.EmployeeId);
+										if (emp is not null)
+										{
+											<span class="badge bg-success me-1">@emp.Name</span>
+										}
+									}
+								</div>
 
-                </div>
+							</div>
+						}
+					}
 
-            </div>
-        </div>
-    }
+				</div>
+
+			</div>
+		</div>
+	}
 
 </div>
 
 @code {
 
-    private List<DateTime> publishedWeeks = new();
-    private DateTime selectedWeek;
-    private List<Shift> selectedWeekShifts = new();
-    private List<Assignment> selectedWeekAssignments = new();
-    private List<Employee> employees = new();
+	private List<DateTime> publishedWeeks = new();
+	private DateTime selectedWeek;
+	private List<Shift> selectedWeekShifts = new();
+	private List<Assignment> selectedWeekAssignments = new();
+	private List<Employee> employees = new();
 
-    private WeekStatus currentStatus = WeekStatus.Draft;
+	private WeekStatus currentStatus = WeekStatus.Draft;
 
-    private bool isBusy;
+	private bool isBusy;
 
-    private bool isEmployee;
-private bool isAdmin;
-private int employeeId;
+	private bool isEmployee;
+	private bool isAdmin;
+	private int employeeId;
 
-private bool showAll = false;
-private void ToggleView()
-{
-    showAll = !showAll;
-}
+	private bool showAll = false;
+	private void ToggleView()
+	{
+		showAll = !showAll;
+	}
 
-    private async Task RunBusy(Func<Task> action)
-    {
-        if (isBusy)
-            return;
+	private async Task RunBusy(Func<Task> action)
+	{
+		if (isBusy)
+			return;
 
-        isBusy = true;
-        StateHasChanged();
+		isBusy = true;
+		StateHasChanged();
 
-        try
-        {
-            await action();
-        }
-        finally
-        {
-            isBusy = false;
-            StateHasChanged();
-        }
-    }
+		try
+		{
+			await action();
+		}
+		finally
+		{
+			isBusy = false;
+			StateHasChanged();
+		}
+	}
 
-    private int? lastCompanyId;
+	private int? lastCompanyId;
 
-protected override async Task OnParametersSetAsync()
-{
-    var currentCompanyId = Schedule.Company?.Id;
+	protected override async Task OnParametersSetAsync()
+	{
+		var currentCompanyId = Schedule.Company?.Id;
 
-    if (currentCompanyId != lastCompanyId)
-    {
-        lastCompanyId = currentCompanyId;
+		if (currentCompanyId != lastCompanyId)
+		{
+			lastCompanyId = currentCompanyId;
 
-        await LoadSelectedWeekDataAsync();
-    }
-}
+			await LoadSelectedWeekDataAsync();
+		}
+	}
 
-    protected override async Task OnInitializedAsync()
-{
-    
+	protected override async Task OnInitializedAsync()
+	{
 
-    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-    var user = authState.User;
 
-if (Schedule.Company == null || Schedule.Company.Id == 0)
-{
-    var companyClaim = user.FindFirst("CompanyId");
+		var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+		var user = authState.User;
 
-    if (companyClaim != null && int.TryParse(companyClaim.Value, out var companyId))
-    {
-        Schedule.SetCompany(companyId);
-    }
-}
+		if (Schedule.Company == null || Schedule.Company.Id == 0)
+		{
+			var companyClaim = user.FindFirst("CompanyId");
 
-    isEmployee = user.Claims.Any(c => c.Type == "Role" && c.Value == "Employee");
-    isAdmin = user.Claims.Any(c => c.Type == "Role" && c.Value == "Admin");
+			if (companyClaim != null && int.TryParse(companyClaim.Value, out var companyId))
+			{
+				Schedule.SetCompany(companyId);
+			}
+		}
 
-    var empClaim = user.FindFirst("EmployeeId");
+		isEmployee = user.Claims.Any(c => c.Type == "Role" && c.Value == "Employee");
+		isAdmin = user.Claims.Any(c => c.Type == "Role" && c.Value == "Admin");
 
-    if (isEmployee && empClaim != null && int.TryParse(empClaim.Value, out var id))
-    {
-        employeeId = id;
-    }
+		var empClaim = user.FindFirst("EmployeeId");
 
-    publishedWeeks = (await Schedule.GetPublishedSchedulesAsync(Schedule.Company.Id))
-        .Select(s => s.WeekStart.Date)
-        .Distinct()
-        .OrderBy(d => d)
-        .ToList();
+		if (isEmployee && empClaim != null && int.TryParse(empClaim.Value, out var id))
+		{
+			employeeId = id;
+		}
 
-    var currentWeek = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
+		publishedWeeks = (await Schedule.GetPublishedSchedulesAsync(Schedule.Company.Id))
+			.Select(s => s.WeekStart.Date)
+			.Distinct()
+			.OrderBy(d => d)
+			.ToList();
 
-    if (publishedWeeks.Any())
-    {
-        var nextWeek = publishedWeeks.FirstOrDefault(w => w >= currentWeek);
+		var currentWeek = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
 
-selectedWeek = nextWeek != default
-    ? nextWeek
-    : publishedWeeks.First();
+		if (publishedWeeks.Any())
+		{
+			var nextWeek = publishedWeeks.FirstOrDefault(w => w >= currentWeek);
 
-        await LoadSelectedWeekDataAsync();
-    }
-}
+			selectedWeek = nextWeek != default
+				? nextWeek
+				: publishedWeeks.First();
 
-    private static DateTime StartOfWeek(DateTime date, DayOfWeek startDay)
-    {
-        int diff = (7 + (date.DayOfWeek - startDay)) % 7;
-        return date.Date.AddDays(-diff);
-    }
+			await LoadSelectedWeekDataAsync();
+		}
+	}
 
-    private async Task LoadSelectedWeekDataAsync()
-    {
-        employees = await Schedule.GetEmployeesAsync(Schedule.Company.Id);
-        selectedWeekShifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, selectedWeek);
-        selectedWeekAssignments = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, selectedWeek);
-        currentStatus = await Schedule.GetWeekStatusAsync(Schedule.Company.Id, selectedWeek);
-    }
+	private static DateTime StartOfWeek(DateTime date, DayOfWeek startDay)
+	{
+		int diff = (7 + (date.DayOfWeek - startDay)) % 7;
+		return date.Date.AddDays(-diff);
+	}
 
-    private async Task UnpublishWeek()
-    {
-        await RunBusy(async () =>
-        {
-            await Schedule.UnpublishWeekAsync(Schedule.Company.Id, selectedWeek);
+	private async Task LoadSelectedWeekDataAsync()
+	{
+		employees = await Schedule.GetEmployeesAsync(Schedule.Company.Id);
+		selectedWeekShifts = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, selectedWeek);
+		selectedWeekAssignments = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, selectedWeek);
+		currentStatus = await Schedule.GetWeekStatusAsync(Schedule.Company.Id, selectedWeek);
+	}
 
-            var week = selectedWeek.ToString("yyyy-MM-dd");
-            Nav.NavigateTo($"/assign?week={week}");
-        });
-    }
+	private async Task UnpublishWeek()
+	{
+		await RunBusy(async () =>
+		{
+			await Schedule.UnpublishWeekAsync(Schedule.Company.Id, selectedWeek);
 
-    private async Task OnWeekChanged(ChangeEventArgs e)
-    {
-        await RunBusy(async () =>
-        {
-            if (DateTime.TryParse(e.Value?.ToString(), out var week))
-            {
-                selectedWeek = week;
-                await LoadSelectedWeekDataAsync();
-            }
-        });
-    }
+			var week = selectedWeek.ToString("yyyy-MM-dd");
+			Nav.NavigateTo($"/assign?week={week}");
+		});
+	}
+
+	private async Task OnWeekChanged(ChangeEventArgs e)
+	{
+		await RunBusy(async () =>
+		{
+			if (DateTime.TryParse(e.Value?.ToString(), out var week))
+			{
+				selectedWeek = week;
+				await LoadSelectedWeekDataAsync();
+			}
+		});
+	}
 }

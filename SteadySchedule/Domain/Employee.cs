@@ -7,6 +7,7 @@ public class Employee
     public int CompanyId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
     public int MaxHoursPerWeek { get; set; }
     public decimal? HourlyRate { get; set; }
     public decimal? WeeklySalary { get; set; }

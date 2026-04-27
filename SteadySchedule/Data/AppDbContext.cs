@@ -19,6 +19,7 @@ namespace SteadySchedule.Data
         public DbSet<WeekTemplate> WeekTemplates { get; set; }
         public DbSet<WeekTemplateShift> WeekTemplateShifts { get; set; }
         public DbSet<Position> Positions { get; set; }
+        public DbSet<InviteCode> InviteCodes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

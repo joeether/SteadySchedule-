@@ -203,8 +203,16 @@
 
 															if (assignment is not null)
 															{
-																var emp = employees.First(x => x.Id == assignment.EmployeeId);
-																<span class="badge bg-success me-1">@emp.Name</span>
+																var emp = employees.FirstOrDefault(x => x.Id == assignment.EmployeeId);
+
+																@if (emp != null)
+																{
+																	<span class="badge bg-success me-1">@emp.Name</span>
+																}
+																else
+																{
+																	<span class="badge bg-secondary me-1">Former Employee</span>
+																}
 															}
 														}
 													</div>
@@ -553,7 +561,13 @@
 						{
 							@foreach (var a in GetAssignmentsForSelectedGroup())
 							{
-								var emp = employees.First(x => x.Id == a.EmployeeId);
+								var emp = employees.FirstOrDefault(x => x.Id == a.EmployeeId);
+								if (emp == null)
+								{
+									continue; // if inside loop
+								}
+
+								var displayName = emp != null ? emp.Name : "Former Employee";
 
 								<button type="button"
 										class="badge bg-success border-0 me-1 mb-1"
@@ -1126,8 +1140,14 @@ private string? shiftDeleteMessage;
 
 	private void SelectShift(ShiftGroup group)
 	{
+		if (IsPastWeek(weekStart))
+		{
+			assignMessage = "Past shifts cannot be modified.";
+			return;
+		}
+
 		selectedGroup = group;
-		selectedShift = GetPreferredShiftFromGroup(group); // still use open slot for adding
+		selectedShift = GetPreferredShiftFromGroup(group);
 		showAssignModal = true;
 	}
 
@@ -1185,7 +1205,14 @@ private string? shiftDeleteMessage;
 
 		foreach (var a in assignments.Where(x => x.ShiftId == s.Id))
 		{
-			var emp = employees.First(x => x.Id == a.EmployeeId);
+			var emp = employees.FirstOrDefault(x => x.Id == a.EmployeeId);
+
+			if (emp == null)
+			{
+				warnings.Add("Former Employee: Assigned to this shift");
+				continue;
+			}
+
 			var empWarnings = GetWarnings(emp, s, isPreview: false);
 
 			foreach (var w in empWarnings)
@@ -1201,7 +1228,7 @@ private string? shiftDeleteMessage;
 	{
 		if (templates.Any())
 		{
-			selectedTemplateId = templates.First().Id;
+			selectedTemplateId = templates.FirstOrDefault().Id;
 		}
 
 		showTemplateModal = true;
@@ -1551,7 +1578,7 @@ private string? shiftDeleteMessage;
 		var openShift = group.Shifts
 			.FirstOrDefault(s => !assignments.Any(a => a.ShiftId == s.Id));
 
-		return openShift ?? group.Shifts.First();
+		return openShift ?? group.Shifts.FirstOrDefault();
 	}
 
 	private Dictionary<DateTime, Dictionary<string, List<string>>> GetWeeklyWarnings()
@@ -1565,7 +1592,10 @@ private string? shiftDeleteMessage;
 		{
 			foreach (var a in assignments.Where(a => a.ShiftId == shift.Id))
 			{
-				var emp = employees.First(x => x.Id == a.EmployeeId);
+				var emp = employees.FirstOrDefault(x => x.Id == a.EmployeeId);
+
+				if (emp == null)
+					continue;
 				var warnings = GetWarnings(emp, shift, isPreview: false);
 
 				if (!warnings.Any()) continue;

@@ -30,48 +30,14 @@ builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, AppUser
 
 builder.Services.AddScoped<UserContextService>();
 
+builder.Services.AddServerSideBlazor()
+    .AddCircuitOptions(options => { options.DetailedErrors = true; });
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-
-    //var scheduleService = services.GetRequiredService<ScheduleService>();
-    //await scheduleService.SeedPositionsIfEmptyAsync(1);
-    //await scheduleService.SeedEmployeesIfEmptyAsync(1);
-
-    //var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-
-    /*var testUsers = new List<(string Email, int CompanyId)>
-    {
-        ("test@test.com", 1),
-        ("user2@test.com", 2)
-    };
-
-    foreach (var (email, companyId) in testUsers)
-    {
-        var normalizedEmail = email.ToLower();
-
-        var existingUser = await userManager.FindByEmailAsync(normalizedEmail);
-
-        if (existingUser == null)
-        {
-            var user = new ApplicationUser
-            {
-                UserName = normalizedEmail,
-                Email = normalizedEmail,
-                CompanyId = companyId
-            };
-
-            var result = await userManager.CreateAsync(user, "Password123!");
-
-            if (!result.Succeeded)
-            {
-                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-                throw new Exception($"Failed to create user {email}: {errors}");
-            }
-        }
-    }*/
 }
 
 // Configure the HTTP request pipeline.

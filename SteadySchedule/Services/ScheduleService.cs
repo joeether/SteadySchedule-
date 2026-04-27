@@ -95,12 +95,12 @@ public class ScheduleService
     }
 
     public async Task<List<Position>> GetPositionsAsync(int companyId)
-{
-    return await _db.Positions
-        .Where(p => p.CompanyId == companyId)
-        .OrderBy(p => p.Name)
-        .ToListAsync();
-}
+    {
+        return await _db.Positions
+            .Where(p => p.CompanyId == companyId)
+            .OrderBy(p => p.Name)
+            .ToListAsync();
+    }
 
     public async Task SeedPositionsIfEmptyAsync(int companyId)
     {
@@ -118,27 +118,27 @@ public class ScheduleService
     }
 
     public async Task AddPositionAsync(string name, int companyId)
-{
-    if (string.IsNullOrWhiteSpace(name))
-        return;
-
-    var trimmed = name.Trim();
-
-    var exists = await _db.Positions.AnyAsync(p =>
-        p.CompanyId == companyId &&
-        p.Name == trimmed);
-
-    if (exists)
-        return;
-
-    _db.Positions.Add(new Position
     {
-        CompanyId = companyId,
-        Name = trimmed
-    });
+        if (string.IsNullOrWhiteSpace(name))
+            return;
 
-    await _db.SaveChangesAsync();
-}
+        var trimmed = name.Trim();
+
+        var exists = await _db.Positions.AnyAsync(p =>
+            p.CompanyId == companyId &&
+            p.Name == trimmed);
+
+        if (exists)
+            return;
+
+        _db.Positions.Add(new Position
+        {
+            CompanyId = companyId,
+            Name = trimmed
+        });
+
+        await _db.SaveChangesAsync();
+    }
 
     public async Task<bool> DeletePositionAsync(string name, int companyId)
     {
@@ -288,7 +288,7 @@ public class ScheduleService
     public async Task<List<Employee>> GetEmployeesAsync(int companyId)
     {
         return await _db.Employees
-            .Where(e => e.CompanyId == companyId)
+            .Where(e => e.CompanyId == companyId && e.IsActive)
             .OrderBy(e => e.Name)
             .ToListAsync();
     }
@@ -424,10 +424,19 @@ public class ScheduleService
 
     public async Task<bool> DeleteEmployeeAsync(int companyId, int employeeId)
     {
-        var hasAssignments = await _db.Assignments
-            .AnyAsync(a => a.EmployeeId == employeeId && a.CompanyId == companyId);
+        var today = DateTime.Today;
 
-        if (hasAssignments)
+        var futureShiftIds = await _db.Shifts
+            .Where(s => s.CompanyId == companyId && s.Date >= today)
+            .Select(s => s.Id)
+            .ToListAsync();
+
+        var hasFutureAssignments = await _db.Assignments
+            .AnyAsync(a => a.EmployeeId == employeeId &&
+                           a.CompanyId == companyId &&
+                           futureShiftIds.Contains(a.ShiftId));
+
+        if (hasFutureAssignments)
             return false;
 
         var employee = await _db.Employees
@@ -436,7 +445,9 @@ public class ScheduleService
         if (employee == null)
             return false;
 
-        _db.Employees.Remove(employee);
+        // SOFT DELETE instead of removing
+        employee.IsActive = false;
+
         await _db.SaveChangesAsync();
         return true;
     }
