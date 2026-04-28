@@ -33,6 +33,10 @@ namespace SteadySchedule.Pages.Account
         [BindProperty(SupportsGet = true)]
         public string? ReturnUrl { get; set; }
 
+        [FromQuery(Name = "code")]
+        [BindProperty(SupportsGet = true)]
+        public string? InviteCode { get; set; }
+
         public class InputModel
         {
             [Required]
@@ -52,12 +56,20 @@ namespace SteadySchedule.Pages.Account
             public string ConfirmPassword { get; set; } = "";
         }
 
+        public void OnGet()
+        {
+            if (!string.IsNullOrWhiteSpace(InviteCode))
+            {
+                Input.InviteCode = InviteCode;
+            }
+        }
+
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
                 return Page();
 
-            // 🔥 TEMP DEV invite code (still fine for now)
+            // TEMP DEV invite code (still fine for now)
             var invite = await _context.InviteCodes
             .FirstOrDefaultAsync(i => i.Code == Input.InviteCode);
 
@@ -79,13 +91,20 @@ namespace SteadySchedule.Pages.Account
                 return Page();
             }
 
-            // 🔥 FIND employee FIRST (before creating user)
+            // GET employee FROM invite
             var employee = await _context.Employees
-                .FirstOrDefaultAsync(e => e.Email == Input.Email);
+                .FirstOrDefaultAsync(e => e.Id == invite.EmployeeId);
 
             if (employee == null)
             {
-                ModelState.AddModelError("", "We couldn’t find you in the system. Please contact your manager.");
+                ModelState.AddModelError("", "This invite is no longer valid.");
+                return Page();
+            }
+
+            // VERIFY email matches invite
+            if (!string.Equals(employee.Email, Input.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("", "This invite does not match your email.");
                 return Page();
             }
 
@@ -111,11 +130,11 @@ namespace SteadySchedule.Pages.Account
             invite.IsUsed = true;
             await _context.SaveChangesAsync();
 
-            // 🔥 link user to correct company
+            // link user to correct company
             user.CompanyId = company.Id;
             await _userManager.UpdateAsync(user);
 
-            // 🔥 claims (clean separation)
+            // claims (clean separation)
             await _userManager.AddClaimAsync(
                 user,
                 new Claim("CompanyId", company.Id.ToString()));

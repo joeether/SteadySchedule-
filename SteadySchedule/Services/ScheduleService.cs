@@ -14,6 +14,24 @@ public class ScheduleService
         _db = db;
     }
 
+    public async Task<string> GenerateInviteCodeAsync(int companyId, int employeeId)
+    {
+        var code = Guid.NewGuid().ToString("N")[..8].ToUpper();
+
+        var invite = new InviteCode
+        {
+            Code = code,
+            CompanyId = companyId,
+            EmployeeId = employeeId,
+            ExpirationDate = DateTime.UtcNow.AddHours(24),
+            IsUsed = false
+        };
+
+        _db.InviteCodes.Add(invite);
+        await _db.SaveChangesAsync();
+
+        return code;
+    }
 
     public async Task PublishWeekAsync(int companyId, DateTime weekStart)
     {

@@ -8,406 +8,409 @@
 @inject NavigationManager Navigation
 @inject UserContextService UserContext
 @inject AuthenticationStateProvider AuthStateProvider
+@inject EmailService EmailService
+@inject IConfiguration Config
 
 <PageTitle>Dashboard</PageTitle>
 
 <div class="container mt-4">
 
-    <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-end">
-            <div>
-                <h2 class="fw-bold mb-0">Dashboard</h2>
-                <small class="text-muted">
-                    @Schedule.Company.Name
-                </small>
-            </div>
-        </div>
-    </div>
+	<div class="mb-4">
+		<div class="d-flex justify-content-between align-items-end">
+			<div>
+				<h2 class="fw-bold mb-0">Dashboard</h2>
+				<small class="text-muted">
+					@Schedule.Company.Name
+				</small>
+			</div>
+		</div>
+	</div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted small">Open Shifts</div>
-                    <div class="fs-4 fw-bold">@OpenShiftCount</div>
 
-                    @if (OpenShiftCount > 0)
-                    {
-                        <NavLink href="/assign" class="btn btn-primary w-100 mt-2">
-                            Fill Shifts
-                        </NavLink>
-                    }
-                </div>
-            </div>
-        </div>
+	<div class="row g-3 mb-4">
+		<div class="col-12 col-md-4 col-lg-2">
+			<div class="card shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Open Shifts</div>
+					<div class="fs-4 fw-bold">@OpenShiftCount</div>
 
-        <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted small">Warnings</div>
-                    <div class="fs-4 fw-bold">@WarningCount</div>
+					@if (OpenShiftCount > 0)
+					{
+						<NavLink href="/assign" class="btn btn-primary w-100 mt-2">
+							Fill Shifts
+						</NavLink>
+					}
+				</div>
+			</div>
+		</div>
 
-                    @if (WarningCount > 0)
-                    {
-                        <button class="btn btn-warning w-100 mt-2" @onclick="ShowWarningsModal">
-                            View Warnings
-                        </button>
-                    }
-                </div>
-            </div>
-        </div>
+		<div class="col-12 col-md-4 col-lg-2">
+			<div class="card shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Warnings</div>
+					<div class="fs-4 fw-bold">@WarningCount</div>
 
-        <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted small">Week Status</div>
-                    <div class="fw-bold">@CurrentWeekStatus</div>
-                </div>
-            </div>
-        </div>
+					@if (WarningCount > 0)
+					{
+						<button class="btn btn-warning w-100 mt-2" @onclick="ShowWarningsModal">
+							View Warnings
+						</button>
+					}
+				</div>
+			</div>
+		</div>
 
-        <div class="col-12 col-md-6 col-lg-3">
-            <div class="card shadow-sm h-100">
-                <div class="card-header fw-semibold">
-                    This Week Overview
-                </div>
-                <div class="card-body">
-                    <div><strong>Week of:</strong> @weekStart.ToString("MMM d, yyyy")</div>
-                    <div><strong>Company:</strong> @Schedule.Company.Name</div>
-                    <div><strong>Published Weeks:</strong> @PublishedWeekCount</div>
-                </div>
-            </div>
-        </div>
+		<div class="col-12 col-md-4 col-lg-2">
+			<div class="card shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Week Status</div>
+					<div class="fw-bold">@CurrentWeekStatus</div>
+				</div>
+			</div>
+		</div>
 
-        <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted small">Employees</div>
-                    <div class="fs-4 fw-bold">@TotalEmployees</div>
-                </div>
-            </div>
-        </div>
+		<div class="col-12 col-md-6 col-lg-3">
+			<div class="card shadow-sm h-100">
+				<div class="card-header fw-semibold">
+					This Week Overview
+				</div>
+				<div class="card-body">
+					<div><strong>Week of:</strong> @weekStart.ToString("MMM d, yyyy")</div>
+					<div><strong>Company:</strong> @Schedule.Company.Name</div>
+					<div><strong>Published Weeks:</strong> @PublishedWeekCount</div>
+				</div>
+			</div>
+		</div>
 
-        <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted small">Shifts This Week</div>
-                    <div class="fs-4 fw-bold">@shiftsThisWeek.Count</div>
-                </div>
-            </div>
-        </div>
+		<div class="col-12 col-md-4 col-lg-2">
+			<div class="card shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Employees</div>
+					<div class="fs-4 fw-bold">@TotalEmployees</div>
+				</div>
+			</div>
+		</div>
 
-        <div class="col-12 col-md-4 col-lg-2">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted small">Assigned</div>
-                    <div class="fs-4 fw-bold">@AssignedShiftCount</div>
-                </div>
-            </div>
-        </div>
-    </div>
+		<div class="col-12 col-md-4 col-lg-2">
+			<div class="card shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Shifts This Week</div>
+					<div class="fs-4 fw-bold">@shiftsThisWeek.Count</div>
+				</div>
+			</div>
+		</div>
 
-@if (showWarningsModal)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
+		<div class="col-12 col-md-4 col-lg-2">
+			<div class="card shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Assigned</div>
+					<div class="fs-4 fw-bold">@AssignedShiftCount</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
-                <div class="modal-header">
-                    <h5 class="modal-title">Warnings</h5>
-                    <button class="btn-close" @onclick="CloseWarningsModal"></button>
-                </div>
+	@if (showWarningsModal)
+	{
+		<div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+			<div class="modal-dialog modal-lg modal-dialog-scrollable">
+				<div class="modal-content">
 
-                <div class="modal-body">
+					<div class="modal-header">
+						<h5 class="modal-title">Warnings</h5>
+						<button class="btn-close" @onclick="CloseWarningsModal"></button>
+					</div>
 
-                    @if (!WarningShifts.Any())
-                    {
-                        <div class="text-muted">No warnings this week.</div>
-                    }
-                    else
-                    {
-                        <ul class="list-group list-group-flush">
-                            @foreach (var shift in WarningShifts)
-                            {
-                                <li class="list-group-item">
+					<div class="modal-body">
 
-                                    <div class="fw-semibold">@shift.Position</div>
+						@if (!WarningShifts.Any())
+						{
+							<div class="text-muted">No warnings this week.</div>
+						}
+						else
+						{
+							<ul class="list-group list-group-flush">
+								@foreach (var shift in WarningShifts)
+								{
+									<li class="list-group-item">
 
-                                    <small class="d-block mb-1">
-                                        @shift.Date.ToString("ddd M/d")
-                                        |
-                                        @shift.StartTime.ToString(@"hh\:mm") -
-                                        @shift.EndTime.ToString(@"hh\:mm")
-                                    </small>
+										<div class="fw-semibold">@shift.Position</div>
 
-                                    @foreach (var detail in GetShiftWarningDetails(shift))
-                                    {
-                                        <div>
-                                            <span class="badge bg-warning text-dark me-1">
-                                                @detail
-                                            </span>
-                                        </div>
-                                    }
+										<small class="d-block mb-1">
+											@shift.Date.ToString("ddd M/d")
+											|
+											@shift.StartTime.ToString(@"hh\:mm") -
+											@shift.EndTime.ToString(@"hh\:mm")
+										</small>
 
-                                </li>
-                            }
-                        </ul>
-                    }
+										@foreach (var detail in GetShiftWarningDetails(shift))
+										{
+											<div>
+												<span class="badge bg-warning text-dark me-1">
+													@detail
+												</span>
+											</div>
+										}
 
-                </div>
+									</li>
+								}
+							</ul>
+						}
 
-                <div class="modal-footer">
-                    <NavLink href="/assign" class="btn btn-primary">
-                        Go to Assign
-                    </NavLink>
+					</div>
 
-                    <button class="btn btn-secondary" @onclick="CloseWarningsModal">
-                        Close
-                    </button>
-                </div>
+					<div class="modal-footer">
+						<NavLink href="/assign" class="btn btn-primary">
+							Go to Assign
+						</NavLink>
 
-            </div>
-        </div>
-    </div>
-}
+						<button class="btn btn-secondary" @onclick="CloseWarningsModal">
+							Close
+						</button>
+					</div>
+
+				</div>
+			</div>
+		</div>
+	}
 
 </div>
 
 @code {
-    private DateTime weekStart = ScheduleService.StartOfWeek(DateTime.Today);
-    private DateTime WeekEnd => weekStart.AddDays(7);
+	private DateTime weekStart = ScheduleService.StartOfWeek(DateTime.Today);
+	private DateTime WeekEnd => weekStart.AddDays(7);
 
-    private int TotalEmployees => employees.Count;
+	private int TotalEmployees => employees.Count;
 
-    private List<Employee> employees = new();
-    private List<Shift> shiftsThisWeek = new();
-    private List<Assignment> assignmentsThisWeek = new();
-    private WeekStatus currentWeekStatus = WeekStatus.Draft;
-    private int publishedWeekCount = 0;
-private bool showWarningsModal = false;
+	private List<Employee> employees = new();
+	private List<Shift> shiftsThisWeek = new();
+	private List<Assignment> assignmentsThisWeek = new();
+	private WeekStatus currentWeekStatus = WeekStatus.Draft;
+	private int publishedWeekCount = 0;
+	private bool showWarningsModal = false;
 
-private void ShowWarningsModal()
-{
-    showWarningsModal = true;
-}
+	private void ShowWarningsModal()
+	{
+		showWarningsModal = true;
+	}
 
-private void CloseWarningsModal()
-{
-    showWarningsModal = false;
-}
+	private void CloseWarningsModal()
+	{
+		showWarningsModal = false;
+	}
 
-    protected override async Task OnInitializedAsync()
-    {
-        await InitializeDashboardAsync();
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		await InitializeDashboardAsync();
+	}
 
-    private async Task InitializeDashboardAsync()
-    {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+	private async Task InitializeDashboardAsync()
+	{
+		var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+		var user = authState.User;
 
-        if (user.Identity?.IsAuthenticated != true)
-            return;
+		if (user.Identity?.IsAuthenticated != true)
+			return;
 
-        if (UserContext.TryInitializeCompany(user, Schedule))
-        {
-            await LoadDashboardData();
-            StateHasChanged();
-        }
-    }
+		if (UserContext.TryInitializeCompany(user, Schedule))
+		{
+			await LoadDashboardData();
+			StateHasChanged();
+		}
+	}
 
-private async Task LoadDashboardData()
-{
-        employees = await Schedule.GetEmployeesAsync(Schedule.Company.Id);
-    shiftsThisWeek = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
-    assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
-        currentWeekStatus = await Schedule.GetWeekStatusAsync(Schedule.Company.Id, weekStart);
-        publishedWeekCount = (await Schedule.GetPublishedSchedulesAsync(Schedule.Company.Id)).Count;
-}
+	private async Task LoadDashboardData()
+	{
+		employees = await Schedule.GetEmployeesAsync(Schedule.Company.Id);
+		shiftsThisWeek = await Schedule.GetWeekShiftsAsync(Schedule.Company.Id, weekStart);
+		assignmentsThisWeek = await Schedule.GetWeekAssignmentsAsync(Schedule.Company.Id, weekStart);
+		currentWeekStatus = await Schedule.GetWeekStatusAsync(Schedule.Company.Id, weekStart);
+		publishedWeekCount = (await Schedule.GetPublishedSchedulesAsync(Schedule.Company.Id)).Count;
+	}
 
-    private int AssignedShiftCount =>
-        shiftsThisWeek.Count(s => assignmentsThisWeek.Any(a => a.ShiftId == s.Id));
+	private int AssignedShiftCount =>
+		shiftsThisWeek.Count(s => assignmentsThisWeek.Any(a => a.ShiftId == s.Id));
 
-    private int OpenShiftCount =>
-        shiftsThisWeek.Count - AssignedShiftCount;
+	private int OpenShiftCount =>
+		shiftsThisWeek.Count - AssignedShiftCount;
 
-    private WeekStatus CurrentWeekStatus =>
-        currentWeekStatus;
+	private WeekStatus CurrentWeekStatus =>
+		currentWeekStatus;
 
-    private int PublishedWeekCount =>
-        publishedWeekCount;
+	private int PublishedWeekCount =>
+		publishedWeekCount;
 
-    private int WarningCount =>
-        shiftsThisWeek.Sum(GetShiftWarningCount);
+	private int WarningCount =>
+		shiftsThisWeek.Sum(GetShiftWarningCount);
 
-    private List<Shift> WarningShifts =>
-        shiftsThisWeek.Where(s => GetShiftWarningCount(s) > 0).ToList();
+	private List<Shift> WarningShifts =>
+		shiftsThisWeek.Where(s => GetShiftWarningCount(s) > 0).ToList();
 
-    private int GetShiftWarningCount(Shift shift)
-    {
-        var assignedEmployees = assignmentsThisWeek
-            .Where(a => a.ShiftId == shift.Id)
-            .Select(a => employees.FirstOrDefault(e => e.Id == a.EmployeeId))
-            .Where(e => e != null)
-            .Cast<Employee>()
-            .ToList();
+	private int GetShiftWarningCount(Shift shift)
+	{
+		var assignedEmployees = assignmentsThisWeek
+			.Where(a => a.ShiftId == shift.Id)
+			.Select(a => employees.FirstOrDefault(e => e.Id == a.EmployeeId))
+			.Where(e => e != null)
+			.Cast<Employee>()
+			.ToList();
 
-        return assignedEmployees.Sum(e => GetWarnings(e, shift).Count);
-    }
+		return assignedEmployees.Sum(e => GetWarnings(e, shift).Count);
+	}
 
-    private List<string> GetWarnings(Employee e, Shift shift)
-    {
-        var warnings = new List<string>();
+	private List<string> GetWarnings(Employee e, Shift shift)
+	{
+		var warnings = new List<string>();
 
-        if (!IsAvailableForShift(e, shift))
-            warnings.Add("Availability conflict");
+		if (!IsAvailableForShift(e, shift))
+			warnings.Add("Availability conflict");
 
-        if (IsOvertimeWarningForAssignedShift(e, shift))
-            warnings.Add("Overtime risk");
+		if (IsOvertimeWarningForAssignedShift(e, shift))
+			warnings.Add("Overtime risk");
 
-        return warnings;
-    }
+		return warnings;
+	}
 
-    private bool IsOvertimeWarningForAssignedShift(Employee e, Shift targetShift)
-    {
-        var employeeWeekShifts = assignmentsThisWeek
-            .Where(a => a.EmployeeId == e.Id)
-            .Join(shiftsThisWeek,
-                  a => a.ShiftId,
-                  s => s.Id,
-                  (a, s) => s)
-            .Where(s => s.Date >= weekStart && s.Date < WeekEnd)
-            .OrderBy(s => s.Date)
-            .ThenBy(s => s.StartTime)
-            .ToList();
+	private bool IsOvertimeWarningForAssignedShift(Employee e, Shift targetShift)
+	{
+		var employeeWeekShifts = assignmentsThisWeek
+			.Where(a => a.EmployeeId == e.Id)
+			.Join(shiftsThisWeek,
+				  a => a.ShiftId,
+				  s => s.Id,
+				  (a, s) => s)
+			.Where(s => s.Date >= weekStart && s.Date < WeekEnd)
+			.OrderBy(s => s.Date)
+			.ThenBy(s => s.StartTime)
+			.ToList();
 
-        double runningHours = 0;
-        bool alreadyCrossed = false;
+		double runningHours = 0;
+		bool alreadyCrossed = false;
 
-        foreach (var s in employeeWeekShifts)
-        {
-            var shiftHours = (s.EndTime - s.StartTime).TotalHours;
+		foreach (var s in employeeWeekShifts)
+		{
+			var shiftHours = (s.EndTime - s.StartTime).TotalHours;
 
-            if (!alreadyCrossed && runningHours + shiftHours > e.MaxHoursPerWeek)
-            {
-                alreadyCrossed = true;
-            }
+			if (!alreadyCrossed && runningHours + shiftHours > e.MaxHoursPerWeek)
+			{
+				alreadyCrossed = true;
+			}
 
-            if (s.Id == targetShift.Id)
-            {
-                return alreadyCrossed;
-            }
+			if (s.Id == targetShift.Id)
+			{
+				return alreadyCrossed;
+			}
 
-            runningHours += shiftHours;
-        }
+			runningHours += shiftHours;
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    private int GetWeeklyHours(Employee employee)
-    {
-        var employeeAssignments = assignmentsThisWeek
-            .Where(a => a.EmployeeId == employee.Id)
-            .Join(shiftsThisWeek,
-                  a => a.ShiftId,
-                  s => s.Id,
-                  (a, s) => s)
-            .Where(s => s.Date >= weekStart && s.Date < WeekEnd);
+	private int GetWeeklyHours(Employee employee)
+	{
+		var employeeAssignments = assignmentsThisWeek
+			.Where(a => a.EmployeeId == employee.Id)
+			.Join(shiftsThisWeek,
+				  a => a.ShiftId,
+				  s => s.Id,
+				  (a, s) => s)
+			.Where(s => s.Date >= weekStart && s.Date < WeekEnd);
 
-        return employeeAssignments.Sum(s => (int)(s.EndTime - s.StartTime).TotalHours);
-    }
+		return employeeAssignments.Sum(s => (int)(s.EndTime - s.StartTime).TotalHours);
+	}
 
-    private static bool IsAvailableForShift(Employee e, Shift shift)
-{
-    bool dayAvailable;
-    bool anyTime;
-    TimeSpan? start;
-    TimeSpan? end;
+	private static bool IsAvailableForShift(Employee e, Shift shift)
+	{
+		bool dayAvailable;
+		bool anyTime;
+		TimeSpan? start;
+		TimeSpan? end;
 
-    switch (shift.Date.DayOfWeek)
-    {
-        case DayOfWeek.Monday:
-            dayAvailable = e.MondayAvailable;
-            anyTime = e.MondayAnyTime;
-            start = e.MondayStart;
-            end = e.MondayEnd;
-            break;
-        case DayOfWeek.Tuesday:
-            dayAvailable = e.TuesdayAvailable;
-            anyTime = e.TuesdayAnyTime;
-            start = e.TuesdayStart;
-            end = e.TuesdayEnd;
-            break;
-        case DayOfWeek.Wednesday:
-            dayAvailable = e.WednesdayAvailable;
-            anyTime = e.WednesdayAnyTime;
-            start = e.WednesdayStart;
-            end = e.WednesdayEnd;
-            break;
-        case DayOfWeek.Thursday:
-            dayAvailable = e.ThursdayAvailable;
-            anyTime = e.ThursdayAnyTime;
-            start = e.ThursdayStart;
-            end = e.ThursdayEnd;
-            break;
-        case DayOfWeek.Friday:
-            dayAvailable = e.FridayAvailable;
-            anyTime = e.FridayAnyTime;
-            start = e.FridayStart;
-            end = e.FridayEnd;
-            break;
-        case DayOfWeek.Saturday:
-            dayAvailable = e.SaturdayAvailable;
-            anyTime = e.SaturdayAnyTime;
-            start = e.SaturdayStart;
-            end = e.SaturdayEnd;
-            break;
-        case DayOfWeek.Sunday:
-            dayAvailable = e.SundayAvailable;
-            anyTime = e.SundayAnyTime;
-            start = e.SundayStart;
-            end = e.SundayEnd;
-            break;
-        default:
-            return true;
-    }
+		switch (shift.Date.DayOfWeek)
+		{
+			case DayOfWeek.Monday:
+				dayAvailable = e.MondayAvailable;
+				anyTime = e.MondayAnyTime;
+				start = e.MondayStart;
+				end = e.MondayEnd;
+				break;
+			case DayOfWeek.Tuesday:
+				dayAvailable = e.TuesdayAvailable;
+				anyTime = e.TuesdayAnyTime;
+				start = e.TuesdayStart;
+				end = e.TuesdayEnd;
+				break;
+			case DayOfWeek.Wednesday:
+				dayAvailable = e.WednesdayAvailable;
+				anyTime = e.WednesdayAnyTime;
+				start = e.WednesdayStart;
+				end = e.WednesdayEnd;
+				break;
+			case DayOfWeek.Thursday:
+				dayAvailable = e.ThursdayAvailable;
+				anyTime = e.ThursdayAnyTime;
+				start = e.ThursdayStart;
+				end = e.ThursdayEnd;
+				break;
+			case DayOfWeek.Friday:
+				dayAvailable = e.FridayAvailable;
+				anyTime = e.FridayAnyTime;
+				start = e.FridayStart;
+				end = e.FridayEnd;
+				break;
+			case DayOfWeek.Saturday:
+				dayAvailable = e.SaturdayAvailable;
+				anyTime = e.SaturdayAnyTime;
+				start = e.SaturdayStart;
+				end = e.SaturdayEnd;
+				break;
+			case DayOfWeek.Sunday:
+				dayAvailable = e.SundayAvailable;
+				anyTime = e.SundayAnyTime;
+				start = e.SundayStart;
+				end = e.SundayEnd;
+				break;
+			default:
+				return true;
+		}
 
-    if (!dayAvailable)
-        return false;
+		if (!dayAvailable)
+			return false;
 
-    if (anyTime)
-        return true;
+		if (anyTime)
+			return true;
 
-    if (!start.HasValue && !end.HasValue)
-        return true;
+		if (!start.HasValue && !end.HasValue)
+			return true;
 
-    if (!start.HasValue || !end.HasValue)
-        return false;
+		if (!start.HasValue || !end.HasValue)
+			return false;
 
-    return shift.StartTime >= start.Value && shift.EndTime <= end.Value;
-}
+		return shift.StartTime >= start.Value && shift.EndTime <= end.Value;
+	}
 
-    private List<string> GetShiftWarningDetails(Shift shift)
-    {
-        var warningDetails = new List<string>();
+	private List<string> GetShiftWarningDetails(Shift shift)
+	{
+		var warningDetails = new List<string>();
 
-        var assignedEmployees = assignmentsThisWeek
-            .Where(a => a.ShiftId == shift.Id)
-            .Select(a => employees.FirstOrDefault(e => e.Id == a.EmployeeId))
-            .Where(e => e != null)
-            .Cast<Employee>()
-            .ToList();
+		var assignedEmployees = assignmentsThisWeek
+			.Where(a => a.ShiftId == shift.Id)
+			.Select(a => employees.FirstOrDefault(e => e.Id == a.EmployeeId))
+			.Where(e => e != null)
+			.Cast<Employee>()
+			.ToList();
 
-        foreach (var employee in assignedEmployees)
-        {
-            var warnings = GetWarnings(employee, shift);
+		foreach (var employee in assignedEmployees)
+		{
+			var warnings = GetWarnings(employee, shift);
 
-            foreach (var warning in warnings)
-            {
-                warningDetails.Add($"{employee.Name}: {warning}");
-            }
-        }
+			foreach (var warning in warnings)
+			{
+				warningDetails.Add($"{employee.Name}: {warning}");
+			}
+		}
 
-        return warningDetails;
-    }
+		return warningDetails;
+	}
 }

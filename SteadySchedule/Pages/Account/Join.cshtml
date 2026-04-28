@@ -1,175 +1,175 @@
 @page
 @model SteadySchedule.Pages.Account.JoinModel
 @{
-    ViewData["Title"] = "Join";
+	ViewData["Title"] = "Join";
 }
 
 <style>
-.login-page {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-}
+	.login-page {
+		position: fixed;
+		inset: 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		background: linear-gradient(135deg, #1e293b, #0f172a);
+	}
 
-.login-page input {
-    width: 100%;
-}
+		.login-page input {
+			width: 100%;
+		}
 
-.login-card-wrapper {
-    width: 100%;
-    max-width: 600px;
-    padding: 25px;
-}
+	.login-card-wrapper {
+		width: 100%;
+		max-width: 600px;
+		padding: 25px;
+	}
 
-.login-page .card {
-    background: white;
-    width: 100%;
-    border-radius: 16px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-}
+	.login-page .card {
+		background: white;
+		width: 100%;
+		border-radius: 16px;
+		box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+	}
 
-.login-page .card-header {
-    text-align: center;
-    font-size: 1.4rem;
-    padding-top: 25px;
-    border-bottom: none;
-}
+	.login-page .card-header {
+		text-align: center;
+		font-size: 1.4rem;
+		padding-top: 25px;
+		border-bottom: none;
+	}
 
-.login-page .card-body {
-    padding: 30px;
-}
+	.login-page .card-body {
+		padding: 30px;
+	}
 
-.login-page .form-control {
-    border-radius: 10px;
-    padding: 12px;
-    font-size: 15px;
-}
+	.login-page .form-control {
+		border-radius: 10px;
+		padding: 12px;
+		font-size: 15px;
+	}
 
-.login-page button[type="submit"] {
-    width: 100%;
-    margin-top: 10px;
-    border-radius: 8px;
-}
+	.login-page button[type="submit"] {
+		width: 100%;
+		margin-top: 10px;
+		border-radius: 8px;
+	}
 
-.login-page label {
-    display: block;
-    margin-bottom: 5px;
-}
+	.login-page label {
+		display: block;
+		margin-bottom: 5px;
+	}
 
-.login-page .btn-dark {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    border: none;
-    font-weight: bold;
-    padding: 12px;
-}
+	.login-page .btn-dark {
+		background: linear-gradient(135deg, #007bff, #0056b3);
+		border: none;
+		font-weight: bold;
+		padding: 12px;
+	}
 
-.login-page .btn-dark:hover {
-    transform: translateY(-1px);
-}
+		.login-page .btn-dark:hover {
+			transform: translateY(-1px);
+		}
 
-img {
-    transition: transform 0.2s ease;
-}
+	img {
+		transition: transform 0.2s ease;
+	}
 
-img:hover {
-    transform: scale(1.05);
-}
+		img:hover {
+			transform: scale(1.05);
+		}
 </style>
 
 
 <div class="login-page">
-    <div class="login-card-wrapper">
-    <div class="card shadow-sm">
-        <div class="card-header fw-semibold">
-    <div class="text-center mb-3">
-        <img src="/images/steadyschedule-logo.png"
-             alt="SteadySchedule"
-             style="max-height: 120px;" />
-    </div>
+	<div class="login-card-wrapper">
+		<div class="card shadow-sm">
+			<div class="card-header fw-semibold">
+				<div class="text-center mb-3">
+					<img src="/images/steadyschedule-logo.png"
+						 alt="SteadySchedule"
+						 style="max-height: 120px;" />
+				</div>
 
-    <h6 class="text-muted text-center mb-3">
-        Tools that don’t make you feel stupid
-    </h6>
-</div>
-        <div class="card-body">
-            <form method="post">
-                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+				<h6 class="text-muted text-center mb-3">
+					Tools that don’t make you feel stupid
+				</h6>
+			</div>
+			<div class="card-body">
+				<form method="post">
+					<div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-                    <div class="mb-3">
-                        <label asp-for="Input.InviteCode" class="form-label">Invite Code</label>
-<input asp-for="Input.InviteCode" class="form-control" />
-<span asp-validation-for="Input.InviteCode" class="text-danger"></span>
-                    </div>
+					<div class="mb-3">
+						<label asp-for="Input.InviteCode" class="form-label">Invite Code</label>
+						<input asp-for="Input.InviteCode" class="form-control" />
+						<span asp-validation-for="Input.InviteCode" class="text-danger"></span>
+					</div>
 
-                    <div class="mb-3">
-                        <label asp-for="Input.Email" class="form-label"></label>
-                        <input asp-for="Input.Email" class="form-control" />
-                        <span asp-validation-for="Input.Email" class="text-danger"></span>
-                    </div>
+					<div class="mb-3">
+						<label asp-for="Input.Email" class="form-label" ></label>
+						<input asp-for="Input.Email" class="form-control" autocomplete="off" />
+						<span asp-validation-for="Input.Email" class="text-danger"></span>
+					</div>
 
-                    <div class="mb-3">
-    <label asp-for="Input.Password" class="form-label"></label>
+					<div class="mb-3">
+						<label asp-for="Input.Password" class="form-label"></label>
 
-    <div class="input-group">
-        <input asp-for="Input.Password"
-       type="password"
-       class="form-control"
-       id="Input_Password" />
+						<div class="input-group">
+							<input asp-for="Input.Password"
+								   type="password"
+								   class="form-control"
+								   id="Input_Password" autocomplete="new-password" />
 
-        <button type="button"
-        class="btn btn-outline-secondary"
-        onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'">
-    👁
-</button>
-    </div>
+							<button type="button"
+									class="btn btn-outline-secondary"
+									onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'">
+								👁
+							</button>
+						</div>
 
-    <span asp-validation-for="Input.Password" class="text-danger"></span>
-</div>
+						<span asp-validation-for="Input.Password" class="text-danger"></span>
+					</div>
 
-                    <div class="mb-3">
-    <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+					<div class="mb-3">
+						<label asp-for="Input.ConfirmPassword" class="form-label"></label>
 
-    <div class="input-group">
-        <input asp-for="Input.ConfirmPassword"
-       type="password"
-       class="form-control"
-       id="Input_ConfirmPassword" />
+						<div class="input-group">
+							<input asp-for="Input.ConfirmPassword"
+								   type="password"
+								   class="form-control"
+								   id="Input_ConfirmPassword" autocomplete="new-password" />
 
-        <button type="button"
-        class="btn btn-outline-secondary"
-        onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'">
-    👁
-</button>
-    </div>
+							<button type="button"
+									class="btn btn-outline-secondary"
+									onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'">
+								👁
+							</button>
+						</div>
 
-    <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-</div>
+						<span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+					</div>
 
-                @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
-                {
-                    <div class="alert alert-danger">
-                        @Model.ErrorMessage
-                    </div>
-                }
+					@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+					{
+						<div class="alert alert-danger">
+							@Model.ErrorMessage
+						</div>
+					}
 
-                <button type="submit" class="btn btn-dark w-100">
-                        Join Your Team
-                </button>
-                    <div class="text-center mt-3">
-                        <span class="text-muted">Already part of a team?</span>
-                        <a href="/Account/Login">Log in</a>
-                    </div>
-            </form>
-        </div>
-    </div>
-</div>
+					<button type="submit" class="btn btn-dark w-100">
+						Join Your Team
+					</button>
+					<div class="text-center mt-3">
+						<span class="text-muted">Already part of a team?</span>
+						<a href="/Account/Login">Log in</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+	<partial name="_ValidationScriptsPartial" />
 
-    
+
 }

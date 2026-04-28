@@ -33,6 +33,8 @@ builder.Services.AddScoped<UserContextService>();
 builder.Services.AddServerSideBlazor()
     .AddCircuitOptions(options => { options.DetailedErrors = true; });
 
+builder.Services.AddScoped<EmailService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
