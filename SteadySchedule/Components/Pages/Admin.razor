@@ -1,0 +1,79 @@
+@page "/admin"
+
+@inject AppDbContext _context
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+<h3>Admin Dashboard</h3>
+
+@if (companies == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Active</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var company in companies)
+            {
+                <tr>
+                    <td>@company.Name</td>
+                    <td>@company.AdminEmail</td>
+                    <td>
+                        @(company.IsActive ? "✅" : "❌")
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary"
+                                @onclick="() => ToggleActive(company)">
+                            Toggle
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Company>? companies;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthorizeAdmin();
+        await LoadCompanies();
+    }
+
+    private async Task AuthorizeAdmin()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // CHANGE THIS TO YOUR EMAIL
+        if (user.Identity?.Name != "collinjonahsdad@gmail.com")
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task LoadCompanies()
+    {
+        companies = await _context.Companies.ToListAsync();
+    }
+
+    private async Task ToggleActive(Company company)
+    {
+        company.IsActive = !company.IsActive;
+        await _context.SaveChangesAsync();
+
+        // refresh UI
+        await LoadCompanies();
+    }
+}
