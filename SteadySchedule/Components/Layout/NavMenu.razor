@@ -10,10 +10,7 @@
 
 <input type="checkbox" id="nav-toggle" class="nav-toggle" @bind="navOpen" />
 
-@if (navOpen)
-{
-    <div class="nav-backdrop" @onclick="CloseMenu"></div>
-}
+
 
 <label for="nav-toggle" class="navbar-toggler"></label>
 
@@ -105,6 +102,11 @@
 
 </nav>
 </div>
+
+@if (navOpen)
+{
+    <div class="nav-backdrop" @onclick="CloseMenu"></div>
+}
 
 @code {
     private bool isAuthenticated;
