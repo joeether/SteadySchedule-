@@ -1,6 +1,7 @@
 @page "/admin"
 
 @using SteadySchedule.Domain
+@using SteadySchedule.ViewModels
 @using SteadySchedule.Data
 @using Microsoft.EntityFrameworkCore
 @inject AppDbContext _context
@@ -48,7 +49,7 @@ else
 }
 
 @code {
-    private List<Company>? companies;
+    private List<CompanyViewModel>? companies;
 
     protected override async Task OnInitializedAsync()
     {
