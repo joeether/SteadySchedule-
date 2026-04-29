@@ -82,25 +82,24 @@
 }
 
 .nav-scrollable {
-    display: none;
+    position: fixed;
+    top: 3.5rem;
+    left: -260px;
+    width: 260px;
+    height: calc(100vh - 3.5rem);
+    background-color: #111;
+    overflow-y: auto;
+    transition: left 0.25s ease;
+    z-index: 1000;
 }
 
 .navbar-toggler:checked ~ .nav-scrollable {
-    display: block;
+    left: 0;
 }
 
 @media (min-width: 641px) {
     .navbar-toggler {
-        display: none;
-    }
-
-    .nav-scrollable {
-        /* Never collapse the sidebar for wide screens */
-        display: block;
-
-        /* Allow sidebar to scroll for tall menus */
-        height: calc(100vh - 3.5rem);
-        overflow-y: auto;
+        display: block; /* keep hamburger */
     }
 }
 
