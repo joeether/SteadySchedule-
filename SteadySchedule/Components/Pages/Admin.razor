@@ -38,7 +38,7 @@ else
 <td>@company.EmployeeCount</td>
                     <td>
                         <button class="btn btn-sm btn-primary"
-                                @onclick="() => ToggleActive(company)">
+                                @onclick="() => ToggleActive(company.Id)">
                             Toggle
                         </button>
                     </td>
@@ -83,12 +83,16 @@ else
     .ToListAsync();
     }
 
-    private async Task ToggleActive(Company company)
+    private async Task ToggleActive(int companyId)
+{
+    var company = await _context.Companies.FindAsync(companyId);
+
+    if (company != null)
     {
         company.IsActive = !company.IsActive;
         await _context.SaveChangesAsync();
-
-        // refresh UI
-        await LoadCompanies();
     }
+
+    await LoadCompanies();
+}
 }
