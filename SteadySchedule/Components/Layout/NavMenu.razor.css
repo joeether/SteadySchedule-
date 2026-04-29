@@ -97,6 +97,13 @@
     left: 0;
 }
 
+.nav-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 900;
+}
+
 @media (min-width: 641px) {
     .navbar-toggler {
         display: block; /* keep hamburger */
