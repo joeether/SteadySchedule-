@@ -10,6 +10,11 @@
 
 <input type="checkbox" id="nav-toggle" class="nav-toggle" @bind="navOpen" />
 
+@if (navOpen)
+{
+    <div class="nav-backdrop" @onclick="CloseMenu"></div>
+}
+
 <label for="nav-toggle" class="navbar-toggler"></label>
 
 <div class="nav-scrollable">
@@ -62,6 +67,15 @@
                 Published Schedule
             </NavLink>
         </div>
+
+        @if (isAdmin)
+{
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="/admin" @onclick="CloseMenu">
+            Admin
+        </NavLink>
+    </div>
+}
     }
 
     <!-- 🔐 AUTH SECTION (same for both) -->
@@ -99,6 +113,7 @@
     private bool isNavigating = false;
 
     private bool navOpen;
+    private bool isAdmin;
 
     private void CloseMenu()
     {
@@ -122,7 +137,9 @@
 
         isAuthenticated = user.Identity?.IsAuthenticated ?? false;
         userEmail = user.Identity?.Name;
-        // 🔥 ADD THIS
+        // ADD THIS
     isEmployee = user.Claims.Any(c => c.Type == "EmployeeId");
+
+    isAdmin = user.Identity?.Name == "collinjonahsdad@gmail.com";
     }
 }
