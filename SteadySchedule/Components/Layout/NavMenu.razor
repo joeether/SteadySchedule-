@@ -96,12 +96,23 @@
     private bool isAuthenticated;
     private string? userEmail;
     private bool isEmployee;
+    private bool isNavigating = false;
 
     private bool navOpen;
 
     private void CloseMenu()
     {
+        if (isNavigating)
+            return;
+
+        isNavigating = true;
+
         navOpen = false;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        isNavigating = false;
     }
 
     protected override async Task OnInitializedAsync()

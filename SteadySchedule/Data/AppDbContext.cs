@@ -50,6 +50,14 @@ namespace SteadySchedule.Data
             modelBuilder.Entity<Employee>()
                 .Property(e => e.WeeklySalary)
                 .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Company>()
+                .Property(c => c.IsActive)
+                .HasDefaultValue(true);
+
+            modelBuilder.Entity<Company>()
+                .Property(c => c.Status)
+                .HasDefaultValue("Trialing");
         }
     }
 }

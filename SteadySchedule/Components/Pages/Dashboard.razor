@@ -2,6 +2,8 @@
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SteadySchedule.Data
 @using SteadySchedule.Domain
 @using SteadySchedule.Services
 @inject ScheduleService Schedule
@@ -189,6 +191,28 @@
 	private int publishedWeekCount = 0;
 	private bool showWarningsModal = false;
 
+	[Inject] private AppDbContext _context { get; set; }
+	[Inject] private NavigationManager NavigationManager { get; set; }
+
+	private bool _checkedActive = false;
+
+	protected override Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (!firstRender || _checkedActive)
+			return Task.CompletedTask;
+
+		_checkedActive = true;
+
+		var company = Schedule?.Company;
+
+		if (company != null && !company.IsActive)
+		{
+			NavigationManager.NavigateTo("/billing-required");
+		}
+
+		return Task.CompletedTask;
+	}
+
 	private void ShowWarningsModal()
 	{
 		showWarningsModal = true;
@@ -212,6 +236,8 @@
 		if (user.Identity?.IsAuthenticated != true)
 			return;
 
+
+		// Initialize company (you already have this)
 		if (UserContext.TryInitializeCompany(user, Schedule))
 		{
 			await LoadDashboardData();
