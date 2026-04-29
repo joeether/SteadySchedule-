@@ -196,20 +196,21 @@
 
 	private bool _checkedActive = false;
 
-	protected override Task OnAfterRenderAsync(bool firstRender)
-	{
-		if (!firstRender || _checkedActive)
-			return Task.CompletedTask;
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+{
+    if (!firstRender || _checkedActive)
+        return;
 
-		_checkedActive = true;
+    _checkedActive = true;
 
-		var company = Schedule?.Company;
+    var company = Schedule?.Company;
 
-		if (company != null && !company.IsActive)
-		{
-			await Task.Delay(50);
-NavigationManager.NavigateTo("/billing-required", true);
-		}
+    if (company != null && !company.IsActive)
+    {
+        await Task.Delay(50);
+        NavigationManager.NavigateTo("/billing-required", true);
+    }
+}
 
 		return Task.CompletedTask;
 	}
