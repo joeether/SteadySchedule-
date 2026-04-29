@@ -21,6 +21,7 @@ else
                 <th>Name</th>
                 <th>Email</th>
                 <th>Active</th>
+                <th>Employees</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -33,6 +34,7 @@ else
                     <td>
                         @(company.IsActive ? "✅" : "❌")
                     </td>
+<td>@company.EmployeeCount</td>
                     <td>
                         <button class="btn btn-sm btn-primary"
                                 @onclick="() => ToggleActive(company)">
@@ -68,7 +70,16 @@ else
 
     private async Task LoadCompanies()
     {
-        companies = await _context.Companies.ToListAsync();
+        companies = await _context.Companies
+    .Select(c => new CompanyViewModel
+    {
+        Id = c.Id,
+        Name = c.Name,
+        AdminEmail = c.AdminEmail,
+        IsActive = c.IsActive,
+        EmployeeCount = _context.Employees.Count(e => e.CompanyId == c.Id)
+    })
+    .ToListAsync();
     }
 
     private async Task ToggleActive(Company company)
