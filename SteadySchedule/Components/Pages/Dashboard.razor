@@ -207,7 +207,8 @@
 
 		if (company != null && !company.IsActive)
 		{
-			NavigationManager.NavigateTo("/billing-required");
+			await Task.Delay(50);
+NavigationManager.NavigateTo("/billing-required", true);
 		}
 
 		return Task.CompletedTask;
