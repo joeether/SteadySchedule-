@@ -26,6 +26,7 @@
     height: 3.5rem;
     background-color: rgba(0,0,0,0.4);
     position: relative;
+    width: 100%;
 }
 
 .navbar-brand {
@@ -118,4 +119,9 @@
 .nav-link.disabled {
     pointer-events: none;
     opacity: 0.5;
+}
+
+.navbar-toggler {
+    display: block !important;
+    z-index: 1100;
 }
