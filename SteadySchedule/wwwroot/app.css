@@ -288,33 +288,19 @@ main {
 
 @media print {
 
-    .navbar-toggler,
-    .nav-scrollable,
-    .nav-backdrop,
-    .btn,
-    select,
-    .top-row,
-    nav {
-        display: none !important;
+    body * {
+        visibility: hidden !important;
     }
 
-    .row {
-        display: none !important;
+    .print-only,
+    .print-only * {
+        visibility: visible !important;
     }
 
     .print-only {
-        display: block !important;
-        position: relative;
-        z-index: 9999;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
     }
-
-    body {
-        background: white !important;
-        color: black !important;
-        font-size: 12px;
-    }
-}
-
-.print-only {
-    display: block !important;
 }
