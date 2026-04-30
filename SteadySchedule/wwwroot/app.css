@@ -290,7 +290,6 @@ main {
 
 @media print {
 
-    /* Hide UI */
     .navbar-toggler,
     .nav-scrollable,
     .nav-backdrop,
@@ -301,15 +300,14 @@ main {
         display: none !important;
     }
 
-    /* Hide your card grid */
-    .row,
-    .card {
+    .row {
         display: none !important;
     }
 
-    /* Show print layout */
     .print-only {
         display: block !important;
+        position: relative;
+        z-index: 9999;
     }
 
     body {
@@ -319,8 +317,6 @@ main {
     }
 }
 
-/* Hidden normally */
 .print-only {
     display: none;
 }
-
