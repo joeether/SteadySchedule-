@@ -303,4 +303,23 @@ main {
         left: 0;
         width: 100%;
     }
+
+    .print-only {
+        column-count: 2;
+        column-gap: 40px;
+    }
+
+    .print-only h5 {
+        break-before: column;
+    }
+
+    .print-only div,
+    .print-only ul {
+        break-inside: avoid;
+    }
+
+    .print-only h3,
+    .print-only h5 {
+        margin-top: 10px;
+    }
 }
