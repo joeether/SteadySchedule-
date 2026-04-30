@@ -50,6 +50,9 @@ namespace SteadySchedule.Pages.Account
             [DataType(DataType.Password)]
             [Compare("Password")]
             public string ConfirmPassword { get; set; } = "";
+
+            [Required(ErrorMessage = "You must accept the Terms and Privacy Policy")]
+            public bool AcceptedTerms { get; set; }
         }
 
         public async Task<IActionResult> OnPostAsync()
