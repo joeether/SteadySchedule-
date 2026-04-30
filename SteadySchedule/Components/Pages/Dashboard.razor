@@ -28,6 +28,22 @@
 		</div>
 	</div>
 
+@{
+    var today = DateTime.UtcNow.Date;
+    var daysRemaining = Math.Max(0,
+        (Schedule.Company.TrialEndDate.Date - today).Days);
+}
+
+@if (Schedule.Company.Status == "Trialing")
+{
+    <div class="alert alert-success">
+        🟢 Free Trial — @daysRemaining days remaining
+        <div class="small text-muted">
+            No payment required during trial
+        </div>
+    </div>
+}
+
 
 	<div class="row g-3 mb-4">
 		<div class="col-12 col-md-4 col-lg-2">
