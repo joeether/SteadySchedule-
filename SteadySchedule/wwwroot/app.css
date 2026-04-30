@@ -288,3 +288,39 @@ main {
     --accent: #8B3A2E;
 }
 
+@media print {
+
+    /* Hide UI */
+    .navbar-toggler,
+    .nav-scrollable,
+    .nav-backdrop,
+    .btn,
+    select,
+    .top-row,
+    nav {
+        display: none !important;
+    }
+
+    /* Hide your card grid */
+    .row,
+    .card {
+        display: none !important;
+    }
+
+    /* Show print layout */
+    .print-only {
+        display: block !important;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 12px;
+    }
+}
+
+/* Hidden normally */
+.print-only {
+    display: none;
+}
+
