@@ -152,7 +152,21 @@
 						</div>
 					}
 
-					<button type="submit" class="btn btn-dark w-100">
+                    <div class="form-check mt-3">
+    <input type="checkbox" class="form-check-input" asp-for="Input.AcceptedTerms" />
+    <label class="form-check-label">
+        I agree to the 
+        <a href="/terms" target="_blank">Terms</a> and 
+        <a href="/privacy" target="_blank">Privacy Policy</a>
+    </label>
+    <span asp-validation-for="Input.AcceptedTerms" class="text-danger"></span>
+</div>
+
+<div class="form-text">
+    Includes a 30-day free trial. No credit card required.
+</div>
+
+					<button type="submit" class="btn btn-dark w-100 mb-3">
 						Create Account
 					</button>
 					<div class="text-center mt-3">
