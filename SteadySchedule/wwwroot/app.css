@@ -278,9 +278,7 @@ main {
     }
 }
 
-.login-page {
-    background: red !important;
-}
+
 :root {
     --card-bg: #ffffff;
     --text-color: #222;
@@ -318,5 +316,5 @@ main {
 }
 
 .print-only {
-    display: none;
+    display: block !important;
 }
