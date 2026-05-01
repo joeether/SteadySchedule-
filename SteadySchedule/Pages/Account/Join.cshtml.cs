@@ -28,6 +28,9 @@ namespace SteadySchedule.Pages.Account
         [BindProperty]
         public InputModel Input { get; set; } = new();
 
+[BindProperty(SupportsGet = true)]
+public string? Email { get; set; }
+
         public string? ErrorMessage { get; set; }
 
         [BindProperty(SupportsGet = true)]
@@ -62,6 +65,11 @@ namespace SteadySchedule.Pages.Account
             {
                 Input.InviteCode = InviteCode;
             }
+
+            if (!string.IsNullOrEmpty(Email))
+    {
+        Input.Email = Email;
+    }
         }
 
         public async Task<IActionResult> OnPostAsync()
