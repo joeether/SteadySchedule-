@@ -38,7 +38,7 @@ public class EmailService
     public async Task SendInviteEmail(string toEmail, string code)
     {
         var baseUrl = _config["App:BaseUrl"];
-        var joinLink = $"{baseUrl}/Account/Join?code={code}";
+        var joinLink = $"{baseUrl}/Account/Join?code={code}&email={Uri.EscapeDataString(toEmail)}";
 
         var subject = "You're invited to SteadySchedule";
 
