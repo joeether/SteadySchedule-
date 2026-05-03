@@ -34,17 +34,24 @@
     var daysRemaining = Math.Max(0, (trialEnd - today).Days);
 
     string alertClass = "alert-success";
+    string icon = "🟢";
 
     if (daysRemaining <= 5 && daysRemaining > 2)
+    {
         alertClass = "alert-warning";
+        icon = "⚠️";
+    }
     else if (daysRemaining <= 2)
+    {
         alertClass = "alert-danger";
+        icon = "🔴";
+    }
 }
 
 @if (Schedule.Company.Status == "Trialing")
 {
     <div class="alert @alertClass">
-        🟢 Free Trial — @daysRemaining days remaining
+        @icon Free Trial — @daysRemaining days remaining
 
         <div class="small text-muted">
             Ends on @Schedule.Company.TrialEndDate
