@@ -78,7 +78,8 @@ namespace SteadySchedule.Pages.Account
 
     var company = new Company
     {
-        Name = Input.CompanyName.Trim()
+        Name = Input.CompanyName.Trim(),
+AdminEmail = Input.Email
     };
 
     _context.Companies.Add(company);
