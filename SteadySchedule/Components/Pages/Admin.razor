@@ -21,6 +21,8 @@ else
             <tr>
                 <th>Name</th>
                 <th>Email</th>
+                <th>Trial Ends</th>
+                <th>Next Pay</th>
                 <th>Active</th>
                 <th>Employees</th>
                 <th>Action</th>
@@ -33,6 +35,14 @@ else
                     <td>@company.Name</td>
                     <td>@company.AdminEmail</td>
                     <td>
+
+<td>
+    @(company.TrialEndDate.ToLocalTime().ToString("MMM d"))
+</td>
+
+<td>
+    @(company.NextBillingDate.ToLocalTime().ToString("MMM d"))
+</td>
                         @(company.IsActive ? "✅" : "❌")
                     </td>
 <td>@company.EmployeeCount</td>
@@ -50,6 +60,10 @@ else
 
 @code {
     private List<CompanyViewModel>? companies;
+
+    public DateTime TrialEndDate { get; set; }
+public int BillingAnchorDay { get; set; }
+public DateTime NextBillingDate { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,14 +85,27 @@ else
 
     private async Task LoadCompanies()
     {
-        companies = await _context.Companies
+        var today = DateTime.UtcNow;
+
+companies = await _context.Companies
     .Select(c => new CompanyViewModel
     {
         Id = c.Id,
         Name = c.Name,
         AdminEmail = c.AdminEmail,
         IsActive = c.IsActive,
-        EmployeeCount = _context.Employees.Count(e => e.CompanyId == c.Id)
+        EmployeeCount = _context.Employees.Count(e => e.CompanyId == c.Id),
+        TrialEndDate = c.TrialEndDate,
+        BillingAnchorDay = c.BillingAnchorDay,
+
+        NextBillingDate = new DateTime(
+            today.AddMonths(1).Year,
+            today.AddMonths(1).Month,
+            Math.Min(c.BillingAnchorDay,
+                DateTime.DaysInMonth(
+                    today.AddMonths(1).Year,
+                    today.AddMonths(1).Month))
+        )
     })
     .ToListAsync();
     }
