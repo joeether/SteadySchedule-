@@ -30,20 +30,33 @@
 
 @{
     var today = DateTime.UtcNow.Date;
-    var daysRemaining = Math.Max(0,
-        (Schedule.Company.TrialEndDate.Date - today).Days);
+    var trialEnd = Schedule.Company.TrialEndDate.Date;
+    var daysRemaining = Math.Max(0, (trialEnd - today).Days);
+
+    string alertClass = "alert-success";
+
+    if (daysRemaining <= 5 && daysRemaining > 2)
+        alertClass = "alert-warning";
+    else if (daysRemaining <= 2)
+        alertClass = "alert-danger";
 }
 
 @if (Schedule.Company.Status == "Trialing")
 {
-    <div class="alert alert-success">
+    <div class="alert @alertClass">
         🟢 Free Trial — @daysRemaining days remaining
+
+        <div class="small text-muted">
+            Ends on @Schedule.Company.TrialEndDate
+                .ToLocalTime()
+                .ToString("MMM d")
+        </div>
+
         <div class="small text-muted">
             No payment required during trial
         </div>
     </div>
 }
-
 
 	<div class="row g-3 mb-4">
 		<div class="col-12 col-md-4 col-lg-2">
