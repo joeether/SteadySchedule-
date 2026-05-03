@@ -54,10 +54,10 @@
         @icon Free Trial — @daysRemaining days remaining
 
         <div class="small text-muted">
-            Ends on @Schedule.Company.TrialEndDate
-                .ToLocalTime()
-                .ToString("MMM d")
-        </div>
+    Ends on @(Schedule.Company.TrialEndDate
+        .ToLocalTime()
+        .ToString("MMM d, yyyy"))
+</div>
 
         <div class="small text-muted">
             No payment required during trial
