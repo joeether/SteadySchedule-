@@ -29,32 +29,35 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var company in companies)
-            {
-                <tr>
-                    <td>@company.Name</td>
-                    <td>@company.AdminEmail</td>
-                    <td>
+    @foreach (var company in companies)
+    {
+        <tr>
+            <td>@company.Name</td>
+            <td>@company.AdminEmail</td>
 
-<td>
-    @(company.TrialEndDate.ToLocalTime().ToString("MMM d"))
-</td>
+            <td>
+                @(company.TrialEndDate.ToLocalTime().ToString("MMM d"))
+            </td>
 
-<td>
-    @(company.NextBillingDate.ToLocalTime().ToString("MMM d"))
-</td>
-                        @(company.IsActive ? "✅" : "❌")
-                    </td>
-<td>@company.EmployeeCount</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary"
-                                @onclick="() => ToggleActive(company.Id)">
-                            Toggle
-                        </button>
-                    </td>
-                </tr>
-            }
-        </tbody>
+            <td>
+                @(company.NextBillingDate.ToLocalTime().ToString("MMM d"))
+            </td>
+
+            <td>
+                @(company.IsActive ? "✅" : "❌")
+            </td>
+
+            <td>@company.EmployeeCount</td>
+
+            <td>
+                <button class="btn btn-sm btn-primary"
+                        @onclick="() => ToggleActive(company.Id)">
+                    Toggle
+                </button>
+            </td>
+        </tr>
+    }
+</tbody>
     </table>
 }
 
