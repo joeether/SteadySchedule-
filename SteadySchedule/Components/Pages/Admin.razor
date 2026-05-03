@@ -87,31 +87,36 @@ public DateTime NextBillingDate { get; set; }
     }
 
     private async Task LoadCompanies()
-    {
-        var today = DateTime.UtcNow;
+{
+    companies = await _context.Companies
+        .Select(c => new CompanyViewModel
+        {
+            Id = c.Id,
+            Name = c.Name,
+            AdminEmail = c.AdminEmail,
+            IsActive = c.IsActive,
+            EmployeeCount = _context.Employees.Count(e => e.CompanyId == c.Id),
 
-companies = await _context.Companies
-    .Select(c => new CompanyViewModel
-    {
-        Id = c.Id,
-        Name = c.Name,
-        AdminEmail = c.AdminEmail,
-        IsActive = c.IsActive,
-        EmployeeCount = _context.Employees.Count(e => e.CompanyId == c.Id),
-        TrialEndDate = c.TrialEndDate,
-        BillingAnchorDay = c.BillingAnchorDay,
+            TrialEndDate = c.TrialEndDate,
+            BillingAnchorDay = c.BillingAnchorDay,
 
-        NextBillingDate = new DateTime(
-            today.AddMonths(1).Year,
-            today.AddMonths(1).Month,
-            Math.Min(c.BillingAnchorDay,
-                DateTime.DaysInMonth(
-                    today.AddMonths(1).Year,
-                    today.AddMonths(1).Month))
-        )
-    })
-    .ToListAsync();
-    }
+            NextBillingDate =
+                c.Status == "Trialing"
+                    ? c.TrialEndDate
+                    : new DateTime(
+                        c.TrialEndDate.AddMonths(1).Year,
+                        c.TrialEndDate.AddMonths(1).Month,
+                        Math.Min(
+                            c.BillingAnchorDay,
+                            DateTime.DaysInMonth(
+                                c.TrialEndDate.AddMonths(1).Year,
+                                c.TrialEndDate.AddMonths(1).Month
+                            )
+                        )
+                    )
+        })
+        .ToListAsync();
+}
 
     private async Task ToggleActive(int companyId)
 {
