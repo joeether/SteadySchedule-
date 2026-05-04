@@ -1,4 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@using SteadySchedule.Services
+@inject ScheduleService Schedule
+@inject NavigationManager Nav
 
 <div class="page">
 
@@ -6,7 +9,23 @@
 
     <main>
         <article class="content px-4">
-            @Body
+            @if (IsInactiveAndNotOnBillingPage)
+            {
+                <div class="alert alert-danger mt-4">
+                    <h4 class="fw-bold">Billing Required</h4>
+                    <p class="mb-2">
+                        Your trial has ended or your account is inactive. Please update billing to continue using SteadySchedule.
+                    </p>
+
+                    <NavLink class="btn btn-primary" href="/billing-required">
+                        Go to Billing
+                    </NavLink>
+                </div>
+            }
+            else
+            {
+                @Body
+            }
         </article>
     </main>
 
@@ -17,3 +36,22 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    private bool IsInactiveAndNotOnBillingPage
+    {
+        get
+        {
+            var path = Nav.ToBaseRelativePath(Nav.Uri).ToLower();
+
+            var isBillingPage =
+                path.StartsWith("billing-required") ||
+                path.StartsWith("billing");
+
+            return Schedule.Company != null
+                && Schedule.Company.Id != 0
+                && Schedule.Company.IsActive == false
+                && !isBillingPage;
+        }
+    }
+}

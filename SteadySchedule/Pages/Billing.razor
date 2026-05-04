@@ -1,0 +1,129 @@
+﻿@page "/billing"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using SteadySchedule.Services
+
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserContextService UserContext
+@inject ScheduleService Schedule
+
+@using Microsoft.EntityFrameworkCore
+@using SteadySchedule.Data
+@inject NavigationManager Nav
+
+@inject AppDbContext _context
+@inject NavigationManager Nav
+
+<h2>Billing</h2>
+
+@if (!loaded)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="card p-4 mt-3">
+        <div><strong>Company:</strong> @(Schedule.Company?.Name ?? "Unknown")</div>
+        <div><strong>Active:</strong> @(Schedule.Company?.IsActive == true ? "Yes" : "No")</div>
+    </div>
+
+    <button type="button"
+            class="btn btn-success mt-3"
+            disabled="@busy"
+            @onclick="@(() => ReactivateAccount())">
+        @(busy ? "Reactivating..." : "Reactivate Account")
+    </button>
+
+    <div class="mt-3">
+        <strong>Live Active State:</strong> @(Schedule.Company?.IsActive == true ? "YES" : "NO")
+    </div>
+
+    <div class="mt-3 text-warning">
+        DEBUG: CompanyId = @Schedule.Company?.Id
+    </div>
+
+    <div class="mt-1 text-warning">
+        DEBUG: Active = @(Schedule.Company?.IsActive == true ? "YES" : "NO")
+    </div>
+
+    <div class="mt-1 text-danger">
+        DEBUG: @errorMessage
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @errorMessage
+        </div>
+    }
+
+    <a class="btn btn-primary mt-3" href="/billing-required">
+        Back
+    </a>
+}
+
+@code {
+    private bool loaded;
+    private bool busy;
+    private string? errorMessage;
+
+    private async Task ReactivateAccount()
+    {
+        try
+        {
+            errorMessage = "Clicked!";
+            busy = true;
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var email = user.Identity?.Name;
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                errorMessage = "No logged-in user email found.";
+                return;
+            }
+
+            var company = await _context.Companies
+                .FirstOrDefaultAsync(c => c.AdminEmail == email);
+
+            if (company == null)
+            {
+                errorMessage = $"No company found for admin email: {email}";
+                return;
+            }
+
+            company.IsActive = true;
+            company.Status = "Active";
+
+            var saved = await _context.SaveChangesAsync();
+
+            errorMessage = $"Saved changes: {saved}. Company active: {company.IsActive}";
+
+            Nav.NavigateTo("/dashboard", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            UserContext.TryInitializeCompany(user, Schedule);
+        }
+
+        loaded = true;
+    }
+}

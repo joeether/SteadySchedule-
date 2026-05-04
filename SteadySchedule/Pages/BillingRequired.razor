@@ -1,0 +1,53 @@
+﻿@page "/billing-required"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Authorization
+@using SteadySchedule.Services
+
+@inject ScheduleService Schedule
+@inject UserContextService UserContext
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Billing Required</PageTitle>
+
+<div class="container mt-5">
+    <div class="card shadow-sm border-danger">
+        <div class="card-body p-4">
+
+            <h2 class="fw-bold text-danger mb-2">Billing Required</h2>
+
+            <p class="text-muted mb-3">
+                Your SteadySchedule account is currently inactive.
+            </p>
+
+            <div class="alert alert-warning">
+                To continue scheduling, please activate your subscription.
+            </div>
+
+            <div class="mb-3">
+                <strong>Company:</strong> @(Schedule.Company?.Name ?? "Loading...")
+            </div>
+
+            <NavLink class="btn btn-primary btn-lg" href="/billing">
+                Go to Billing
+            </NavLink>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            UserContext.TryInitializeCompany(user, Schedule);
+        }
+    }
+}

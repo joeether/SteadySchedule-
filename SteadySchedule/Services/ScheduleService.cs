@@ -1,8 +1,6 @@
 using SteadySchedule.Domain;
 using Microsoft.EntityFrameworkCore;
 using SteadySchedule.Data;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Http;
 
 namespace SteadySchedule.Services;
 
@@ -12,6 +10,23 @@ public class ScheduleService
     public ScheduleService(AppDbContext db)
     {
         _db = db;
+    }
+
+    public async Task<bool> ReactivateCompanyAsync(int companyId)
+    {
+        var company = await _db.Companies.FindAsync(companyId);
+
+        if (company == null)
+            return false;
+
+        company.IsActive = true;
+        company.Status = "Active";
+
+        await _db.SaveChangesAsync();
+
+        SetCompany(companyId);
+
+        return true;
     }
 
     public async Task<string> GenerateInviteCodeAsync(int companyId, int employeeId)

@@ -28,42 +28,42 @@
 		</div>
 	</div>
 
-@{
-    var today = DateTime.UtcNow.Date;
-    var trialEnd = Schedule.Company.TrialEndDate.Date;
-    var daysRemaining = Math.Max(0, (trialEnd - today).Days);
+	@{
+		var today = DateTime.UtcNow.Date;
+		var trialEnd = Schedule.Company.TrialEndDate.Date;
+		var daysRemaining = Math.Max(0, (trialEnd - today).Days);
 
-    string alertClass = "alert-success";
-    string icon = "🟢";
+		string alertClass = "alert-success";
+		string icon = "🟢";
 
-    if (daysRemaining <= 5 && daysRemaining > 2)
-    {
-        alertClass = "alert-warning";
-        icon = "⚠️";
-    }
-    else if (daysRemaining <= 2)
-    {
-        alertClass = "alert-danger";
-        icon = "🔴";
-    }
-}
+		if (daysRemaining <= 5 && daysRemaining > 2)
+		{
+			alertClass = "alert-warning";
+			icon = "⚠️";
+		}
+		else if (daysRemaining <= 2)
+		{
+			alertClass = "alert-danger";
+			icon = "🔴";
+		}
+	}
 
-@if (Schedule.Company.Status == "Trialing")
-{
-    <div class="alert @alertClass">
-        @icon Free Trial — @daysRemaining days remaining
+	@if (Schedule.Company.Status == "Trialing")
+	{
+		<div class="alert @alertClass">
+			@icon Free Trial — @daysRemaining days remaining
 
-        <div class="small text-muted">
-    Ends on @(Schedule.Company.TrialEndDate
-        .ToLocalTime()
-        .ToString("MMM d, yyyy"))
-</div>
+			<div class="small text-muted">
+				Ends on @(Schedule.Company.TrialEndDate
+							.ToLocalTime()
+							.ToString("MMM d, yyyy"))
+		</div>
 
-        <div class="small text-muted">
-            No payment required during trial
-        </div>
-    </div>
-}
+			<div class="small text-muted">
+				No payment required during trial
+			</div>
+		</div>
+		}
 
 	<div class="row g-3 mb-4">
 		<div class="col-12 col-md-4 col-lg-2">
@@ -228,27 +228,6 @@
 	private bool showWarningsModal = false;
 
 	[Inject] private AppDbContext _context { get; set; }
-	[Inject] private NavigationManager NavigationManager { get; set; }
-
-	private bool _checkedActive = false;
-
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-{
-    if (!firstRender || _checkedActive)
-        return;
-
-    _checkedActive = true;
-
-    var company = Schedule?.Company;
-
-    if (company != null && !company.IsActive)
-    {
-        await Task.Delay(50);
-        NavigationManager.NavigateTo("/billing-required", true);
-    }
-}
-
-		
 
 	private void ShowWarningsModal()
 	{

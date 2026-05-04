@@ -35,10 +35,10 @@
 			<option value="@w.ToString("yyyy-MM-dd")">@w.ToString("MMM d, yyyy")</option>
 		}
 	</select>
-    <button class="btn btn-sm btn-outline-primary mt-2"
-        onclick="window.print()">
-    Print
-</button>
+	<button class="btn btn-sm btn-outline-primary mt-2"
+			onclick="window.print()">
+		Print
+	</button>
 	@if (isEmployee)
 	{
 		<button class="btn btn-sm btn-outline-secondary mt-2"
@@ -163,51 +163,7 @@
 		</div>
 	}
 
-<div class="print-only" style="border: 5px solid black;">
-
-    <h3>@Schedule.Company.Name</h3>
-    <h5>Week of @selectedWeek.ToString("MMM d, yyyy")</h5>
-
-    @foreach (var posGroup in selectedWeekShifts.GroupBy(s => s.Position))
-    {
-        <div class="mb-3">
-            <h5>@posGroup.Key</h5>
-
-            @foreach (var dayGroup in posGroup.GroupBy(s => s.Date.Date).OrderBy(d => d.Key))
-            {
-                <div class="mb-2">
-                    <strong>@dayGroup.Key.ToString("dddd (M/d)")</strong>
-
-                    @foreach (var shift in dayGroup.OrderBy(s => s.StartTime))
-                    {
-                        var assigned = selectedWeekAssignments
-                            .Where(a => a.ShiftId == shift.Id)
-                            .Where(a => !isEmployee || showAll || a.EmployeeId == employeeId);
-
-                        <div class="ms-3">
-                            <div>
-    @shift.StartTime.ToString(@"hh\:mm") -
-    @shift.EndTime.ToString(@"hh\:mm")
-</div>
-
-<ul class="ms-3">
-    @foreach (var a in assigned)
-    {
-        var emp = employees.FirstOrDefault(e => e.Id == a.EmployeeId);
-        if (emp != null)
-        {
-            <li>@emp.Name</li>
-        }
-    }
-</ul>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-    }
-
-</div>
+	@*<div class="print-only" style="border: 5px solid black;">*@
 
 </div>
 
