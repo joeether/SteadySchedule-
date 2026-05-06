@@ -25,13 +25,6 @@
 					@Schedule.Company.Name
 				</small>
 			</div>
-			@if (showInstallButton)
-			{
-				<button class="btn btn-success mb-3"
-						@onclick="InstallApp">
-					Install App 📱
-				</button>
-			}
 		</div>
 	</div>
 
@@ -236,7 +229,7 @@
 
 	[Inject] private AppDbContext _context { get; set; }
 
-	[Inject] IJSRuntime JS { get; set; }
+	/*[Inject] IJSRuntime JS { get; set; }
 
 	private bool showInstallButton = false;
 
@@ -261,7 +254,7 @@
 	{
 		showInstallButton = true;
 		StateHasChanged();
-	}
+	}*/
 
 	private void ShowWarningsModal()
 	{
