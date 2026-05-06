@@ -1,14 +1,45 @@
-﻿@page "/"
+@page "/"
 
 <PageTitle>SteadySchedule</PageTitle>
 
 <div class="container mt-5" style="max-width: 700px;">
-    <div class="card shadow-sm">
+    <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body text-center p-5">
-            <h1 class="fw-bold mb-3">SteadySchedule</h1>
-            <p class="lead mb-4">Simple scheduling for real businesses.</p>
 
-            <a class="btn btn-dark btn-lg" href="/Account/Login">Log In</a>
+            <img src="images/steadyschedule-logo.png"
+                 alt="SteadySchedule Logo"
+                 style="max-width: 120px;"
+                 class="mb-4" />
+
+            <h1 class="fw-bold mb-3">SteadySchedule</h1>
+
+            <p class="lead mb-2">
+                Simple scheduling for real businesses.
+            </p>
+
+            <p class="text-muted mb-4">
+                Create schedules in minutes, prevent conflicts automatically,
+                and let employees view schedules from their phones.
+            </p>
+
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+
+                <a class="btn btn-dark btn-lg"
+                   href="/Account/Login">
+                    Log In
+                </a>
+
+                <a class="btn btn-outline-dark btn-lg"
+                   href="/Account/Register">
+                    Start Free Trial
+                </a>
+
+            </div>
+
+            <p class="text-muted small mt-4 mb-0">
+                No credit card required.
+            </p>
+
         </div>
     </div>
 </div>
