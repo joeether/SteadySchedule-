@@ -25,6 +25,13 @@
 					@Schedule.Company.Name
 				</small>
 			</div>
+			@if (showInstallButton)
+			{
+				<button class="btn btn-success mb-3"
+						@onclick="InstallApp">
+					Install App 📱
+				</button>
+			}
 		</div>
 	</div>
 
@@ -228,6 +235,33 @@
 	private bool showWarningsModal = false;
 
 	[Inject] private AppDbContext _context { get; set; }
+
+	[Inject] IJSRuntime JS { get; set; }
+
+	private bool showInstallButton = false;
+
+	private async Task InstallApp()
+	{
+		await JS.InvokeVoidAsync("installApp");
+	}
+
+	private DotNetObjectReference<Dashboard>? objRef;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			objRef = DotNetObjectReference.Create(this);
+			await JS.InvokeVoidAsync("setupInstallPrompt", objRef);
+		}
+	}
+
+	[JSInvokable]
+	public void ShowInstallButton()
+	{
+		showInstallButton = true;
+		StateHasChanged();
+	}
 
 	private void ShowWarningsModal()
 	{
