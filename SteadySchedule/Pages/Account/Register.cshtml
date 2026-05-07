@@ -90,12 +90,14 @@
 				</div>
 
 				<h6 class="text-muted text-center mb-3">
-					Welcome to SteadySchedule! Create you account.
+					Welcome to SteadySchedule! Create your account.
 				</h6>
 			</div>
 			<div class="card-body">
 				<form method="post">
-					<div asp-validation-summary="All" class="text-danger mb-3"></div>
+					<div asp-validation-summary="All"
+     class="alert alert-warning mb-3">
+</div>
 
 					<div class="mb-3">
 						<label asp-for="Input.CompanyName" class="form-label"></label>
@@ -115,7 +117,7 @@
 						<div class="input-group">
 							<input asp-for="Input.Password"
 								   type="password"
-								   class="form-control" autocomplete="new-password" />
+								   class="form-control @(ViewData.ModelState["Input.Password"]?.Errors.Count > 0 ? "is-invalid" : "")" autocomplete="new-password" />
 
 							<button type="button"
 									class="btn btn-outline-secondary"
@@ -133,7 +135,7 @@
 						<div class="input-group">
 							<input asp-for="Input.ConfirmPassword"
 								   type="password"
-								   class="form-control" autocomplete="new-password" />
+								   class="form-control @(ViewData.ModelState["Input.ConfirmPassword"]?.Errors.Count > 0 ? "is-invalid" : "")" autocomplete="new-password" />
 
 							<button type="button"
 									class="btn btn-outline-secondary"
@@ -152,31 +154,93 @@
 						</div>
 					}
 
-                    <div class="form-check mt-3">
-    <input type="checkbox" class="form-check-input" asp-for="Input.AcceptedTerms" />
-    <label class="form-check-label">
-        I agree to the 
-        <a href="/terms" target="_blank">Terms</a> and 
-        <a href="/privacy" target="_blank">Privacy Policy</a>
+                    <div class="form-check mt-4 mb-3">
+    <input type="checkbox"
+           class="form-check-input"
+           asp-for="Input.AcceptedTerms" />
+
+    <label class="form-check-label" asp-for="Input.AcceptedTerms">
+        I agree to the
+        <a href="#"
+   data-bs-toggle="modal"
+   data-bs-target="#termsModal">
+    Terms
+</a>
+        and
+        <a href="#"
+   data-bs-toggle="modal"
+   data-bs-target="#privacyModal">
+    Privacy Policy
+</a>
     </label>
-    <span asp-validation-for="Input.AcceptedTerms" class="text-danger"></span>
 </div>
 
-<div class="form-text">
+<span asp-validation-for="Input.AcceptedTerms"
+      class="text-danger d-block mb-3">
+</span>
+
+<div class="form-text mb-4">
     Includes a 30-day free trial. No credit card required.
 </div>
 
-					<button type="submit" class="btn btn-dark w-100 mb-3">
-						Create Account
-					</button>
-					<div class="text-center mt-3">
-						<span class="text-muted">Already have an account?</span>
-						<a href="/Account/Login">Log in</a>
-					</div>
+<button type="submit" class="btn btn-dark w-100 mb-3">
+    Create Account
+</button>
+
+<div class="text-center mt-3">
+    <span class="text-muted">Already have an account?</span>
+    <a href="/Account/Login">Log in</a>
+</div>
 				</form>
 			</div>
 		</div>
 	</div>
+</div>
+
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Terms & Conditions</h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Your Terms text here...</p>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="privacyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Privacy Policy</h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Your Privacy text here...</p>
+
+            </div>
+
+        </div>
+    </div>
 </div>
 
 @section Scripts {
