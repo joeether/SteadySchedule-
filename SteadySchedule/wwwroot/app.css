@@ -335,3 +335,17 @@ main {
         font-size: 10px;
     }
 }
+
+.validation-summary-errors {
+    background-color: #fff3cd;
+    border: 1px solid #ffecb5;
+    color: #664d03;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.validation-summary-errors ul {
+    margin: 0;
+    padding-left: 20px;
+}
